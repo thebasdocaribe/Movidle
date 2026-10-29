@@ -32,6 +32,7 @@ import {
   serializeDuel,
 } from './duel.js'
 import { sendPasswordResetEmail, sendVerifyEmail } from './mail.js'
+import { migrate } from './migrate.js'
 import { matchesTitle, normalizeGuess } from './normalize.js'
 import { scoreRound } from './scoring.js'
 
@@ -361,7 +362,10 @@ app.post('/api/auth/login', async (req, res) => {
       progress,
     })
   } catch (err) {
-    res.status(500).json({ error: String(err.message) })
+    console.error('[login]', err)
+    res.status(500).json({
+      error: err?.message ? String(err.message) : 'Erro interno no login',
+    })
   }
 })
 
@@ -857,7 +861,7 @@ app.post('/api/duel/:code/act', authRequired, async (req, res) => {
   }
 })
 
-// Produção (Railway): serve o build do Vite (API + front na mesma URL)
+// Produção (Render): serve o build do Vite (API + front na mesma URL)
 const distPath = path.join(__dirname, '../../web/dist')
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath))
@@ -866,6 +870,15 @@ if (fs.existsSync(distPath)) {
   })
 }
 
-app.listen(PORT, () => {
-  console.log(`API cineblitz em http://localhost:${PORT}`)
-})
+async function boot() {
+  try {
+    await migrate()
+  } catch (err) {
+    console.error('[migrate] falhou:', err)
+  }
+  app.listen(PORT, () => {
+    console.log(`API cineblitz em http://localhost:${PORT}`)
+  })
+}
+
+boot()

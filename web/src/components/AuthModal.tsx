@@ -125,7 +125,7 @@ export function AuthModal({
   const [busy, setBusy] = useState(false)
   const [canResend, setCanResend] = useState(false)
   const [usernameStatus, setUsernameStatus] = useState<
-    'idle' | 'checking' | 'ok' | 'taken' | 'invalid'
+    'idle' | 'checking' | 'ok' | 'taken' | 'invalid' | 'error'
   >('idle')
 
   const strong = passwordLooksStrong(password)
@@ -133,9 +133,19 @@ export function AuthModal({
     password.length > 0 && password === passwordConfirm
   const emailOk = isValidEmailFormat(email)
   const needsStrongPassword = mode === 'register' || mode === 'reset'
-  const usernameOk = usernameStatus === 'ok'
+  const usernameFormatOk =
+    username.trim().length >= 3 &&
+    username.trim().length <= 32 &&
+    /^[a-zA-Z0-9_]+$/.test(username.trim())
+  // Libera CRIAR se o formato estiver ok (mesmo se a API de check falhar)
   const registerReady =
-    strong && passwordsMatch && emailOk && usernameOk
+    strong &&
+    passwordsMatch &&
+    emailOk &&
+    usernameFormatOk &&
+    usernameStatus !== 'taken' &&
+    usernameStatus !== 'invalid' &&
+    usernameStatus !== 'checking'
 
   useEffect(() => {
     if (mode !== 'register') return
@@ -154,7 +164,7 @@ export function AuthModal({
         .then((res) => {
           setUsernameStatus(res.available ? 'ok' : 'taken')
         })
-        .catch(() => setUsernameStatus('invalid'))
+        .catch(() => setUsernameStatus('error'))
     }, 350)
     return () => window.clearTimeout(handle)
   }, [username, mode])
@@ -336,11 +346,17 @@ export function AuthModal({
                   <p className="text-[11px] text-cinema-red">
                     Esse nome de usuário já está em uso
                   </p>
+                ) : usernameStatus === 'error' ? (
+                  <p className="text-[11px] text-cinema-red">
+                    Servidor/banco não respondeu — confira DATABASE_URL no
+                    Render
+                  </p>
                 ) : (
                   <p className="text-[11px] text-cinema-red">
                     Usuário inválido (mín. 3; só letras, números e _)
                   </p>
                 )}
+
               </div>
               <div className="space-y-1">
                 <input
