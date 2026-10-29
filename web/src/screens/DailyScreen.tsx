@@ -84,6 +84,7 @@ export function DailyScreen({
   const videoRef = useRef<HTMLVideoElement>(null)
   const suggestTimer = useRef<number | null>(null)
   const floatTimer = useRef<number | null>(null)
+  const [videoReady, setVideoReady] = useState(false)
   const currentMult = multiplierForStreak(firstTryStreak)
 
   const durations = daily?.takeDurations ?? [...FALLBACK_DURATIONS]
@@ -157,9 +158,28 @@ export function DailyScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, user?.id])
 
+  // Pré-carrega o MP4 assim que o puzzle chega (evita tela preta no 1º take)
+  useEffect(() => {
+    setVideoReady(mediaType !== 'video')
+    const video = videoRef.current
+    if (!video || mediaType !== 'video' || !mediaUrl) return
+
+    const markReady = () => setVideoReady(true)
+    if (video.readyState >= 2) markReady()
+    video.addEventListener('loadeddata', markReady)
+    video.addEventListener('canplay', markReady)
+    video.load()
+    return () => {
+      video.removeEventListener('loadeddata', markReady)
+      video.removeEventListener('canplay', markReady)
+    }
+  }, [mediaUrl, mediaType])
+
   useEffect(() => {
     if (phase !== 'countdown') return
     if (countdown <= 0) {
+      // Espera o buffer mínimo pra não abrir em preto
+      if (mediaType === 'video' && !videoReady) return
       setPhase('playing')
       return
     }
@@ -168,7 +188,7 @@ export function DailyScreen({
       COUNTDOWN_TICK_MS,
     )
     return () => window.clearTimeout(id)
-  }, [phase, countdown])
+  }, [phase, countdown, mediaType, videoReady])
 
   useEffect(() => {
     if (phase !== 'playing') return
@@ -194,9 +214,30 @@ export function DailyScreen({
       }
     }
 
-    video.currentTime = 0
+    const start = () => {
+      try {
+        video.currentTime = 0
+      } catch {
+        /* ignore seek race */
+      }
+      void video.play().catch(() => {})
+    }
+
     video.addEventListener('timeupdate', stopAtBoundary)
-    void video.play().catch(() => {})
+    if (video.readyState >= 2) {
+      start()
+    } else {
+      const onReady = () => {
+        video.removeEventListener('canplay', onReady)
+        start()
+      }
+      video.addEventListener('canplay', onReady)
+      return () => {
+        video.removeEventListener('canplay', onReady)
+        video.removeEventListener('timeupdate', stopAtBoundary)
+        video.pause()
+      }
+    }
     return () => {
       video.removeEventListener('timeupdate', stopAtBoundary)
       video.pause()
@@ -479,26 +520,33 @@ export function DailyScreen({
             </div>
 
             <div className="film-grain relative aspect-video w-full bg-[#050308]">
+              {/* Vídeo sempre montado pra pré-buffer; só aparece em playing/guess/ended */}
+              {mediaUrl && mediaType === 'video' ? (
+                <video
+                  ref={videoRef}
+                  src={mediaUrl}
+                  muted
+                  playsInline
+                  preload="auto"
+                  className={`absolute inset-0 h-full w-full object-contain bg-black transition-opacity ${
+                    phase === 'playing' ||
+                    phase === 'guess' ||
+                    phase === 'ended'
+                      ? 'opacity-100'
+                      : 'pointer-events-none opacity-0'
+                  }`}
+                />
+              ) : null}
               {mediaUrl &&
+              mediaType === 'image' &&
               (phase === 'playing' ||
                 phase === 'guess' ||
                 phase === 'ended') ? (
-                mediaType === 'video' ? (
-                  <video
-                    ref={videoRef}
-                    src={mediaUrl}
-                    muted
-                    playsInline
-                    preload="auto"
-                    className="absolute inset-0 h-full w-full object-contain bg-black"
-                  />
-                ) : (
-                  <img
-                    src={mediaUrl}
-                    alt=""
-                    className="absolute inset-0 h-full w-full object-contain bg-black"
-                  />
-                )
+                <img
+                  src={mediaUrl}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-contain bg-black"
+                />
               ) : null}
 
               {(phase === 'idle' ||
@@ -601,6 +649,17 @@ export function DailyScreen({
                 </div>
               ) : null}
 
+              {phase === 'countdown' &&
+              countdown <= 0 &&
+              mediaType === 'video' &&
+              !videoReady ? (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50">
+                  <p className="font-display text-2xl text-cinema-gold sm:text-3xl">
+                    CARREGANDO CLIPE…
+                  </p>
+                </div>
+              ) : null}
+
               {phase === 'playing' ? (
                 <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col items-center gap-2 bg-gradient-to-t from-black via-black/70 to-transparent px-4 pb-4 pt-10">
                   <div className="h-2 w-2/3 max-w-xs overflow-hidden border border-cinema-gold/40 bg-black/50">
@@ -631,89 +690,87 @@ export function DailyScreen({
               ) : null}
 
               {phase === 'ended' && endState ? (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/88 px-4 sm:px-6">
-                  <div className="flex w-full max-w-2xl items-center gap-4 sm:gap-5">
-                    {endState.posterUrl ? (
-                      <img
-                        src={endState.posterUrl}
-                        alt=""
-                        className="win-soft h-40 w-28 shrink-0 border-2 border-cinema-gold/70 object-cover sm:h-48 sm:w-32"
-                      />
-                    ) : null}
-                    <div className="min-w-0 flex-1 text-left">
-                      {endState.kind === 'win' ? (
-                        <>
-                          <p
-                            className={`font-display leading-none text-cinema-gold ${
-                              firstTryWin
-                                ? 'win-first text-4xl sm:text-5xl'
-                                : 'win-soft text-3xl sm:text-4xl'
-                            }`}
-                          >
-                            {firstTryWin ? 'PERFEITO!' : 'ACERTOU!'}
-                          </p>
-                          <p
-                            className={`font-display text-cinema-red ${
-                              firstTryWin
-                                ? 'win-first text-3xl'
-                                : 'win-soft text-2xl'
-                            }`}
-                          >
-                            +{endState.points} PTS
-                            {endState.multiplier && endState.multiplier > 1
-                              ? ` (×${endState.multiplier})`
-                              : ''}
-                          </p>
-                          <p className="win-soft mt-1 text-xs font-bold tracking-wide text-cinema-cyan uppercase">
-                            {TAKE_LABEL[endState.take] ||
-                              `TAKE ${endState.take}`}
-                            {endState.take === 1
-                              ? ` · STREAK ${firstTryStreak}`
-                              : ' · STREAK MANTIDO'}
-                          </p>
-                          <p className="win-soft mt-1 text-sm text-white">
-                            {endState.filmTitle}
-                            {endState.year ? ` (${endState.year})` : ''}
-                          </p>
-                          <p className="mt-1 text-[11px] text-cinema-muted">
-                            Total: +{sessionScore} · mult ×
-                            {multiplierForStreak(firstTryStreak)
-                              .toFixed(2)
-                              .replace(/\.00$/, '')}
-                            {mode === 'daily'
-                              ? ' · daily encerrado'
-                              : ' · próximo filme'}
-                          </p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="win-soft font-display text-3xl text-cinema-muted sm:text-4xl">
-                            FIM
-                          </p>
-                          <p className="mt-1 text-sm text-white">
-                            0 pts · era {endState.filmTitle}
-                            {endState.year ? ` (${endState.year})` : ''}
-                          </p>
-                        </>
-                      )}
-                      {mode === 'classic' ? (
-                        <button
-                          type="button"
-                          onClick={() => void goNextClassic()}
-                          className="mode-btn mode-btn-primary mode-btn-inline mt-3 px-5 py-2 font-display text-lg"
+                <div className="absolute inset-0 z-10 flex items-stretch bg-black/90 px-4 py-4 sm:px-8 sm:py-5">
+                  {endState.posterUrl ? (
+                    <img
+                      src={endState.posterUrl}
+                      alt=""
+                      className="win-soft my-auto h-[70%] max-h-64 w-auto shrink-0 border-2 border-cinema-gold/70 object-cover sm:max-h-72 sm:w-40"
+                    />
+                  ) : null}
+                  <div className="flex min-w-0 flex-1 flex-col items-center justify-center px-3 text-center sm:px-6">
+                    {endState.kind === 'win' ? (
+                      <>
+                        <p
+                          className={`font-display leading-none text-cinema-gold ${
+                            firstTryWin
+                              ? 'win-first text-5xl sm:text-7xl'
+                              : 'win-soft text-4xl sm:text-6xl'
+                          }`}
                         >
-                          PRÓXIMO FILME
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={onBack}
-                          className="mode-btn mode-btn-inline mt-3 border-cinema-gold px-5 py-2 font-display text-lg text-cinema-gold"
+                          {firstTryWin ? 'PERFEITO!' : 'ACERTOU!'}
+                        </p>
+                        <p
+                          className={`mt-1 font-display text-cinema-red ${
+                            firstTryWin
+                              ? 'win-first text-4xl sm:text-5xl'
+                              : 'win-soft text-3xl sm:text-4xl'
+                          }`}
                         >
-                          VOLTAR AO LOBBY
-                        </button>
-                      )}
-                    </div>
+                          +{endState.points} PTS
+                          {endState.multiplier && endState.multiplier > 1
+                            ? ` (×${endState.multiplier})`
+                            : ''}
+                        </p>
+                        <p className="win-soft mt-2 text-sm font-bold tracking-wide text-cinema-cyan uppercase sm:text-base">
+                          {TAKE_LABEL[endState.take] ||
+                            `TAKE ${endState.take}`}
+                          {endState.take === 1
+                            ? ` · STREAK ${firstTryStreak}`
+                            : ' · STREAK MANTIDO'}
+                        </p>
+                        <p className="win-soft mt-2 text-lg font-semibold text-white sm:text-xl">
+                          {endState.filmTitle}
+                          {endState.year ? ` (${endState.year})` : ''}
+                        </p>
+                        <p className="mt-1 text-xs text-cinema-muted sm:text-sm">
+                          Total: +{sessionScore} · mult ×
+                          {multiplierForStreak(firstTryStreak)
+                            .toFixed(2)
+                            .replace(/\.00$/, '')}
+                          {mode === 'daily'
+                            ? ' · daily encerrado'
+                            : ' · próximo filme'}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="win-soft font-display text-5xl text-cinema-muted sm:text-6xl">
+                          FIM
+                        </p>
+                        <p className="mt-2 text-base text-white sm:text-lg">
+                          0 pts · era {endState.filmTitle}
+                          {endState.year ? ` (${endState.year})` : ''}
+                        </p>
+                      </>
+                    )}
+                    {mode === 'classic' ? (
+                      <button
+                        type="button"
+                        onClick={() => void goNextClassic()}
+                        className="mode-btn mode-btn-primary mode-btn-inline mt-4 px-6 py-2.5 font-display text-xl"
+                      >
+                        PRÓXIMO FILME
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={onBack}
+                        className="mode-btn mode-btn-inline mt-4 border-cinema-gold px-6 py-2.5 font-display text-xl text-cinema-gold"
+                      >
+                        VOLTAR AO LOBBY
+                      </button>
+                    )}
                   </div>
                 </div>
               ) : null}
