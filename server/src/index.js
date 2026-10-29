@@ -34,6 +34,52 @@ import {
 import { sendPasswordResetEmail, sendVerifyEmail } from './mail.js'
 import { migrate } from './migrate.js'
 import { matchesTitle, normalizeGuess } from './normalize.js'
+
+async function countDailySolved(dateStr) {
+  const { rows } = await query(
+    `SELECT COUNT(*)::int AS n
+     FROM user_daily_plays
+     WHERE puzzle_date = $1::date AND won = true`,
+    [dateStr],
+  )
+  return rows[0]?.n ?? 0
+}
+
+async function recordDailyGuess({
+  dateStr,
+  userId,
+  guessRaw,
+  guessNorm,
+  correct,
+}) {
+  if (!guessNorm) return 0
+  if (userId) {
+    await query(
+      `INSERT INTO daily_guesses (puzzle_date, user_id, guess_norm, guess_raw, correct)
+       SELECT $1::date, $2::uuid, $3, $4, $5
+       WHERE NOT EXISTS (
+         SELECT 1 FROM daily_guesses
+         WHERE puzzle_date = $1::date
+           AND user_id = $2::uuid
+           AND guess_norm = $3
+       )`,
+      [dateStr, userId, guessNorm, guessRaw, correct],
+    )
+  } else {
+    await query(
+      `INSERT INTO daily_guesses (puzzle_date, user_id, guess_norm, guess_raw, correct)
+       VALUES ($1::date, NULL, $2, $3, $4)`,
+      [dateStr, guessNorm, guessRaw, correct],
+    )
+  }
+  const { rows } = await query(
+    `SELECT COUNT(DISTINCT COALESCE(user_id::text, id::text))::int AS n
+     FROM daily_guesses
+     WHERE puzzle_date = $1::date AND guess_norm = $2`,
+    [dateStr, guessNorm],
+  )
+  return rows[0]?.n ?? 0
+}
 import { scoreRound } from './scoring.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -191,12 +237,15 @@ app.get('/api/daily', async (req, res) => {
       alreadyPlayed = await hasPlayedDaily(req.user.id, date)
     }
 
+    const solvedCount = await countDailySolved(date)
+
     res.json(
       publicPuzzle(puzzle, {
         mode: 'daily',
         date,
         puzzleId: date,
         alreadyPlayed,
+        solvedCount,
       }),
     )
   } catch (err) {
@@ -745,9 +794,22 @@ app.post('/api/guess', async (req, res) => {
     const points = correct ? POINTS_BY_TAKE[attempt - 1] : 0
     const reveal = correct || attempt === 6
 
+    let alsoGuessedCount = null
+    if (isDateId(puzzleId)) {
+      const guessNorm = normalizeGuess(guess)
+      alsoGuessedCount = await recordDailyGuess({
+        dateStr: puzzleId,
+        userId: req.user?.id || null,
+        guessRaw: guess.trim(),
+        guessNorm,
+        correct,
+      })
+    }
+
     res.json({
       correct,
       points: correct ? points : 0,
+      ...(alsoGuessedCount != null ? { alsoGuessedCount } : {}),
       ...(reveal
         ? {
             title: puzzle.title,

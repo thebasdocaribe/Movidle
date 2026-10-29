@@ -12,6 +12,8 @@ export type DailyPayload = {
   posterUrl?: string | null
   attribution: string | null
   alreadyPlayed?: boolean
+  /** Quantas pessoas já acertaram o daily de hoje */
+  solvedCount?: number
 }
 
 export type GuessResult = {
@@ -21,6 +23,8 @@ export type GuessResult = {
   titlePt?: string
   year?: number
   posterUrl?: string
+  /** Quantas pessoas (incl. você) chutaram esse título no daily */
+  alsoGuessedCount?: number
 }
 
 export type GiveUpResult = {

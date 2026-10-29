@@ -10,6 +10,7 @@ const MIGRATION_FILES = [
   'schema.sql',
   'auth.sql',
   'duel.sql',
+  'daily_stats.sql',
 ]
 
 /** Clips em web/public/clips (vão pro dist no build). */

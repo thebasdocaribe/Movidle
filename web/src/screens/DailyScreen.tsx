@@ -80,6 +80,9 @@ export function DailyScreen({
   const [sessionHits, setSessionHits] = useState(0)
   const [firstTryStreak, setFirstTryStreak] = useState(0)
   const [floatPoints, setFloatPoints] = useState<number | null>(null)
+  const [guessHistory, setGuessHistory] = useState<
+    { label: string; count: number }[]
+  >([])
   const guessRef = useRef<HTMLInputElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const suggestTimer = useRef<number | null>(null)
@@ -150,6 +153,7 @@ export function DailyScreen({
     setDaily(null)
     setEndState(null)
     setFloatPoints(null)
+    setGuessHistory([])
     const prog = modeProgress(progress, mode)
     setSessionScore(prog.totalScore)
     setSessionHits(prog.wins)
@@ -356,6 +360,7 @@ export function DailyScreen({
     setEndState(null)
     setScoreHint(null)
     setSuggestions([])
+    setGuessHistory([])
     setPhase('idle')
     const data = await loadPuzzle([...playedIds])
     if (data) goReady(0)
@@ -374,6 +379,16 @@ export function DailyScreen({
       })
 
       const filmTitle = result.titlePt || result.title || typed
+      if (
+        mode === 'daily' &&
+        typeof result.alsoGuessedCount === 'number' &&
+        result.alsoGuessedCount > 0
+      ) {
+        setGuessHistory((prev) => [
+          { label: typed, count: result.alsoGuessedCount! },
+          ...prev.filter((g) => g.label.toLowerCase() !== typed.toLowerCase()),
+        ])
+      }
 
       if (result.correct) {
         if (!user) {
@@ -832,6 +847,30 @@ export function DailyScreen({
             </div>
           ) : null}
 
+          {mode === 'daily' && guessHistory.length > 0 ? (
+            <ul className="mt-3 flex flex-wrap justify-center gap-2">
+              {guessHistory.map((g) => (
+                <li
+                  key={g.label}
+                  className="relative flex min-w-[5.5rem] flex-col items-center border border-cinema-line bg-[#2a1520] px-3 py-2"
+                >
+                  <span
+                    className="absolute top-1 right-1.5 text-right text-[10px] leading-tight text-white/90"
+                    title="Pessoas que também chutaram isso hoje"
+                  >
+                    <span className="block text-[8px] tracking-wide text-cinema-muted uppercase">
+                      tb
+                    </span>
+                    <span className="font-bold text-cinema-gold">{g.count}</span>
+                  </span>
+                  <span className="max-w-[8rem] truncate px-3 pt-4 text-center text-xs font-bold text-white">
+                    {g.label}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
           <form
             onSubmit={submitGuess}
             className="relative mt-4 flex w-full flex-col gap-2 sm:flex-row sm:items-stretch"
@@ -887,6 +926,17 @@ export function DailyScreen({
               CONFIRMAR
             </button>
           </form>
+
+          {mode === 'daily' && daily ? (
+            <p className="mt-2 text-center text-sm font-semibold text-white drop-shadow">
+              <span className="text-cinema-gold">
+                {daily.solvedCount ?? 0}
+              </span>{' '}
+              {(daily.solvedCount ?? 0) === 1
+                ? 'pessoa já descobriu!'
+                : 'pessoas já descobriram!'}
+            </p>
+          ) : null}
 
           {scoreHint ? (
             <p className="mt-3 border-2 border-cinema-line bg-black/40 px-3 py-2 font-mono text-xs text-cinema-muted">
