@@ -1,0 +1,14 @@
+{
+  "name": "cineblitz",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "npm install --prefix web && npm run build --prefix web && npm install --prefix server --omit=dev",
+    "start": "npm start --prefix server",
+    "dev:web": "npm run dev --prefix web",
+    "dev:api": "npm start --prefix server"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

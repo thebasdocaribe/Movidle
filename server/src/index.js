@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import cors from 'cors'
@@ -855,6 +856,15 @@ app.post('/api/duel/:code/act', authRequired, async (req, res) => {
     res.status(err.status || 500).json({ error: String(err.message) })
   }
 })
+
+// Produção (Railway): serve o build do Vite (API + front na mesma URL)
+const distPath = path.join(__dirname, '../../web/dist')
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath))
+  app.get(/^(?!\/api).*/, (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'))
+  })
+}
 
 app.listen(PORT, () => {
   console.log(`API cineblitz em http://localhost:${PORT}`)
