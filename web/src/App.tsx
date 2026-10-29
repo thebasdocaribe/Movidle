@@ -213,7 +213,6 @@ export default function App() {
             onCastPlayed={() => setCastPlayedToday(true)}
             puzzleDate={screen === 'cast' ? playDate : null}
             onBack={goHome}
-            onNeedAuth={() => setShowAuth(true)}
           />
         ) : (
           <DailyScreen
@@ -225,7 +224,6 @@ export default function App() {
             dailyPlayedToday={dailyPlayedToday}
             puzzleDate={mode === 'daily' ? playDate : null}
             onBack={goHome}
-            onNeedAuth={() => setShowAuth(true)}
           />
         )}
       </AppShell>

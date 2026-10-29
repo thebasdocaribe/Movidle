@@ -178,8 +178,8 @@ export function AuthModal({
     setCanResend(false)
   }
 
-  function showVerificationResult(res: { message: string }) {
-    setInfo(res.message)
+  function showVerificationResult(res: { message?: string }) {
+    setInfo(res.message || 'Verifique seu e-mail pra continuar.')
     setCanResend(true)
   }
 

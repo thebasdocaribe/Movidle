@@ -35,7 +35,6 @@ type DailyScreenProps = {
   /** YYYY-MM-DD do calendário; null = hoje */
   puzzleDate?: string | null
   onBack: () => void
-  onNeedAuth: () => void
 }
 
 const COUNTDOWN_FROM = 3
@@ -63,7 +62,6 @@ export function DailyScreen({
   onDailyPlayed,
   puzzleDate = null,
   onBack,
-  onNeedAuth,
 }: DailyScreenProps) {
   const [phase, setPhase] = useState<Phase>('idle')
   const [countdown, setCountdown] = useState(COUNTDOWN_FROM)

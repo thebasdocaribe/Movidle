@@ -27,7 +27,6 @@ type CastScreenProps = {
   /** YYYY-MM-DD do calendário; null = hoje */
   puzzleDate?: string | null
   onBack: () => void
-  onNeedAuth: () => void
 }
 
 const MAX_TAKE = 7
