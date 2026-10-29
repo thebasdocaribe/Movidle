@@ -1,0 +1,80 @@
+[
+  {
+    "slug": "night-of-the-living-dead",
+    "title": "Night of the Living Dead",
+    "archiveId": "night_of_the_living_dead_ipod",
+    "preferredFile": "night_of_the_living_dead_512kb.mp4",
+    "takeDurationSec": 1,
+    "takes": [2280, 1680, 2700, 3600, 480, 5400]
+  },
+  {
+    "slug": "carnival-of-souls",
+    "title": "Carnival of Souls",
+    "archiveId": "carnival-of-souls_1962",
+    "takeDurationSec": 1,
+    "takes": [900, 1500, 2100, 2700, 600, 3600]
+  },
+  {
+    "slug": "charade",
+    "title": "Charade",
+    "archiveId": "batvwi-Charade_1963",
+    "takeDurationSec": 1,
+    "takes": [1200, 1800, 2400, 3000, 800, 4200]
+  },
+  {
+    "slug": "detour",
+    "title": "Detour",
+    "archiveId": "detour-1945_202310",
+    "takeDurationSec": 1,
+    "takes": [700, 1300, 1900, 2500, 500, 3200]
+  },
+  {
+    "slug": "doa",
+    "title": "D.O.A.",
+    "archiveId": "DOA1950",
+    "takeDurationSec": 1,
+    "takes": [800, 1400, 2000, 2600, 600, 3800]
+  },
+  {
+    "slug": "the-brain-that-wouldnt-die",
+    "title": "The Brain That Wouldn't Die",
+    "archiveId": "the.-brain.-that.-wouldnt.-die.-1962",
+    "takeDurationSec": 1,
+    "takes": [900, 1600, 2200, 2800, 700, 4000]
+  },
+  {
+    "slug": "the-last-man-on-earth",
+    "title": "The Last Man on Earth",
+    "archiveId": "TheLastManOnEarth1964_201808",
+    "takeDurationSec": 1,
+    "takes": [1000, 1700, 2400, 3100, 800, 4500]
+  },
+  {
+    "slug": "angel-and-the-badman",
+    "title": "Angel and the Badman",
+    "archiveId": "angel-and-the-badman-1947",
+    "takeDurationSec": 1,
+    "takes": [900, 1500, 2100, 2700, 600, 3600]
+  },
+  {
+    "slug": "beat-the-devil",
+    "title": "Beat the Devil",
+    "archiveId": "beat-the-devil-1953-by-john-huston",
+    "takeDurationSec": 1,
+    "takes": [900, 1500, 2100, 2700, 700, 3600]
+  },
+  {
+    "slug": "nothing-sacred",
+    "title": "Nothing Sacred",
+    "archiveId": "nothingsacred1937",
+    "takeDurationSec": 1,
+    "takes": [600, 1100, 1600, 2100, 400, 2800]
+  },
+  {
+    "slug": "reefer-madness",
+    "title": "Reefer Madness",
+    "archiveId": "reefer-madness-colourised",
+    "takeDurationSec": 1,
+    "takes": [500, 1000, 1500, 2000, 300, 2500]
+  }
+]

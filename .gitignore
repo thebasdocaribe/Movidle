@@ -1,0 +1,12 @@
+node_modules/
+web/node_modules/
+server/node_modules/
+dist/
+web/dist/
+.env
+server/.env
+*.log
+.DS_Store
+.Railway/
+tmp/
+scripts/clips/_tmp/
