@@ -251,12 +251,14 @@ export async function serializeDuel(duel, viewerId) {
   const movieId = state.movieIds[state.filmIndex]
   const movie =
     duel.status === 'finished' ? null : await loadMovie(movieId)
+  const viewer = String(viewerId)
+  const turn = String(state.turnUserId)
 
   return {
     code: duel.code,
     status: duel.status,
-    youAreHost: viewerId === duel.host_id,
-    yourTurn: state.turnUserId === viewerId,
+    youAreHost: String(duel.host_id) === viewer,
+    yourTurn: turn === viewer,
     host: {
       id: duel.host_id,
       username: state.hostUsername,

@@ -19,6 +19,8 @@ export type ModeProgress = {
 export type ProgressMap = {
   daily: ModeProgress
   classic: ModeProgress
+  cast: ModeProgress
+  character: ModeProgress
 }
 
 export function getToken(): string | null {
@@ -39,13 +41,18 @@ export function emptyProgress(): ProgressMap {
   return {
     daily: { totalScore: 0, firstTryStreak: 0, wins: 0 },
     classic: { totalScore: 0, firstTryStreak: 0, wins: 0 },
+    cast: { totalScore: 0, firstTryStreak: 0, wins: 0 },
+    character: { totalScore: 0, firstTryStreak: 0, wins: 0 },
   }
 }
 
 export function modeProgress(
   progress: ProgressMap | null,
-  mode: GameMode,
+  mode: GameMode | 'character',
 ): ModeProgress {
   const p = progress || emptyProgress()
-  return mode === 'daily' ? p.daily : p.classic
+  if (mode === 'cast') return p.cast
+  if (mode === 'classic') return p.classic
+  if (mode === 'character') return p.character
+  return p.daily
 }

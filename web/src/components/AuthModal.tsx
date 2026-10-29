@@ -216,7 +216,17 @@ export function AuthModal({
           password,
           passwordConfirm,
         })
-        showVerificationResult(res)
+        if (res.token && res.user) {
+          setToken(res.token)
+          onSuccess(res.user, res.progress)
+          onClose()
+          return
+        }
+        showVerificationResult(
+          res.message
+            ? res
+            : { message: 'Conta criada. Faça login.' },
+        )
         return
       }
 

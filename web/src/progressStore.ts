@@ -12,6 +12,7 @@ const KEY = 'cineblitz.progress.v1'
 type Store = {
   daily: ModeProgress
   classic: ModeProgress
+  cast: ModeProgress
 }
 
 function defaultMode(): ModeProgress {
@@ -23,19 +24,26 @@ function defaultMode(): ModeProgress {
   }
 }
 
+function emptyStore(): Store {
+  return {
+    daily: defaultMode(),
+    classic: defaultMode(),
+    cast: defaultMode(),
+  }
+}
+
 function read(): Store {
   try {
     const raw = localStorage.getItem(KEY)
-    if (!raw) {
-      return { daily: defaultMode(), classic: defaultMode() }
-    }
-    const parsed = JSON.parse(raw) as Store
+    if (!raw) return emptyStore()
+    const parsed = JSON.parse(raw) as Partial<Store>
     return {
       daily: { ...defaultMode(), ...parsed.daily },
       classic: { ...defaultMode(), ...parsed.classic },
+      cast: { ...defaultMode(), ...parsed.cast },
     }
   } catch {
-    return { daily: defaultMode(), classic: defaultMode() }
+    return emptyStore()
   }
 }
 
@@ -45,13 +53,16 @@ function write(store: Store) {
 
 export function getModeProgress(mode: GameMode): ModeProgress {
   const store = read()
-  return mode === 'daily' ? store.daily : store.classic
+  if (mode === 'cast') return store.cast
+  if (mode === 'classic') return store.classic
+  return store.daily
 }
 
 export function saveModeProgress(mode: GameMode, next: ModeProgress) {
   const store = read()
-  if (mode === 'daily') store.daily = next
-  else store.classic = next
+  if (mode === 'cast') store.cast = next
+  else if (mode === 'classic') store.classic = next
+  else store.daily = next
   write(store)
 }
 

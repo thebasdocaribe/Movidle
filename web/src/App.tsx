@@ -7,12 +7,15 @@ import {
   type AuthUser,
   type ProgressMap,
 } from './auth'
+import { AppShell } from './components/AppShell'
 import { AuthModal } from './components/AuthModal'
+import { CastScreen } from './screens/CastScreen'
+import { CharacterScreen } from './screens/CharacterScreen'
 import { DailyScreen } from './screens/DailyScreen'
 import { DuelScreen } from './screens/DuelScreen'
 import { HubScreen } from './screens/HubScreen'
 
-type Screen = 'hub' | 'play' | 'duel'
+type Screen = 'hub' | 'play' | 'cast' | 'cast-endless' | 'character' | 'duel'
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('hub')
@@ -20,12 +23,14 @@ export default function App() {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [progress, setProgress] = useState<ProgressMap>(emptyProgress())
   const [dailyPlayedToday, setDailyPlayedToday] = useState(false)
+  const [castPlayedToday, setCastPlayedToday] = useState(false)
   const [showAuth, setShowAuth] = useState(false)
   const [resetToken, setResetToken] = useState<string | null>(null)
   const [duelCode, setDuelCode] = useState<string | null>(null)
   const [bootstrapping, setBootstrapping] = useState(true)
   const [banner, setBanner] = useState<string | null>(null)
   const [pendingDuel, setPendingDuel] = useState(false)
+  const [playDate, setPlayDate] = useState<string | null>(null)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -53,7 +58,7 @@ export default function App() {
         .then((res) => {
           setToken(res.token)
           setUser(res.user)
-          setProgress(res.progress)
+          setProgress({ ...emptyProgress(), ...res.progress })
           setBanner(res.message || 'E-mail confirmado!')
         })
         .catch((err) => {
@@ -76,8 +81,9 @@ export default function App() {
     fetchMe()
       .then((res) => {
         setUser(res.user)
-        setProgress(res.progress)
+        setProgress({ ...emptyProgress(), ...res.progress })
         setDailyPlayedToday(res.dailyPlayedToday)
+        setCastPlayedToday(Boolean(res.castPlayedToday))
         if (duel) setScreen('duel')
       })
       .catch(() => {
@@ -91,9 +97,29 @@ export default function App() {
       .finally(() => setBootstrapping(false))
   }, [])
 
-  function openMode(next: GameMode) {
-    if (!user) {
-      setShowAuth(true)
+  function goHome() {
+    setScreen('hub')
+    setDuelCode(null)
+    setPlayDate(null)
+  }
+
+  function openMode(
+    next: GameMode | 'cast-endless' | 'character',
+    date?: string,
+  ) {
+    // Guest pode jogar; só duelo exige conta
+    setPlayDate(date || null)
+    if (next === 'cast') {
+      setScreen('cast')
+      return
+    }
+    if (next === 'cast-endless') {
+      setPlayDate(null)
+      setScreen('cast-endless')
+      return
+    }
+    if (next === 'character') {
+      setScreen('character')
       return
     }
     setMode(next)
@@ -114,6 +140,7 @@ export default function App() {
     setUser(null)
     setProgress(emptyProgress())
     setDailyPlayedToday(false)
+    setCastPlayedToday(false)
     setScreen('hub')
     setDuelCode(null)
   }
@@ -141,37 +168,67 @@ export default function App() {
         </div>
       ) : null}
 
-      {screen === 'hub' ? (
-        <HubScreen
-          user={user}
-          progress={progress}
-          onPlayDaily={() => openMode('daily')}
-          onPlayClassic={() => openMode('classic')}
-          onPlayDuel={openDuel}
-          onOpenAuth={() => setShowAuth(true)}
-          onLogout={logout}
-        />
-      ) : screen === 'duel' && user ? (
-        <DuelScreen
-          user={user}
-          initialCode={duelCode}
-          onBack={() => {
-            setScreen('hub')
-            setDuelCode(null)
-          }}
-        />
-      ) : (
-        <DailyScreen
-          mode={mode}
-          user={user}
-          progress={progress}
-          onProgress={setProgress}
-          onDailyPlayed={() => setDailyPlayedToday(true)}
-          dailyPlayedToday={dailyPlayedToday}
-          onBack={() => setScreen('hub')}
-          onNeedAuth={() => setShowAuth(true)}
-        />
-      )}
+      <AppShell
+        onHome={goHome}
+        onAuth={() => setShowAuth(true)}
+        onLogout={logout}
+        loggedIn={Boolean(user)}
+        username={user?.username}
+        showFooter={screen === 'hub'}
+      >
+        {screen === 'hub' ? (
+          <HubScreen
+            user={user}
+            progress={progress}
+            onPlayDaily={(date) => openMode('daily', date)}
+            onPlayCast={(date) => openMode('cast', date)}
+            onPlayClassic={() => openMode('classic')}
+            onPlayCastEndless={() => openMode('cast-endless')}
+            onPlayCharacter={(date) => openMode('character', date)}
+            onPlayDuel={openDuel}
+            onOpenAuth={() => setShowAuth(true)}
+          />
+        ) : screen === 'duel' && user ? (
+          <DuelScreen
+            user={user}
+            initialCode={duelCode}
+            onBack={goHome}
+          />
+        ) : screen === 'character' ? (
+          <CharacterScreen
+            variant="daily"
+            user={user}
+            progress={progress}
+            onProgress={(p) => setProgress({ ...emptyProgress(), ...p })}
+            puzzleDate={playDate}
+            onBack={goHome}
+          />
+        ) : screen === 'cast' || screen === 'cast-endless' ? (
+          <CastScreen
+            variant={screen === 'cast-endless' ? 'endless' : 'daily'}
+            user={user}
+            progress={progress}
+            onProgress={(p) => setProgress({ ...emptyProgress(), ...p })}
+            castPlayedToday={castPlayedToday}
+            onCastPlayed={() => setCastPlayedToday(true)}
+            puzzleDate={screen === 'cast' ? playDate : null}
+            onBack={goHome}
+            onNeedAuth={() => setShowAuth(true)}
+          />
+        ) : (
+          <DailyScreen
+            mode={mode === 'cast' ? 'daily' : mode}
+            user={user}
+            progress={progress}
+            onProgress={(p) => setProgress({ ...emptyProgress(), ...p })}
+            onDailyPlayed={() => setDailyPlayedToday(true)}
+            dailyPlayedToday={dailyPlayedToday}
+            puzzleDate={mode === 'daily' ? playDate : null}
+            onBack={goHome}
+            onNeedAuth={() => setShowAuth(true)}
+          />
+        )}
+      </AppShell>
 
       {showAuth ? (
         <AuthModal
@@ -183,7 +240,7 @@ export default function App() {
           }}
           onSuccess={(u, p) => {
             setUser(u)
-            setProgress(p)
+            setProgress({ ...emptyProgress(), ...p })
             if (pendingDuel || duelCode) {
               setPendingDuel(false)
               setScreen('duel')

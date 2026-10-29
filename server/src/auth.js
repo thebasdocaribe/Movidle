@@ -92,14 +92,14 @@ export async function createUser({ username, email, password }) {
   const mail = normalizeEmail(email)
   const { rows } = await query(
     `INSERT INTO users (username, display_name, email, password_hash, email_verified)
-     VALUES ($1, $2, $3, $4, false)
+     VALUES ($1, $2, $3, $4, true)
      RETURNING ${USER_COLS}`,
     [name, name, mail, hash],
   )
   const user = rows[0]
   await query(
     `INSERT INTO user_progress (user_id, mode) VALUES
-     ($1, 'daily'), ($1, 'classic')
+     ($1, 'daily'), ($1, 'classic'), ($1, 'cast')
      ON CONFLICT DO NOTHING`,
     [user.id],
   )
@@ -193,18 +193,64 @@ export async function getProgress(userId) {
     [userId],
   )
   const empty = { totalScore: 0, firstTryStreak: 0, wins: 0 }
-  const out = { daily: { ...empty }, classic: { ...empty } }
+  const out = {
+    daily: { ...empty },
+    classic: { ...empty },
+    cast: { ...empty },
+    character: { ...empty },
+  }
   for (const row of rows) {
-    out[row.mode] = {
-      totalScore: row.total_score,
-      firstTryStreak: row.first_try_streak,
-      wins: row.wins,
+    if (out[row.mode]) {
+      out[row.mode] = {
+        totalScore: row.total_score,
+        firstTryStreak: row.first_try_streak,
+        wins: row.wins,
+      }
     }
   }
   return out
 }
 
 export async function getRank(mode, limit = 20) {
+  // Daily: quem já jogou o daily aparece (mesmo com 0 pts / derrota)
+  if (mode === 'daily') {
+    const { rows } = await query(
+      `SELECT u.username AS name,
+              u.username,
+              p.total_score AS score,
+              p.first_try_streak AS streak
+       FROM user_progress p
+       JOIN users u ON u.id = p.user_id
+       WHERE p.mode = 'daily'
+         AND EXISTS (
+           SELECT 1 FROM user_daily_plays d WHERE d.user_id = p.user_id
+         )
+       ORDER BY p.total_score DESC, p.updated_at ASC
+       LIMIT $1`,
+      [limit],
+    )
+    return rows
+  }
+
+  if (mode === 'cast') {
+    const { rows } = await query(
+      `SELECT u.username AS name,
+              u.username,
+              p.total_score AS score,
+              p.first_try_streak AS streak
+       FROM user_progress p
+       JOIN users u ON u.id = p.user_id
+       WHERE p.mode = 'cast'
+         AND EXISTS (
+           SELECT 1 FROM user_cast_daily_plays d WHERE d.user_id = p.user_id
+         )
+       ORDER BY p.total_score DESC, p.updated_at ASC
+       LIMIT $1`,
+      [limit],
+    )
+    return rows
+  }
+
   const { rows } = await query(
     `SELECT u.username AS name,
             u.username,
@@ -212,7 +258,7 @@ export async function getRank(mode, limit = 20) {
             p.first_try_streak AS streak
      FROM user_progress p
      JOIN users u ON u.id = p.user_id
-     WHERE p.mode = $1 AND p.total_score > 0
+     WHERE p.mode = $1 AND (p.total_score > 0 OR p.wins > 0)
      ORDER BY p.total_score DESC, p.updated_at ASC
      LIMIT $2`,
     [mode, limit],
@@ -223,6 +269,15 @@ export async function getRank(mode, limit = 20) {
 export async function hasPlayedDaily(userId, dateStr) {
   const { rows } = await query(
     `SELECT 1 FROM user_daily_plays
+     WHERE user_id = $1 AND puzzle_date = $2::date`,
+    [userId, dateStr],
+  )
+  return rows.length > 0
+}
+
+export async function hasPlayedCastDaily(userId, dateStr) {
+  const { rows } = await query(
+    `SELECT 1 FROM user_cast_daily_plays
      WHERE user_id = $1 AND puzzle_date = $2::date`,
     [userId, dateStr],
   )

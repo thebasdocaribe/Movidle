@@ -20,3 +20,14 @@ export function matchesTitle(guess, movie) {
 
   return candidates.some((c) => normalizeGuess(c) === g)
 }
+
+export function matchesCharacter(guess, character) {
+  const g = normalizeGuess(guess)
+  if (!g) return false
+  const candidates = [
+    character.name,
+    character.name_pt,
+    ...(character.aliases || []),
+  ].filter(Boolean)
+  return candidates.some((c) => normalizeGuess(c) === g)
+}

@@ -1,6 +1,6 @@
 import { authHeaders, type AuthUser, type ProgressMap } from './auth'
 
-export type GameMode = 'daily' | 'classic'
+export type GameMode = 'daily' | 'classic' | 'cast' | 'character'
 
 export type DailyPayload = {
   puzzleId: string
@@ -67,11 +67,23 @@ export type RoundFinishResult = {
 }
 
 async function parseJson<T>(res: Response): Promise<T> {
-  const data = await res.json()
+  const text = await res.text()
+  const trimmed = text.trim()
+  if (trimmed.startsWith('<!') || trimmed.startsWith('<html')) {
+    throw new Error(
+      'API offline ou desatualizada — reinicie o server (npm start em server/)',
+    )
+  }
+  let data: { error?: string } & T
+  try {
+    data = JSON.parse(text) as { error?: string } & T
+  } catch {
+    throw new Error(`Resposta inválida da API (HTTP ${res.status})`)
+  }
   if (!res.ok) {
     throw new Error(data?.error || `HTTP ${res.status}`)
   }
-  return data as T
+  return data
 }
 
 export function fetchDaily(date?: string) {
@@ -112,6 +124,133 @@ export function postGuess(body: {
   }).then((r) => parseJson<GuessResult>(r))
 }
 
+export type CastHint = {
+  kind: string
+  label: string
+  name: string
+  imageUrl?: string | null
+  /** true = filme sem antagonista (dica válida) */
+  empty?: boolean
+}
+
+export type CastDailyPayload = {
+  puzzleId: string
+  mode: 'cast'
+  date?: string
+  posterUrl?: string | null
+  posterPortrait?: string | null
+  attribution: string | null
+  maxTakes: number
+  hints: CastHint[]
+  alreadyPlayed?: boolean
+  endless?: boolean
+}
+
+export function fetchCastDaily(date?: string) {
+  const q = date ? `?date=${encodeURIComponent(date)}` : ''
+  return fetch(`/api/cast/daily${q}`, { headers: { ...authHeaders() } }).then(
+    (r) => parseJson<CastDailyPayload>(r),
+  )
+}
+
+export function fetchCastNext(excludeIds: string[] = []) {
+  const q =
+    excludeIds.length > 0
+      ? `?exclude=${encodeURIComponent(excludeIds.join(','))}`
+      : ''
+  return fetch(`/api/cast/next${q}`, { headers: { ...authHeaders() } }).then(
+    (r) => parseJson<CastDailyPayload>(r),
+  )
+}
+
+export function postCastGuess(body: {
+  puzzleId: string
+  attempt: number
+  guess: string
+}) {
+  return fetch('/api/cast/guess', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body),
+  }).then((r) =>
+    parseJson<GuessResult & { hintsUnlocked?: number }>(r),
+  )
+}
+
+export type CharacterPayload = {
+  puzzleId: string
+  mode: 'character'
+  imageUrl: string
+  attribution: string | null
+  maxTakes: number
+  date?: string
+  alreadyPlayed?: boolean
+  endless?: boolean
+}
+
+export function fetchCharacterDaily(date?: string) {
+  const q = date ? `?date=${encodeURIComponent(date)}` : ''
+  return fetch(`/api/character/daily${q}`, {
+    headers: { ...authHeaders() },
+  }).then((r) => parseJson<CharacterPayload>(r))
+}
+
+export function fetchCharacterNext(excludeIds: string[] = []) {
+  const q =
+    excludeIds.length > 0
+      ? `?exclude=${encodeURIComponent(excludeIds.join(','))}`
+      : ''
+  return fetch(`/api/character/next${q}`, {
+    headers: { ...authHeaders() },
+  }).then((r) => parseJson<CharacterPayload>(r))
+}
+
+export function fetchCharacterAutocomplete(q: string) {
+  if (!q.trim()) {
+    return Promise.resolve({ suggestions: [] as AutocompleteItem[] })
+  }
+  return fetch(
+    `/api/character/autocomplete?q=${encodeURIComponent(q)}`,
+  ).then((r) => parseJson<{ suggestions: AutocompleteItem[] }>(r))
+}
+
+export function postCharacterGuess(body: {
+  puzzleId: string
+  attempt: number
+  guess: string
+  endless?: boolean
+}) {
+  return fetch('/api/character/guess', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body),
+  }).then((r) =>
+    parseJson<{
+      correct: boolean
+      points: number
+      progress?: ProgressMap
+      name?: string
+      namePt?: string
+      filmTitle?: string
+      imageUrl?: string
+    }>(r),
+  )
+}
+
+export function postBugReport(body: {
+  title: string
+  description: string
+  email?: string
+}) {
+  return fetch('/api/feedback/bug', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body),
+  }).then((r) =>
+    parseJson<{ ok: boolean; message: string; mailto?: string }>(r),
+  )
+}
+
 export function postGiveUp(puzzleId: string) {
   return fetch('/api/give-up', {
     method: 'POST',
@@ -120,10 +259,10 @@ export function postGiveUp(puzzleId: string) {
   }).then((r) => parseJson<GiveUpResult>(r))
 }
 
-export type RegisterResult = {
-  ok: boolean
-  needsVerification: boolean
-  message: string
+export type RegisterResult = AuthResponse & {
+  ok?: boolean
+  needsVerification?: boolean
+  message?: string
   emailSent?: boolean
 }
 
@@ -194,6 +333,7 @@ export function fetchMe() {
       user: AuthUser
       progress: ProgressMap
       dailyPlayedToday: boolean
+      castPlayedToday?: boolean
     }>(r),
   )
 }

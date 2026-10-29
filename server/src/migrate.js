@@ -11,6 +11,8 @@ const MIGRATION_FILES = [
   'auth.sql',
   'duel.sql',
   'daily_stats.sql',
+  'cast_mode.sql',
+  'character_mode.sql',
 ]
 
 /** Clips em web/public/clips (vão pro dist no build). */

@@ -32,6 +32,8 @@ type DailyScreenProps = {
   onProgress: (p: ProgressMap) => void
   dailyPlayedToday: boolean
   onDailyPlayed: () => void
+  /** YYYY-MM-DD do calendário; null = hoje */
+  puzzleDate?: string | null
   onBack: () => void
   onNeedAuth: () => void
 }
@@ -59,6 +61,7 @@ export function DailyScreen({
   onProgress,
   dailyPlayedToday,
   onDailyPlayed,
+  puzzleDate = null,
   onBack,
   onNeedAuth,
 }: DailyScreenProps) {
@@ -103,17 +106,31 @@ export function DailyScreen({
   /** Chute liberado o tempo todo no round (ready/countdown/playing/guess). */
   const canTypeGuess = inRound && !busy
   const title =
-    mode === 'classic' ? 'MODO INFINITO' : 'DESAFIO DIÁRIO'
+    mode === 'classic' ? 'MARATONA' : 'CLÁSSICO'
 
-  const dateLabel = useMemo(
+  const todayKey = useMemo(
     () =>
-      new Intl.DateTimeFormat('pt-BR', {
-        day: '2-digit',
-        month: 'short',
+      new Intl.DateTimeFormat('en-CA', {
         timeZone: 'America/Sao_Paulo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
       }).format(new Date()),
     [],
   )
+  const activeDate = mode === 'daily' ? puzzleDate || todayKey : null
+  const isArchive = Boolean(activeDate && activeDate < todayKey)
+
+  const dateLabel = useMemo(() => {
+    const base = activeDate
+      ? new Date(`${activeDate}T12:00:00`)
+      : new Date()
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      timeZone: 'America/Sao_Paulo',
+    }).format(base)
+  }, [activeDate])
 
   function popPoints(points: number) {
     if (floatTimer.current) window.clearTimeout(floatTimer.current)
@@ -128,7 +145,7 @@ export function DailyScreen({
       const data =
         mode === 'classic'
           ? await fetchClassicNext(exclude)
-          : await fetchDaily()
+          : await fetchDaily(activeDate || undefined)
       setDaily(data)
       if (mode === 'classic' && data.movieId) {
         setPlayedIds((prev) =>
@@ -160,7 +177,13 @@ export function DailyScreen({
     setFirstTryStreak(prog.firstTryStreak)
     void loadPuzzle([])
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, user?.id])
+  }, [mode, user?.id, activeDate])
+
+  const dailyLocked = Boolean(
+    user &&
+      mode === 'daily' &&
+      (daily?.alreadyPlayed || (!isArchive && dailyPlayedToday)),
+  )
 
   // Pré-carrega o MP4 assim que o puzzle chega (evita tela preta no 1º take)
   useEffect(() => {
@@ -278,18 +301,28 @@ export function DailyScreen({
   }
 
   function startRound() {
-    if (!user) {
-      onNeedAuth()
-      return
-    }
     if (!daily) return
-    if (mode === 'daily' && (daily.alreadyPlayed || dailyPlayedToday)) {
-      setScoreHint('Você já jogou o daily de hoje')
+    // Guest joga livre; daily 1x/dia só trava conta logada
+    if (dailyLocked) {
+      setScoreHint(
+        isArchive
+          ? 'Você já jogou este dia do calendário'
+          : 'Você já jogou o daily de hoje',
+      )
       return
     }
     setScoreHint(null)
     setEndState(null)
     goReady(0)
+  }
+
+  function jumpToTake(takeIndex: number) {
+    if (phase === 'idle' || phase === 'ended' || busy) return
+    // Só pra frente — voltar seria exploit de pontuação
+    if (takeIndex <= attempt || takeIndex > LAST_TAKE) return
+    if (phase === 'countdown' || phase === 'playing') return
+    videoRef.current?.pause()
+    goReady(takeIndex)
   }
 
   async function persistRound(outcome: 'win' | 'lose', take: number) {
@@ -305,7 +338,7 @@ export function DailyScreen({
     setSessionScore(prog.totalScore)
     setSessionHits(prog.wins)
     setFirstTryStreak(prog.firstTryStreak)
-    if (mode === 'daily') onDailyPlayed()
+    if (mode === 'daily' && !isArchive) onDailyPlayed()
     return finished
   }
 
@@ -327,22 +360,29 @@ export function DailyScreen({
 
   async function finishGiveUp() {
     if (!daily) return
-    if (!user) {
-      onNeedAuth()
-      return
-    }
     setBusy(true)
     try {
-      const result = await persistRound('lose', attempt + 1)
-      setEndState({
-        kind: 'lose',
-        points: 0,
-        take: attempt + 1,
-        filmTitle: result.titlePt || result.title,
-        year: result.year,
-        posterUrl: result.posterUrl || daily.posterUrl || null,
-        multiplier: 1,
-      })
+      if (user) {
+        const result = await persistRound('lose', attempt + 1)
+        setEndState({
+          kind: 'lose',
+          points: 0,
+          take: attempt + 1,
+          filmTitle: result.titlePt || result.title,
+          year: result.year,
+          posterUrl: result.posterUrl || daily.posterUrl || null,
+          multiplier: 1,
+        })
+      } else {
+        setEndState({
+          kind: 'lose',
+          points: 0,
+          take: attempt + 1,
+          filmTitle: '—',
+          posterUrl: daily.posterUrl || null,
+          multiplier: 1,
+        })
+      }
       setScoreHint(null)
       setPhase('ended')
     } catch (err) {
@@ -391,26 +431,37 @@ export function DailyScreen({
       }
 
       if (result.correct) {
-        if (!user) {
-          onNeedAuth()
-          return
+        if (user) {
+          const finished = await persistRound('win', attempt + 1)
+          popPoints(finished.points)
+          setEndState({
+            kind: 'win',
+            points: finished.points,
+            take: attempt + 1,
+            filmTitle: finished.titlePt || finished.title || filmTitle,
+            year: finished.year ?? result.year,
+            posterUrl:
+              finished.posterUrl ||
+              result.posterUrl ||
+              daily.posterUrl ||
+              null,
+            multiplier: finished.multiplier,
+          })
+          setScoreHint(null)
+        } else {
+          popPoints(result.points)
+          setSessionScore((s) => s + result.points)
+          setEndState({
+            kind: 'win',
+            points: result.points,
+            take: attempt + 1,
+            filmTitle,
+            year: result.year,
+            posterUrl: result.posterUrl || daily.posterUrl || null,
+            multiplier: 1,
+          })
+          setScoreHint('Guest · entre pra salvar pontos no rank')
         }
-        const finished = await persistRound('win', attempt + 1)
-        popPoints(finished.points)
-        setEndState({
-          kind: 'win',
-          points: finished.points,
-          take: attempt + 1,
-          filmTitle: finished.titlePt || finished.title || filmTitle,
-          year: finished.year ?? result.year,
-          posterUrl:
-            finished.posterUrl ||
-            result.posterUrl ||
-            daily.posterUrl ||
-            null,
-          multiplier: finished.multiplier,
-        })
-        setScoreHint(null)
         setPhase('ended')
         return
       }
@@ -418,24 +469,32 @@ export function DailyScreen({
       setScoreHint(`Errou: “${typed}” · take ${attempt + 1}/6`)
 
       if (attempt >= LAST_TAKE) {
-        if (!user) {
-          onNeedAuth()
-          return
+        if (user) {
+          const finished = await persistRound('lose', 6)
+          setEndState({
+            kind: 'lose',
+            points: 0,
+            take: 6,
+            filmTitle: finished.titlePt || finished.title || filmTitle,
+            year: finished.year ?? result.year,
+            posterUrl:
+              finished.posterUrl ||
+              result.posterUrl ||
+              daily.posterUrl ||
+              null,
+            multiplier: 1,
+          })
+        } else {
+          setEndState({
+            kind: 'lose',
+            points: 0,
+            take: 6,
+            filmTitle: result.titlePt || result.title || filmTitle,
+            year: result.year,
+            posterUrl: result.posterUrl || daily.posterUrl || null,
+            multiplier: 1,
+          })
         }
-        const finished = await persistRound('lose', 6)
-        setEndState({
-          kind: 'lose',
-          points: 0,
-          take: 6,
-          filmTitle: finished.titlePt || finished.title || filmTitle,
-          year: finished.year ?? result.year,
-          posterUrl:
-            finished.posterUrl ||
-            result.posterUrl ||
-            daily.posterUrl ||
-            null,
-          multiplier: 1,
-        })
         setPhase('ended')
         return
       }
@@ -482,8 +541,8 @@ export function DailyScreen({
   const firstTryWin = endState?.kind === 'win' && endState.take === 1
 
   return (
-    <div className="hub-stage min-h-svh">
-      <div className="relative z-10 mx-auto flex min-h-svh w-full max-w-5xl flex-col gap-4 px-4 py-5 lg:flex-row lg:items-start sm:px-6">
+    <div className="min-h-0 flex-1">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-5 lg:flex-row lg:items-start sm:px-6">
         <div className="mx-auto flex w-full max-w-3xl min-w-0 flex-1 flex-col">
           <div className="mb-4 flex items-center justify-between gap-3">
             <button
@@ -498,7 +557,9 @@ export function DailyScreen({
                 {title}
               </p>
               <p className="text-[11px] font-bold tracking-widest text-cinema-cyan uppercase">
-                {mode === 'daily' ? `${dateLabel} · BRT` : 'SESSÃO CORRIDA'}
+                {mode === 'daily'
+                  ? `${dateLabel} · BRT${isArchive ? ' · 0 PTS' : ''}`
+                  : 'SESSÃO CORRIDA'}
               </p>
             </div>
             <div className="w-[72px]" />
@@ -600,40 +661,34 @@ export function DailyScreen({
                     <p className="max-w-md text-sm text-cinema-red">
                       {loadError}
                     </p>
-                  ) : mode === 'daily' &&
-                    (daily?.alreadyPlayed || dailyPlayedToday) ? (
+                  ) : dailyLocked ? (
                     <p className="max-w-md font-display text-xl leading-tight text-cinema-gold sm:text-2xl">
-                      VOCÊ JÁ JOGOU O DAILY DE HOJE
-                    </p>
-                  ) : !user ? (
-                    <p className="max-w-md font-display text-xl leading-tight text-cinema-gold sm:text-2xl">
-                      ENTRE NA CONTA PRA JOGAR E SALVAR PONTOS
+                      {isArchive
+                        ? 'VOCÊ JÁ JOGOU ESTE DIA'
+                        : 'VOCÊ JÁ JOGOU O DAILY DE HOJE'}
                     </p>
                   ) : (
                     <p className="max-w-md font-display text-xl leading-tight text-cinema-gold sm:text-2xl">
-                      {mode === 'classic'
-                        ? 'ACERTOU? SOMA PONTOS E SEGUE'
-                        : 'UM FILME POR DIA · SEM REPETIR'}
+                      {!user
+                        ? 'GUEST · JOGUE SEM CONTA (SEM RANK)'
+                        : mode === 'classic'
+                          ? 'ACERTOU? SOMA PONTOS E SEGUE'
+                          : isArchive
+                            ? 'ARQUIVO · JOGA SEM PONTOS NO RANK'
+                            : 'UM FILME POR DIA · SEM REPETIR'}
                     </p>
                   )}
                   <button
                     type="button"
                     onClick={startRound}
-                    disabled={
-                      loading ||
-                      !!loadError ||
-                      !daily ||
-                      (mode === 'daily' &&
-                        (daily?.alreadyPlayed || dailyPlayedToday))
-                    }
+                    disabled={loading || !!loadError || !daily || dailyLocked}
                     className="mode-btn mode-btn-primary mode-btn-inline mt-2 px-10 py-3 font-display text-3xl tracking-widest disabled:opacity-40"
                   >
-                    {!user
-                      ? 'ENTRAR PRA JOGAR'
-                      : mode === 'daily' &&
-                          (daily?.alreadyPlayed || dailyPlayedToday)
-                        ? 'VOLTA AMANHÃ'
-                        : 'PLAY'}
+                    {dailyLocked
+                      ? isArchive
+                        ? 'JÁ JOGADO'
+                        : 'VOLTA AMANHÃ'
+                      : 'PLAY'}
                   </button>
                 </div>
               ) : null}
@@ -793,21 +848,43 @@ export function DailyScreen({
           </div>
 
           <div className="mt-4 flex justify-center gap-2">
-            {durations.map((sec, index) => (
-              <div
-                key={`${index}-${sec}`}
-                className={`flex h-10 w-10 flex-col items-center justify-center border-2 text-xs font-bold ${
-                  index === attempt && phase !== 'idle' && phase !== 'ended'
-                    ? 'border-cinema-red bg-cinema-red text-white shadow-[0_0_16px_rgba(255,42,60,0.55)]'
-                    : index < attempt
-                      ? 'border-cinema-line bg-black/40 text-cinema-muted'
-                      : 'border-cinema-line/50 text-cinema-muted/40'
-                }`}
-              >
-                <span>{index + 1}</span>
-                <span className="text-[9px] opacity-70">{sec}s</span>
-              </div>
-            ))}
+            {durations.map((sec, index) => {
+              const active =
+                index === attempt && phase !== 'idle' && phase !== 'ended'
+              const canJump =
+                inRound &&
+                !busy &&
+                phase !== 'countdown' &&
+                phase !== 'playing' &&
+                index > attempt
+              return (
+                <button
+                  key={`${index}-${sec}`}
+                  type="button"
+                  disabled={!canJump}
+                  title={
+                    canJump
+                      ? `Pular pro take ${index + 1}`
+                      : index < attempt
+                        ? 'Já passou — sem voltar'
+                        : `Take ${index + 1}`
+                  }
+                  onClick={() => jumpToTake(index)}
+                  className={`flex h-10 w-10 flex-col items-center justify-center border-2 text-xs font-bold transition disabled:cursor-default ${
+                    active
+                      ? 'border-cinema-red bg-cinema-red text-white shadow-[0_0_16px_rgba(255,42,60,0.55)]'
+                      : index < attempt
+                        ? 'border-cinema-line bg-black/40 text-cinema-muted'
+                        : canJump
+                          ? 'border-cinema-line/50 text-cinema-muted/40 hover:border-cinema-gold hover:text-cinema-gold'
+                          : 'border-cinema-line/50 text-cinema-muted/40'
+                  }`}
+                >
+                  <span>{index + 1}</span>
+                  <span className="text-[9px] opacity-70">{sec}s</span>
+                </button>
+              )
+            })}
           </div>
 
           {inRound ? (

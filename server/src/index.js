@@ -17,6 +17,7 @@ import {
   findUserByUsername,
   getProgress,
   getRank,
+  hasPlayedCastDaily,
   hasPlayedDaily,
   isValidEmail,
   normalizeEmail,
@@ -24,6 +25,7 @@ import {
   verifyPassword,
 } from './auth.js'
 import { query } from './db.js'
+import { enrichHintsWithTmdb, tmdbConfigured } from './tmdb.js'
 import {
   applyDuelGuess,
   createDuel,
@@ -31,9 +33,17 @@ import {
   joinDuel,
   serializeDuel,
 } from './duel.js'
-import { sendPasswordResetEmail, sendVerifyEmail } from './mail.js'
+import {
+  sendBugReportEmail,
+  sendPasswordResetEmail,
+  sendVerifyEmail,
+} from './mail.js'
 import { migrate } from './migrate.js'
-import { matchesTitle, normalizeGuess } from './normalize.js'
+import { matchesCharacter, matchesTitle, normalizeGuess } from './normalize.js'
+import { CAST_POINTS, scoreRound } from './scoring.js'
+
+const CHARACTER_MAX_TAKE = 6
+const CHARACTER_POINTS = CAST_POINTS
 
 async function countDailySolved(dateStr) {
   const { rows } = await query(
@@ -80,7 +90,6 @@ async function recordDailyGuess({
   )
   return rows[0]?.n ?? 0
 }
-import { scoreRound } from './scoring.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 dotenv.config({ path: path.join(__dirname, '../.env') })
@@ -90,6 +99,7 @@ const PORT = Number(process.env.PORT || 3001)
 /** Tentativa N toca os primeiros N segundos do MP4 (N takes de 1s concatenados). */
 const TAKE_DURATIONS = [1, 2, 3, 4, 5, 6]
 const POINTS_BY_TAKE = [100, 50, 25, 15, 10, 5]
+const CAST_MAX_TAKE = 7
 
 app.use(cors())
 app.use(express.json())
@@ -109,22 +119,46 @@ function isDateId(id) {
 }
 
 async function getPuzzleByDate(dateStr) {
-  const { rows } = await query(
-    `SELECT d.puzzle_date::text AS puzzle_key,
-            m.id AS movie_id,
-            m.title,
-            m.title_pt,
-            m.aliases,
-            m.poster_path,
-            m.clip_path,
-            m.attribution,
-            m.year
+  try {
+    const { rows } = await query(
+      `SELECT d.puzzle_date::text AS puzzle_key,
+              m.id AS movie_id,
+              m.title,
+              m.title_pt,
+              m.aliases,
+              m.poster_path,
+              m.clip_path,
+              m.attribution,
+            m.year,
+            m.director,
+            m.cast_json,
+            m.poster_wide_path
      FROM daily_puzzles d
      JOIN movies m ON m.id = d.movie_id
      WHERE d.puzzle_date = $1::date`,
-    [dateStr],
-  )
-  return rows[0] || null
+      [dateStr],
+    )
+    return rows[0] || null
+  } catch (err) {
+    // Schema antigo sem director/cast_json — migrate ainda não rodou
+    console.warn('[daily] fallback sem cast cols:', err.message)
+    const { rows } = await query(
+      `SELECT d.puzzle_date::text AS puzzle_key,
+              m.id AS movie_id,
+              m.title,
+              m.title_pt,
+              m.aliases,
+              m.poster_path,
+              m.clip_path,
+              m.attribution,
+              m.year
+       FROM daily_puzzles d
+       JOIN movies m ON m.id = d.movie_id
+       WHERE d.puzzle_date = $1::date`,
+      [dateStr],
+    )
+    return rows[0] || null
+  }
 }
 
 function dayNumber(dateStr) {
@@ -133,27 +167,29 @@ function dayNumber(dateStr) {
 }
 
 /** Se não existe daily pra data, escolhe filme estável (mesmo pra todo mundo) e grava. */
-async function ensureDailyPuzzle(dateStr) {
-  const existing = await getPuzzleByDate(dateStr)
-  if (existing) return existing
-
-  const { rows: movies } = await query(
+async function moviesWithClips() {
+  const { rows } = await query(
     `SELECT id
      FROM movies
-     WHERE license = 'public_domain'
+     WHERE clip_path IS NOT NULL AND clip_path <> ''
      ORDER BY title ASC`,
   )
+  return rows
+}
 
+/** Clássico diário: só filmes com clipe (não pôster). */
+async function ensureDailyPuzzle(dateStr) {
+  const existing = await getPuzzleByDate(dateStr)
+  if (existing?.clip_path) return existing
+
+  const movies = await moviesWithClips()
   if (movies.length === 0) {
-    const { rows: anyMovies } = await query(
-      `SELECT id FROM movies ORDER BY title ASC`,
-    )
-    if (anyMovies.length === 0) return null
-    movies.push(...anyMovies)
+    // Sem clips no banco — devolve o que tiver (dev/seed incompleto)
+    if (existing) return existing
+    return null
   }
 
-  // Nunca repetir enquanto ainda houver filme não usado no histórico de dailies.
-  // Quando o pool zerar, reinicia o ciclo.
+  // Nunca repetir enquanto ainda houver filme com clip não usado.
   const { rows: used } = await query(
     `SELECT DISTINCT movie_id::text AS id
      FROM daily_puzzles
@@ -167,12 +203,20 @@ async function ensureDailyPuzzle(dateStr) {
   const index = dayNumber(dateStr) % pool.length
   const movieId = pool[index].id
 
-  await query(
-    `INSERT INTO daily_puzzles (puzzle_date, movie_id)
-     VALUES ($1::date, $2::uuid)
-     ON CONFLICT (puzzle_date) DO NOTHING`,
-    [dateStr, movieId],
-  )
+  if (existing && !existing.clip_path) {
+    // Corrige dia antigo sorteado sem clipe (calendário / seed)
+    await query(
+      `UPDATE daily_puzzles SET movie_id = $2::uuid WHERE puzzle_date = $1::date`,
+      [dateStr, movieId],
+    )
+  } else {
+    await query(
+      `INSERT INTO daily_puzzles (puzzle_date, movie_id)
+       VALUES ($1::date, $2::uuid)
+       ON CONFLICT (puzzle_date) DO NOTHING`,
+      [dateStr, movieId],
+    )
+  }
 
   return getPuzzleByDate(dateStr)
 }
@@ -187,12 +231,173 @@ async function getMovieById(movieId) {
             poster_path,
             clip_path,
             attribution,
-            year
+            year,
+            director,
+            cast_json,
+            poster_wide_path
      FROM movies
      WHERE id = $1::uuid`,
     [movieId],
   )
   return rows[0] || null
+}
+
+function slugifyPerson(name) {
+  return String(name || '')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+function personThumb(name, imageUrl) {
+  if (imageUrl) return imageUrl
+  if (!name || name === '—') return null
+  return `/cast/${slugifyPerson(name)}.jpg`
+}
+
+function creditName(entry, emptyLabel) {
+  if (entry == null) return emptyLabel
+  if (typeof entry === 'string') return entry
+  if (entry.none) return emptyLabel
+  return entry.name || emptyLabel
+}
+
+function creditImage(entry) {
+  if (!entry || typeof entry === 'string') return null
+  return entry.image_url || entry.imageUrl || null
+}
+
+/** 7 slots fixos estilo Loldle — ordem = ordem das dicas */
+function buildCastHints(puzzle) {
+  const raw = puzzle.cast_json
+  const meta =
+    raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {}
+
+  // Compat: cast_json antigo era array de {role,name}
+  if (Array.isArray(raw) && raw.length > 0) {
+    const byRole = Object.fromEntries(
+      raw.map((c) => [c.role, c]).filter(([r]) => r),
+    )
+    return [
+      {
+        kind: 'director',
+        label: 'Diretor',
+        name: puzzle.director || '—',
+        imageUrl: null,
+      },
+      {
+        kind: 'screenwriter',
+        label: 'Roteirista',
+        name: '—',
+        imageUrl: null,
+      },
+      {
+        kind: 'protagonist',
+        label: 'Protagonista',
+        name: byRole.protagonista?.name || '—',
+        imageUrl: byRole.protagonista?.image_url || null,
+      },
+      {
+        kind: 'antagonist',
+        label: 'Antagonista',
+        name: byRole.antagonista?.name || 'Sem antagonista',
+        imageUrl: byRole.antagonista?.image_url || null,
+        empty: !byRole.antagonista,
+      },
+      {
+        kind: 'secondary',
+        label: 'Secundário',
+        name: byRole.secundario?.name || '—',
+        imageUrl: byRole.secundario?.image_url || null,
+      },
+      {
+        kind: 'year',
+        label: 'Ano',
+        name: puzzle.year != null ? String(puzzle.year) : '—',
+        imageUrl: null,
+      },
+      {
+        kind: 'region',
+        label: 'Origem',
+        name: '—',
+        imageUrl: null,
+      },
+    ]
+  }
+
+  const ant = meta.antagonist
+  const hasAntagonist = ant != null && ant !== false && !ant?.none
+
+  const dirName = puzzle.director || '—'
+  const swName = creditName(meta.screenwriter, '—')
+  const proName = creditName(meta.protagonist, '—')
+  const secName = creditName(meta.secondary, '—')
+  const antName = hasAntagonist ? creditName(ant, '—') : 'Sem antagonista'
+
+  return [
+    {
+      kind: 'director',
+      label: 'Diretor',
+      name: dirName,
+      imageUrl: personThumb(dirName, meta.director_image_url || null),
+    },
+    {
+      kind: 'screenwriter',
+      label: 'Roteirista',
+      name: swName,
+      imageUrl: personThumb(swName, creditImage(meta.screenwriter)),
+    },
+    {
+      kind: 'protagonist',
+      label: 'Protagonista',
+      name: proName,
+      imageUrl: personThumb(proName, creditImage(meta.protagonist)),
+    },
+    {
+      kind: 'antagonist',
+      label: 'Antagonista',
+      name: antName,
+      imageUrl: hasAntagonist
+        ? personThumb(antName, creditImage(ant))
+        : null,
+      empty: !hasAntagonist,
+    },
+    {
+      kind: 'secondary',
+      label: 'Secundário',
+      name: secName,
+      imageUrl: personThumb(secName, creditImage(meta.secondary)),
+    },
+    {
+      kind: 'year',
+      label: 'Ano',
+      name: puzzle.year != null ? String(puzzle.year) : '—',
+      imageUrl: null,
+    },
+    {
+      kind: 'region',
+      label: 'Origem',
+      name: creditName(meta.region, '—'),
+      imageUrl: null,
+    },
+  ]
+}
+
+async function publicCastPuzzle(puzzle, extra = {}) {
+  const hints = await enrichHintsWithTmdb(buildCastHints(puzzle))
+  return {
+    puzzleId: puzzle.puzzle_key || String(puzzle.movie_id || puzzle.id || ''),
+    mode: 'cast',
+    posterUrl: puzzle.poster_wide_path || puzzle.poster_path || null,
+    posterPortrait: puzzle.poster_path || null,
+    attribution: puzzle.attribution || null,
+    maxTakes: CAST_MAX_TAKE,
+    hints,
+    tmdb: tmdbConfigured(),
+    ...extra,
+  }
 }
 
 async function resolvePuzzle(puzzleId) {
@@ -248,6 +453,475 @@ app.get('/api/daily', async (req, res) => {
         solvedCount,
       }),
     )
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.get('/api/cast/daily', async (req, res) => {
+  try {
+    const date = String(req.query.date || todayBRT())
+    let puzzle = await ensureDailyPuzzle(date)
+    if (!puzzle) {
+      res.status(404).json({ error: 'Sem filmes no catálogo' })
+      return
+    }
+    // Se o daily do dia não tem elenco, pega um PD com cast_json
+    const cj = puzzle.cast_json
+    const hasCastMeta =
+      (cj && typeof cj === 'object' && !Array.isArray(cj) && Object.keys(cj).length > 0) ||
+      (Array.isArray(cj) && cj.length > 0)
+    if (!puzzle.director || !hasCastMeta) {
+      const { rows } = await query(
+        `SELECT id::text AS puzzle_key,
+                id AS movie_id,
+                title, title_pt, aliases, poster_path, poster_wide_path,
+                clip_path, attribution, year, director, cast_json
+         FROM movies
+         WHERE director IS NOT NULL
+           AND cast_json IS NOT NULL
+           AND cast_json != '{}'::jsonb
+           AND cast_json != '[]'::jsonb
+         ORDER BY title ASC`,
+      )
+      if (rows.length === 0) {
+        res.status(404).json({ error: 'Sem filmes com elenco cadastrado' })
+        return
+      }
+      puzzle = rows[dayNumber(date) % rows.length]
+      puzzle.puzzle_key = date
+    }
+
+    let alreadyPlayed = false
+    if (req.user) {
+      alreadyPlayed = await hasPlayedCastDaily(req.user.id, date)
+    }
+
+    res.json(
+      await publicCastPuzzle(puzzle, {
+        date,
+        puzzleId: date,
+        alreadyPlayed,
+      }),
+    )
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+/** Elenco infinito: filmes com cast_json preenchido */
+app.get('/api/cast/next', async (req, res) => {
+  try {
+    const exclude = String(req.query.exclude || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+
+    const params = []
+    let where = `director IS NOT NULL
+      AND cast_json IS NOT NULL
+      AND cast_json != '{}'::jsonb
+      AND cast_json != '[]'::jsonb`
+    if (exclude.length > 0) {
+      params.push(exclude)
+      where += ` AND NOT (id::text = ANY($${params.length}::text[]))`
+    }
+
+    let { rows } = await query(
+      `SELECT id::text AS puzzle_key,
+              id AS movie_id,
+              title, title_pt, aliases, poster_path, poster_wide_path,
+              clip_path, attribution, year, director, cast_json
+       FROM movies
+       WHERE ${where}
+       ORDER BY random()
+       LIMIT 1`,
+      params,
+    )
+
+    if (rows.length === 0 && exclude.length > 0) {
+      ;({ rows } = await query(
+        `SELECT id::text AS puzzle_key,
+                id AS movie_id,
+                title, title_pt, aliases, poster_path, poster_wide_path,
+                clip_path, attribution, year, director, cast_json
+         FROM movies
+         WHERE director IS NOT NULL
+           AND cast_json IS NOT NULL
+           AND cast_json != '{}'::jsonb
+           AND cast_json != '[]'::jsonb
+         ORDER BY random()
+         LIMIT 1`,
+      ))
+    }
+
+    if (rows.length === 0) {
+      res.status(404).json({ error: 'Sem filmes com elenco' })
+      return
+    }
+
+    res.json(await publicCastPuzzle(rows[0], { endless: true }))
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.post('/api/cast/guess', async (req, res) => {
+  try {
+    const puzzleId = String(req.body?.puzzleId || '')
+    const attempt = Number(req.body?.attempt)
+    const guess = String(req.body?.guess || '')
+
+    if (
+      !puzzleId ||
+      !Number.isInteger(attempt) ||
+      attempt < 1 ||
+      attempt > CAST_MAX_TAKE
+    ) {
+      res.status(400).json({ error: 'puzzleId e attempt (1-7) obrigatórios' })
+      return
+    }
+
+    const puzzle = await resolvePuzzle(puzzleId)
+    if (!puzzle) {
+      res.status(404).json({ error: 'Puzzle não encontrado' })
+      return
+    }
+
+    const correct = matchesTitle(guess, puzzle)
+    const points = correct ? CAST_POINTS[attempt - 1] : 0
+    const reveal = correct || attempt === CAST_MAX_TAKE
+
+    let alsoGuessedCount = null
+    if (isDateId(puzzleId) && guess.trim()) {
+      alsoGuessedCount = await recordDailyGuess({
+        dateStr: puzzleId,
+        userId: req.user?.id || null,
+        guessRaw: guess.trim(),
+        guessNorm: normalizeGuess(guess),
+        correct,
+      })
+    }
+
+    res.json({
+      correct,
+      points: correct ? points : 0,
+      hintsUnlocked: attempt,
+      ...(alsoGuessedCount != null ? { alsoGuessedCount } : {}),
+      ...(reveal
+        ? {
+            title: puzzle.title,
+            titlePt: puzzle.title_pt,
+            year: puzzle.year,
+            posterUrl: puzzle.poster_path,
+          }
+        : {}),
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+async function getCharacterById(id) {
+  const { rows } = await query(
+    `SELECT id::text AS puzzle_key, id, name, name_pt, aliases,
+            film_title, image_path, attribution
+     FROM characters WHERE id = $1::uuid`,
+    [id],
+  )
+  return rows[0] || null
+}
+
+async function ensureCharacterDaily(dateStr) {
+  const { rows: existing } = await query(
+    `SELECT c.id::text AS puzzle_key, c.id, c.name, c.name_pt, c.aliases,
+            c.film_title, c.image_path, c.attribution
+     FROM character_daily d
+     JOIN characters c ON c.id = d.character_id
+     WHERE d.puzzle_date = $1::date`,
+    [dateStr],
+  )
+  if (existing[0]) return existing[0]
+
+  const { rows: pool } = await query(
+    `SELECT id FROM characters ORDER BY name ASC`,
+  )
+  if (pool.length === 0) return null
+  const movieId = pool[dayNumber(dateStr) % pool.length].id
+  await query(
+    `INSERT INTO character_daily (puzzle_date, character_id)
+     VALUES ($1::date, $2::uuid)
+     ON CONFLICT (puzzle_date) DO NOTHING`,
+    [dateStr, movieId],
+  )
+  const { rows } = await query(
+    `SELECT c.id::text AS puzzle_key, c.id, c.name, c.name_pt, c.aliases,
+            c.film_title, c.image_path, c.attribution
+     FROM character_daily d
+     JOIN characters c ON c.id = d.character_id
+     WHERE d.puzzle_date = $1::date`,
+    [dateStr],
+  )
+  return rows[0] || null
+}
+
+function publicCharacterPuzzle(ch, extra = {}) {
+  return {
+    puzzleId: ch.puzzle_key || String(ch.id),
+    mode: 'character',
+    imageUrl: ch.image_path,
+    filmHint: null,
+    attribution: ch.attribution || null,
+    maxTakes: CHARACTER_MAX_TAKE,
+    ...extra,
+  }
+}
+
+app.get('/api/character/daily', async (req, res) => {
+  try {
+    const date = String(req.query.date || todayBRT())
+    const ch = await ensureCharacterDaily(date)
+    if (!ch) {
+      res.status(404).json({ error: 'Sem personagens cadastrados' })
+      return
+    }
+    let alreadyPlayed = false
+    if (req.user) {
+      const { rows } = await query(
+        `SELECT 1 FROM user_character_daily_plays
+         WHERE user_id = $1 AND puzzle_date = $2::date`,
+        [req.user.id, date],
+      )
+      alreadyPlayed = rows.length > 0
+    }
+    res.json(
+      publicCharacterPuzzle(ch, {
+        date,
+        puzzleId: date,
+        alreadyPlayed,
+      }),
+    )
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.get('/api/character/next', async (req, res) => {
+  try {
+    const exclude = String(req.query.exclude || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+    const params = []
+    let where = 'TRUE'
+    if (exclude.length > 0) {
+      params.push(exclude)
+      where = `NOT (id::text = ANY($${params.length}::text[]))`
+    }
+    let { rows } = await query(
+      `SELECT id::text AS puzzle_key, id, name, name_pt, aliases,
+              film_title, image_path, attribution
+       FROM characters WHERE ${where}
+       ORDER BY random() LIMIT 1`,
+      params,
+    )
+    if (rows.length === 0) {
+      ;({ rows } = await query(
+        `SELECT id::text AS puzzle_key, id, name, name_pt, aliases,
+                film_title, image_path, attribution
+         FROM characters ORDER BY random() LIMIT 1`,
+      ))
+    }
+    if (rows.length === 0) {
+      res.status(404).json({ error: 'Sem personagens' })
+      return
+    }
+    res.json(publicCharacterPuzzle(rows[0], { endless: true }))
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.get('/api/character/autocomplete', async (req, res) => {
+  try {
+    const q = normalizeGuess(req.query.q)
+    if (!q) {
+      res.json({ suggestions: [] })
+      return
+    }
+    const { rows } = await query(
+      `SELECT name, name_pt, film_title
+       FROM characters
+       WHERE name ILIKE $1 OR name_pt ILIKE $1
+          OR EXISTS (
+            SELECT 1 FROM unnest(aliases) a WHERE a ILIKE $1
+          )
+       ORDER BY name ASC
+       LIMIT 12`,
+      [`%${q}%`],
+    )
+    res.json({
+      suggestions: rows.map((r) => ({
+        title: r.name,
+        titlePt: r.name_pt,
+        label: r.name_pt
+          ? `${r.name_pt} (${r.name})`
+          : r.film_title
+            ? `${r.name} · ${r.film_title}`
+            : r.name,
+      })),
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.post('/api/character/guess', async (req, res) => {
+  try {
+    const puzzleId = String(req.body?.puzzleId || '')
+    const attempt = Number(req.body?.attempt)
+    const guess = String(req.body?.guess || '')
+    const endless = Boolean(req.body?.endless)
+
+    if (
+      !puzzleId ||
+      !Number.isInteger(attempt) ||
+      attempt < 1 ||
+      attempt > CHARACTER_MAX_TAKE
+    ) {
+      res.status(400).json({ error: 'puzzleId e attempt inválidos' })
+      return
+    }
+
+    let ch = null
+    const dateKey = isDateId(puzzleId) ? puzzleId : null
+    if (dateKey) {
+      ch = await ensureCharacterDaily(dateKey)
+    } else {
+      ch = await getCharacterById(puzzleId)
+    }
+    if (!ch) {
+      res.status(404).json({ error: 'Personagem não encontrado' })
+      return
+    }
+
+    const correct = matchesCharacter(guess, ch)
+    const reveal = correct || attempt >= CHARACTER_MAX_TAKE
+    let points = 0
+    let progress = null
+
+    if (req.user && reveal) {
+      const today = todayBRT()
+      const isArchive = Boolean(dateKey && dateKey < today)
+      if (!endless && dateKey) {
+        const { rows: played } = await query(
+          `SELECT 1 FROM user_character_daily_plays
+           WHERE user_id = $1 AND puzzle_date = $2::date`,
+          [req.user.id, dateKey],
+        )
+        if (played.length > 0) {
+          res.status(409).json({ error: 'Você já jogou este dia' })
+          return
+        }
+      }
+
+      if (!isArchive) {
+        const { rows: progRows } = await query(
+          `SELECT total_score, first_try_streak, wins
+           FROM user_progress WHERE user_id = $1 AND mode = 'character'`,
+          [req.user.id],
+        )
+        let totalScore = progRows[0]?.total_score ?? 0
+        let firstTryStreak = progRows[0]?.first_try_streak ?? 0
+        let wins = progRows[0]?.wins ?? 0
+        const scored = scoreRound({
+          won: correct,
+          take: attempt,
+          firstTryStreak,
+          pointsTable: CHARACTER_POINTS,
+        })
+        points = scored.points
+        totalScore += scored.points
+        firstTryStreak = scored.nextStreak
+        if (correct) wins += 1
+        await query(
+          `INSERT INTO user_progress (user_id, mode, total_score, first_try_streak, wins, updated_at)
+           VALUES ($1, 'character', $2, $3, $4, now())
+           ON CONFLICT (user_id, mode) DO UPDATE SET
+             total_score = EXCLUDED.total_score,
+             first_try_streak = EXCLUDED.first_try_streak,
+             wins = EXCLUDED.wins,
+             updated_at = now()`,
+          [req.user.id, totalScore, firstTryStreak, wins],
+        )
+      }
+
+      if (!endless && dateKey) {
+        await query(
+          `INSERT INTO user_character_daily_plays (user_id, puzzle_date, won, take, points)
+           VALUES ($1, $2::date, $3, $4, $5)
+           ON CONFLICT (user_id, puzzle_date) DO NOTHING`,
+          [req.user.id, dateKey, correct, attempt, points],
+        )
+      }
+      progress = await getProgress(req.user.id)
+    } else if (correct) {
+      points = CHARACTER_POINTS[attempt - 1] ?? 5
+    }
+
+    res.json({
+      correct,
+      points,
+      progress,
+      ...(reveal
+        ? {
+            name: ch.name,
+            namePt: ch.name_pt,
+            filmTitle: ch.film_title,
+            imageUrl: ch.image_path,
+          }
+        : {}),
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.post('/api/feedback/bug', async (req, res) => {
+  try {
+    const title = String(req.body?.title || '').trim()
+    const description = String(req.body?.description || '').trim()
+    const email = String(req.body?.email || '').trim()
+    if (title.length < 3 || description.length < 10) {
+      res.status(400).json({ error: 'Preencha título e descrição' })
+      return
+    }
+
+    try {
+      await sendBugReportEmail({
+        title,
+        description,
+        fromEmail: email,
+        username: req.user?.username,
+      })
+      res.json({ ok: true, message: 'Relatório enviado. Obrigado!' })
+    } catch {
+      const to =
+        process.env.BUG_REPORT_EMAIL ||
+        process.env.EMAIL_TO ||
+        'suporte@cineblitz.local'
+      const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(
+        `[CineBlitz bug] ${title}`,
+      )}&body=${encodeURIComponent(
+        `${description}\n\n— ${email || 'anon'} @${req.user?.username || '?'}`,
+      )}`
+      res.json({
+        ok: true,
+        mailto,
+        message:
+          'E-mail automático indisponível — abrindo seu cliente de e-mail.',
+      })
+    }
   } catch (err) {
     res.status(500).json({ error: String(err.message) })
   }
@@ -349,39 +1023,27 @@ app.post('/api/auth/register', async (req, res) => {
     const byUser = await findUserByUsername(username)
     const byEmail = await findUserByEmail(email)
 
-    if (byUser?.email_verified) {
+    if (byUser) {
       res.status(409).json({ error: 'Nome de usuário já está em uso' })
       return
     }
-    if (byEmail?.email_verified) {
+    if (byEmail) {
       res.status(409).json({ error: 'E-mail já cadastrado' })
       return
     }
 
-    // Conta pendente: não cria de novo — reenvia confirmação
-    if (byEmail && !byEmail.email_verified) {
-      await issueVerifyEmail(byEmail)
-      res.status(200).json(verificationResponse({ created: false }))
-      return
-    }
-
-    if (byUser && !byUser.email_verified) {
-      res.status(409).json({
-        error:
-          'Esse usuário está reservado por uma conta ainda não confirmada',
-      })
-      return
-    }
-
     const user = await createUser({ username, email, password })
-    try {
-      await issueVerifyEmail(user)
-    } catch (mailErr) {
-      await query('DELETE FROM users WHERE id = $1', [user.id])
-      throw mailErr
-    }
-
-    res.status(201).json(verificationResponse({ created: true }))
+    // Contas antigas sem verify: marca como ok ao criar nova
+    await query(`UPDATE users SET email_verified = true WHERE id = $1`, [
+      user.id,
+    ])
+    const token = signToken(user)
+    const progress = await getProgress(user.id)
+    res.status(201).json({
+      token,
+      user: publicUser({ ...user, email_verified: true }),
+      progress,
+    })
   } catch (err) {
     res.status(500).json({ error: String(err.message) })
   }
@@ -396,12 +1058,12 @@ app.post('/api/auth/login', async (req, res) => {
       res.status(401).json({ error: 'Usuário/e-mail ou senha inválidos' })
       return
     }
+    // Sem confirmação de e-mail — libera login direto
     if (!user.email_verified) {
-      res.status(403).json({
-        error: 'Confirme seu e-mail antes de entrar',
-        code: 'EMAIL_NOT_VERIFIED',
-      })
-      return
+      await query(`UPDATE users SET email_verified = true WHERE id = $1`, [
+        user.id,
+      ])
+      user.email_verified = true
     }
     const token = signToken(user)
     const progress = await getProgress(user.id)
@@ -543,11 +1205,14 @@ app.get('/api/me', authRequired, async (req, res) => {
       return
     }
     const progress = await getProgress(user.id)
-    const alreadyPlayed = await hasPlayedDaily(user.id, todayBRT())
+    const date = todayBRT()
+    const alreadyPlayed = await hasPlayedDaily(user.id, date)
+    const castPlayedToday = await hasPlayedCastDaily(user.id, date)
     res.json({
       user: publicUser(user),
       progress,
       dailyPlayedToday: alreadyPlayed,
+      castPlayedToday,
     })
   } catch (err) {
     res.status(500).json({ error: String(err.message) })
@@ -556,7 +1221,12 @@ app.get('/api/me', authRequired, async (req, res) => {
 
 app.get('/api/rank', async (req, res) => {
   try {
-    const mode = req.query.mode === 'classic' ? 'classic' : 'daily'
+    const mode =
+      req.query.mode === 'classic'
+        ? 'classic'
+        : req.query.mode === 'cast'
+          ? 'cast'
+          : 'daily'
     const rows = await getRank(mode, 30)
     res.json({
       mode,
@@ -576,12 +1246,15 @@ app.get('/api/rank', async (req, res) => {
 /** Fecha o round autenticado: aplica mult no server, grava score e daily 1x */
 app.post('/api/round/finish', authRequired, async (req, res) => {
   try {
-    const mode = req.body?.mode === 'classic' ? 'classic' : 'daily'
+    const rawMode = String(req.body?.mode || 'daily')
+    const mode =
+      rawMode === 'classic' ? 'classic' : rawMode === 'cast' ? 'cast' : 'daily'
     const puzzleId = String(req.body?.puzzleId || '')
     const outcome = req.body?.outcome === 'win' ? 'win' : 'lose'
     const take = Number(req.body?.take)
+    const maxTake = mode === 'cast' ? CAST_MAX_TAKE : 6
 
-    if (!puzzleId || !Number.isInteger(take) || take < 1 || take > 6) {
+    if (!puzzleId || !Number.isInteger(take) || take < 1 || take > maxTake) {
       res.status(400).json({ error: 'Dados inválidos' })
       return
     }
@@ -592,51 +1265,86 @@ app.post('/api/round/finish', authRequired, async (req, res) => {
       return
     }
 
-    if (mode === 'daily') {
-      const date = isDateId(puzzleId) ? puzzleId : todayBRT()
-      if (await hasPlayedDaily(req.user.id, date)) {
-        res.status(409).json({ error: 'Você já jogou o daily de hoje' })
+    const today = todayBRT()
+    const playDate =
+      mode === 'daily' || mode === 'cast'
+        ? isDateId(puzzleId)
+          ? puzzleId
+          : today
+        : null
+    /** Arquivo (calendário): jogável, mas 0 pts e sem streak/rank */
+    const isArchive = Boolean(playDate && playDate < today)
+
+    if (mode === 'daily' && playDate) {
+      if (await hasPlayedDaily(req.user.id, playDate)) {
+        res.status(409).json({
+          error: isArchive
+            ? 'Você já jogou este dia'
+            : 'Você já jogou o daily de hoje',
+        })
+        return
+      }
+    }
+    if (mode === 'cast' && playDate) {
+      if (await hasPlayedCastDaily(req.user.id, playDate)) {
+        res.status(409).json({
+          error: isArchive
+            ? 'Você já jogou o elenco deste dia'
+            : 'Você já jogou o elenco de hoje',
+        })
         return
       }
     }
 
-    const { rows: progRows } = await query(
-      `SELECT total_score, first_try_streak, wins
-       FROM user_progress WHERE user_id = $1 AND mode = $2`,
-      [req.user.id, mode],
-    )
-    let totalScore = progRows[0]?.total_score ?? 0
-    let firstTryStreak = progRows[0]?.first_try_streak ?? 0
-    let wins = progRows[0]?.wins ?? 0
+    let scored = { points: 0, multiplier: 1, nextStreak: 0 }
 
-    const scored = scoreRound({
-      won: outcome === 'win',
-      take,
-      firstTryStreak,
-    })
+    if (!isArchive) {
+      const { rows: progRows } = await query(
+        `SELECT total_score, first_try_streak, wins
+         FROM user_progress WHERE user_id = $1 AND mode = $2`,
+        [req.user.id, mode],
+      )
+      let totalScore = progRows[0]?.total_score ?? 0
+      let firstTryStreak = progRows[0]?.first_try_streak ?? 0
+      let wins = progRows[0]?.wins ?? 0
 
-    totalScore += scored.points
-    firstTryStreak = scored.nextStreak
-    if (outcome === 'win') wins += 1
+      scored = scoreRound({
+        won: outcome === 'win',
+        take,
+        firstTryStreak,
+        pointsTable: mode === 'cast' ? CAST_POINTS : undefined,
+      })
 
-    await query(
-      `INSERT INTO user_progress (user_id, mode, total_score, first_try_streak, wins, updated_at)
-       VALUES ($1, $2, $3, $4, $5, now())
-       ON CONFLICT (user_id, mode) DO UPDATE SET
-         total_score = EXCLUDED.total_score,
-         first_try_streak = EXCLUDED.first_try_streak,
-         wins = EXCLUDED.wins,
-         updated_at = now()`,
-      [req.user.id, mode, totalScore, firstTryStreak, wins],
-    )
+      totalScore += scored.points
+      firstTryStreak = scored.nextStreak
+      if (outcome === 'win') wins += 1
 
-    if (mode === 'daily') {
-      const date = isDateId(puzzleId) ? puzzleId : todayBRT()
+      await query(
+        `INSERT INTO user_progress (user_id, mode, total_score, first_try_streak, wins, updated_at)
+         VALUES ($1, $2, $3, $4, $5, now())
+         ON CONFLICT (user_id, mode) DO UPDATE SET
+           total_score = EXCLUDED.total_score,
+           first_try_streak = EXCLUDED.first_try_streak,
+           wins = EXCLUDED.wins,
+           updated_at = now()`,
+        [req.user.id, mode, totalScore, firstTryStreak, wins],
+      )
+    }
+
+    if (mode === 'daily' && playDate) {
       await query(
         `INSERT INTO user_daily_plays (user_id, puzzle_date, won, take, points)
          VALUES ($1, $2::date, $3, $4, $5)
          ON CONFLICT (user_id, puzzle_date) DO NOTHING`,
-        [req.user.id, date, outcome === 'win', take, scored.points],
+        [req.user.id, playDate, outcome === 'win', take, scored.points],
+      )
+    }
+    if (mode === 'cast' && playDate) {
+      await query(
+        `INSERT INTO user_cast_daily_plays (user_id, puzzle_date, won, take, points)
+         VALUES ($1, $2::date, $3, $4, $5)
+         ON CONFLICT (user_id, puzzle_date) DO NOTHING`,
+        [req.user.id, playDate, outcome === 'win', take, scored.points],
       )
     }
 
@@ -644,6 +1352,7 @@ app.post('/api/round/finish', authRequired, async (req, res) => {
     res.json({
       points: scored.points,
       multiplier: scored.multiplier,
+      archive: isArchive,
       progress,
       title: puzzle.title,
       titlePt: puzzle.title_pt,
@@ -689,17 +1398,11 @@ app.get('/api/classic/next', async (req, res) => {
       return rows[0] || null
     }
 
-    // 1) clip ainda não jogado nesta sessão
-    // 2) reinicia ciclo só com clips
-    // 3) fallback: qualquer filme (poster)
-    const puzzle =
-      (await pick(true, true)) ||
-      (await pick(true, false)) ||
-      (await pick(false, true)) ||
-      (await pick(false, false))
+    // Só clipes — Maratona não cai em pôster
+    const puzzle = (await pick(true, true)) || (await pick(true, false))
 
     if (!puzzle) {
-      res.status(404).json({ error: 'Sem mais filmes no catálogo' })
+      res.status(404).json({ error: 'Sem filmes com clipe no catálogo' })
       return
     }
 
@@ -938,9 +1641,26 @@ async function boot() {
   } catch (err) {
     console.error('[migrate] falhou:', err)
   }
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`API cineblitz em http://localhost:${PORT}`)
+    console.log('Deixe esta janela ABERTA enquanto joga.')
+  })
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(
+        `Porta ${PORT} já está em uso por OUTRO node antigo.\n` +
+          `No PowerShell: Get-NetTCPConnection -LocalPort ${PORT} | Select OwningProcess\n` +
+          `Depois: Stop-Process -Id <PID> -Force\n` +
+          `E rode npm start de novo.`,
+      )
+    } else {
+      console.error('[listen]', err)
+    }
+    process.exit(1)
   })
 }
 
-boot()
+boot().catch((err) => {
+  console.error('[boot]', err)
+  process.exit(1)
+})

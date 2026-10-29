@@ -68,6 +68,36 @@ export async function sendPasswordResetEmail({
   })
 }
 
+export async function sendBugReportEmail({
+  toEmail,
+  title,
+  description,
+  fromEmail,
+  username,
+}) {
+  const templateId =
+    process.env.EMAILJS_TEMPLATE_BUG ||
+    process.env.EMAILJS_TEMPLATE_VERIFY ||
+    process.env.EMAILJS_TEMPLATE_ID
+  const dest =
+    toEmail ||
+    process.env.BUG_REPORT_EMAIL ||
+    process.env.EMAIL_TO ||
+    ''
+  if (!dest) {
+    throw new Error('BUG_REPORT_EMAIL não configurado')
+  }
+  return sendEmailJs(templateId, {
+    to_email: dest,
+    email: dest,
+    username: username || 'anon',
+    name: username || 'anon',
+    from_email: fromEmail || '',
+    title,
+    message: `Bug CineBlitz\nDe: ${fromEmail || 'anon'} (@${username || '?'})\n\n${title}\n\n${description}`,
+  })
+}
+
 export async function sendVerifyEmail({ toEmail, username, verifyLink }) {
   const templateId =
     process.env.EMAILJS_TEMPLATE_VERIFY ||

@@ -1,4 +1,6 @@
 export const BASE_POINTS = [100, 50, 25, 15, 10, 5]
+/** Modo elenco: 7 dicas */
+export const CAST_POINTS = [100, 50, 25, 15, 10, 5, 5]
 
 export function multiplierForStreak(firstTryStreak) {
   if (firstTryStreak <= 0) return 1
@@ -8,12 +10,13 @@ export function multiplierForStreak(firstTryStreak) {
   return 2
 }
 
-export function scoreRound({ won, take, firstTryStreak }) {
+export function scoreRound({ won, take, firstTryStreak, pointsTable }) {
   if (!won) {
     return { points: 0, multiplier: 1, nextStreak: 0 }
   }
 
-  const base = BASE_POINTS[take - 1] ?? 5
+  const table = pointsTable || BASE_POINTS
+  const base = table[take - 1] ?? table[table.length - 1] ?? 5
   const multiplier = multiplierForStreak(firstTryStreak)
   const points = Math.round(base * multiplier)
 
