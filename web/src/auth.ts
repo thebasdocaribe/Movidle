@@ -2,13 +2,6 @@ import type { GameMode } from './api'
 
 const TOKEN_KEY = 'cineblitz.token'
 
-export type FavoriteFilm = {
-  movieId: string
-  title: string
-  titlePt?: string | null
-  posterUrl?: string | null
-}
-
 export type AuthUser = {
   id: string
   username: string
@@ -17,7 +10,6 @@ export type AuthUser = {
   emailVerified?: boolean
   avatarUrl?: string | null
   bio?: string
-  favorites?: FavoriteFilm[]
 }
 
 export type ModeProgress = {

@@ -3,6 +3,9 @@ import { useMemo, useState } from 'react'
 type DayCalendarModalProps = {
   title: string
   today: string
+  /** Inclusive — dias antes disso ficam bloqueados (ex.: lançamento do Personagem). */
+  minDate?: string
+  hint?: string
   playedDates?: Set<string>
   onPick: (date: string) => void
   onClose: () => void
@@ -35,6 +38,8 @@ export function todayBRT(): string {
 export function DayCalendarModal({
   title,
   today,
+  minDate,
+  hint,
   playedDates,
   onPick,
   onClose,
@@ -52,6 +57,9 @@ export function DayCalendarModal({
     [year, month],
   )
 
+  const minMonthKey = minDate ? minDate.slice(0, 7) : null
+  const curMonthKey = toKey(year, month, 1).slice(0, 7)
+
   const cells = useMemo(() => {
     const firstDow = new Date(year, month, 1).getDay()
     const daysInMonth = new Date(year, month + 1, 0).getDate()
@@ -60,13 +68,17 @@ export function DayCalendarModal({
     for (let i = 0; i < firstDow; i++) list.push(null)
     for (let d = 1; d <= daysInMonth; d++) {
       const key = toKey(year, month, d)
-      list.push({ key, day: d, disabled: key > today })
+      const beforeMin = Boolean(minDate && key < minDate)
+      list.push({ key, day: d, disabled: key > today || beforeMin })
     }
     return list
-  }, [year, month, today])
+  }, [year, month, today, minDate])
 
   function shift(delta: number) {
     const dt = new Date(year, month + delta, 1)
+    const nextKey = toKey(dt.getFullYear(), dt.getMonth(), 1).slice(0, 7)
+    if (minMonthKey && nextKey < minMonthKey) return
+    if (nextKey > today.slice(0, 7)) return
     setYear(dt.getFullYear())
     setMonth(dt.getMonth())
   }
@@ -93,13 +105,15 @@ export function DayCalendarModal({
           </button>
         </div>
         <p className="mb-3 text-[11px] text-cinema-muted">
-          Dias anteriores: pode jogar, sem pontos no rank.
+          {hint ||
+            'Dias anteriores: pode jogar, sem pontos no rank.'}
         </p>
         <div className="mb-2 flex items-center justify-between">
           <button
             type="button"
-            className="border border-cinema-line px-2 py-1 text-sm text-white"
+            className="border border-cinema-line px-2 py-1 text-sm text-white disabled:opacity-25"
             onClick={() => shift(-1)}
+            disabled={Boolean(minMonthKey && curMonthKey <= minMonthKey)}
           >
             ‹
           </button>
@@ -108,9 +122,9 @@ export function DayCalendarModal({
           </span>
           <button
             type="button"
-            className="border border-cinema-line px-2 py-1 text-sm text-white"
+            className="border border-cinema-line px-2 py-1 text-sm text-white disabled:opacity-25"
             onClick={() => shift(1)}
-            disabled={toKey(year, month, 1).slice(0, 7) >= today.slice(0, 7)}
+            disabled={curMonthKey >= today.slice(0, 7)}
           >
             ›
           </button>

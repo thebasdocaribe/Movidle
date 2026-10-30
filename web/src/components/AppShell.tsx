@@ -2,7 +2,6 @@ import { useState, type ReactNode } from 'react'
 import type { AuthUser } from '../auth'
 import { AboutModal } from './AboutModal'
 import { BugReportModal } from './BugReportModal'
-import { ProfileModal } from './ProfileModal'
 import { SideMenu } from './SideMenu'
 import { SiteFooter } from './SiteFooter'
 
@@ -11,7 +10,9 @@ type AppShellProps = {
   onHome: () => void
   onAuth?: () => void
   onLogout?: () => void
-  onUserUpdate?: (user: AuthUser) => void
+  onProfile?: () => void
+  onBrowseProfiles?: () => void
+  onOscars?: () => void
   loggedIn: boolean
   user?: AuthUser | null
   username?: string | null
@@ -29,7 +30,9 @@ export function AppShell({
   onHome,
   onAuth,
   onLogout,
-  onUserUpdate,
+  onProfile,
+  onBrowseProfiles,
+  onOscars,
   loggedIn,
   user,
   username,
@@ -38,7 +41,6 @@ export function AppShell({
   const [menuOpen, setMenuOpen] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
   const [bugOpen, setBugOpen] = useState(false)
-  const [profileOpen, setProfileOpen] = useState(false)
 
   return (
     <div className="hub-stage flex min-h-svh flex-col">
@@ -55,7 +57,7 @@ export function AppShell({
           {loggedIn ? (
             <button
               type="button"
-              onClick={() => setProfileOpen(true)}
+              onClick={() => onProfile?.()}
               className="flex max-w-[9.5rem] items-center gap-1.5 border border-cinema-gold/50 bg-black/30 py-1 pr-2 pl-1 text-left hover:border-cinema-gold sm:max-w-[12rem]"
               title="Meu perfil"
             >
@@ -108,7 +110,9 @@ export function AppShell({
         onAbout={() => setAboutOpen(true)}
         onBug={() => setBugOpen(true)}
         onAuth={onAuth}
-        onProfile={loggedIn ? () => setProfileOpen(true) : undefined}
+        onProfile={loggedIn ? onProfile : undefined}
+        onBrowseProfiles={onBrowseProfiles}
+        onOscars={onOscars}
         loggedIn={loggedIn}
         username={username}
         onLogout={onLogout}
@@ -116,15 +120,6 @@ export function AppShell({
 
       {aboutOpen ? <AboutModal onClose={() => setAboutOpen(false)} /> : null}
       {bugOpen ? <BugReportModal onClose={() => setBugOpen(false)} /> : null}
-      {profileOpen && user ? (
-        <ProfileModal
-          user={user}
-          onClose={() => setProfileOpen(false)}
-          onSaved={(u) => {
-            onUserUpdate?.(u)
-          }}
-        />
-      ) : null}
     </div>
   )
 }

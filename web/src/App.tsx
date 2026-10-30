@@ -14,8 +14,20 @@ import { CharacterScreen } from './screens/CharacterScreen'
 import { DailyScreen } from './screens/DailyScreen'
 import { DuelScreen } from './screens/DuelScreen'
 import { HubScreen } from './screens/HubScreen'
+import { ProfileScreen } from './screens/ProfileScreen'
+import { OscarsScreen } from './screens/OscarsScreen'
+import { ProfilesBrowseScreen } from './screens/ProfilesBrowseScreen'
 
-type Screen = 'hub' | 'play' | 'cast' | 'cast-endless' | 'character' | 'duel'
+type Screen =
+  | 'hub'
+  | 'play'
+  | 'cast'
+  | 'cast-endless'
+  | 'character'
+  | 'duel'
+  | 'profile'
+  | 'profiles'
+  | 'oscars'
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('hub')
@@ -31,6 +43,7 @@ export default function App() {
   const [banner, setBanner] = useState<string | null>(null)
   const [pendingDuel, setPendingDuel] = useState(false)
   const [playDate, setPlayDate] = useState<string | null>(null)
+  const [profileUsername, setProfileUsername] = useState<string | null>(null)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -114,6 +127,21 @@ export default function App() {
     setScreen('hub')
     setDuelCode(null)
     setPlayDate(null)
+    setProfileUsername(null)
+  }
+
+  function openProfile(username?: string | null) {
+    setProfileUsername(username || user?.username || null)
+    setScreen('profile')
+  }
+
+  function openBrowseProfiles() {
+    setProfileUsername(null)
+    setScreen('profiles')
+  }
+
+  function openOscars() {
+    setScreen('oscars')
   }
 
   function openMode(
@@ -156,6 +184,7 @@ export default function App() {
     setCastPlayedToday(false)
     setScreen('hub')
     setDuelCode(null)
+    setProfileUsername(null)
   }
 
   if (bootstrapping) {
@@ -185,7 +214,9 @@ export default function App() {
         onHome={goHome}
         onAuth={() => setShowAuth(true)}
         onLogout={logout}
-        onUserUpdate={(u) => setUser(u)}
+        onProfile={() => openProfile(user?.username)}
+        onBrowseProfiles={openBrowseProfiles}
+        onOscars={openOscars}
         loggedIn={Boolean(user)}
         user={user}
         username={user?.username}
@@ -202,7 +233,25 @@ export default function App() {
             onPlayCharacter={(date) => openMode('character', date)}
             onPlayDuel={openDuel}
             onOpenAuth={() => setShowAuth(true)}
+            onOpenProfile={(uname) => openProfile(uname)}
           />
+        ) : screen === 'profile' ? (
+          <ProfileScreen
+            username={profileUsername}
+            viewer={user}
+            onBack={goHome}
+            onSaved={(u) => {
+              setUser(u)
+              setProfileUsername(u.username)
+            }}
+          />
+        ) : screen === 'profiles' ? (
+          <ProfilesBrowseScreen
+            onBack={goHome}
+            onOpenProfile={(uname) => openProfile(uname)}
+          />
+        ) : screen === 'oscars' ? (
+          <OscarsScreen onBack={goHome} />
         ) : screen === 'duel' && user ? (
           <DuelScreen
             user={user}

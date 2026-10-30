@@ -1,7 +1,6 @@
 import {
   authHeaders,
   type AuthUser,
-  type FavoriteFilm,
   type ProgressMap,
 } from './auth'
 
@@ -65,14 +64,39 @@ export type AutocompleteItem = {
   posterUrl?: string | null
 }
 
-export type { FavoriteFilm }
-
 export type RankEntry = {
   rank: number
+  userId?: string
   name: string
   username: string
+  avatarUrl?: string | null
   score: number
   streak: number
+}
+
+export type Achievement = {
+  id: string
+  title: string
+  desc: string
+  locked: boolean
+}
+
+export type PublicProfile = {
+  id: string
+  username: string
+  displayName: string
+  avatarUrl?: string | null
+  bio?: string
+  progress?: ProgressMap | null
+  achievements: Achievement[]
+}
+
+export type PublicUserCard = {
+  id: string
+  username: string
+  displayName: string
+  avatarUrl?: string | null
+  bio?: string
 }
 
 export type AuthResponse = {
@@ -371,13 +395,25 @@ export function updateProfile(body: {
   displayName?: string
   bio?: string
   avatarUrl?: string | null
-  favorites?: FavoriteFilm[]
 }) {
   return fetch('/api/me/profile', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(body),
   }).then((r) => parseJson<{ user: AuthUser }>(r))
+}
+
+export function fetchPublicProfile(username: string) {
+  return fetch(`/api/users/${encodeURIComponent(username)}`, {
+    headers: { ...authHeaders() },
+  }).then((r) => parseJson<{ profile: PublicProfile }>(r))
+}
+
+export function searchPublicUsers(q = '') {
+  const qs = q.trim() ? `?q=${encodeURIComponent(q.trim())}` : ''
+  return fetch(`/api/users${qs}`, {
+    headers: { ...authHeaders() },
+  }).then((r) => parseJson<{ users: PublicUserCard[] }>(r))
 }
 
 export function fetchRank(mode: GameMode) {

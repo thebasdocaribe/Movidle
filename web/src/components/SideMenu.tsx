@@ -6,6 +6,8 @@ type SideMenuProps = {
   onBug: () => void
   onAuth?: () => void
   onProfile?: () => void
+  onBrowseProfiles?: () => void
+  onOscars?: () => void
   loggedIn: boolean
   username?: string | null
   onLogout?: () => void
@@ -19,6 +21,8 @@ export function SideMenu({
   onBug,
   onAuth,
   onProfile,
+  onBrowseProfiles,
+  onOscars,
   loggedIn,
   username,
   onLogout,
@@ -51,7 +55,7 @@ export function SideMenu({
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-3">
           {loggedIn ? (
             <MenuRow
-              label={`@${username || 'perfil'}`}
+              label="Meu perfil"
               onClick={() => {
                 onClose()
                 onProfile?.()
@@ -77,21 +81,25 @@ export function SideMenu({
 
           <div className="my-2 border-t border-cinema-line" />
 
+          <MenuRow
+            label="Ver perfis"
+            onClick={() => {
+              onClose()
+              onBrowseProfiles?.()
+            }}
+          />
           <MenuRow label="Sons" badge="em breve" disabled />
-          <MenuRow label="Óscares" badge="em breve" disabled />
+          <MenuRow
+            label="Óscares"
+            onClick={() => {
+              onClose()
+              onOscars?.()
+            }}
+          />
           <MenuRow label="Código apoiador" badge="em breve" disabled />
 
           <div className="my-2 border-t border-cinema-line" />
 
-          {loggedIn ? (
-            <MenuRow
-              label="Editar perfil"
-              onClick={() => {
-                onClose()
-                onProfile?.()
-              }}
-            />
-          ) : null}
           <MenuRow
             label="Relatório de erro"
             onClick={() => {

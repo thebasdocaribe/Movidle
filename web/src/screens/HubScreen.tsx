@@ -17,6 +17,7 @@ type HubScreenProps = {
   onPlayCharacter: (date?: string) => void
   onPlayDuel: () => void
   onOpenAuth: () => void
+  onOpenProfile: (username: string) => void
 }
 
 type RankTab = 'daily' | 'classic' | 'cast'
@@ -31,6 +32,7 @@ export function HubScreen({
   onPlayCharacter,
   onPlayDuel,
   onOpenAuth,
+  onOpenProfile,
 }: HubScreenProps) {
   const [rankTab, setRankTab] = useState<RankTab>('daily')
   const [entries, setEntries] = useState<RankEntry[]>([])
@@ -39,6 +41,8 @@ export function HubScreen({
     'daily' | 'cast' | 'character' | null
   >(null)
   const today = todayBRT()
+  /** Personagem: contagem começa em 30/10/2026 (dia 1 = Odeo). */
+  const characterEpoch = '2026-10-30'
 
   useEffect(() => {
     setRankLoading(true)
@@ -181,7 +185,7 @@ export function HubScreen({
             </div>
           </div>
 
-          <div className="max-h-52 overflow-y-auto px-2.5 py-2">
+          <div className="max-h-52 overflow-x-hidden overflow-y-auto px-2.5 py-2">
             {rankLoading ? (
               <p className="py-4 text-center text-sm text-cinema-muted">
                 Carregando rank…
@@ -194,29 +198,43 @@ export function HubScreen({
               <ol className="flex flex-col gap-1">
                 {entries.map((row) => {
                   const isYou = user?.username === row.username
+                  const avatar =
+                    row.avatarUrl ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(row.name || row.username)}&background=1a0a12&color=ffc44d&size=48&bold=true`
                   return (
-                    <li
-                      key={row.username}
-                      className={`flex items-center gap-2 border px-2.5 py-1.5 ${
-                        isYou
-                          ? 'border-cinema-gold bg-cinema-gold/10'
-                          : 'border-cinema-line/70 bg-black/30'
-                      }`}
-                    >
-                      <span className="font-display w-7 text-lg text-cinema-red">
-                        #{row.rank}
-                      </span>
-                      <span
-                        className={`flex-1 truncate text-sm font-semibold ${
-                          isYou ? 'text-cinema-gold' : 'text-white'
+                    <li key={row.username}>
+                      <button
+                        type="button"
+                        onClick={() => onOpenProfile(row.username)}
+                        className={`rank-row-click flex w-full items-center gap-2 border px-2.5 py-1.5 text-left ${
+                          isYou
+                            ? 'border-cinema-gold bg-cinema-gold/10'
+                            : 'border-cinema-line/70 bg-black/30'
                         }`}
                       >
-                        {row.name}
-                        {isYou ? ' (você)' : ''}
-                      </span>
-                      <span className="font-display text-lg text-cinema-cyan">
-                        {row.score}
-                      </span>
+                        <span className="font-display w-7 shrink-0 text-lg text-cinema-red">
+                          #{row.rank}
+                        </span>
+                        <img
+                          src={avatar}
+                          alt=""
+                          className="rank-row-avatar h-7 w-7 shrink-0 rounded-full object-cover"
+                        />
+                        <span
+                          className={`min-w-0 flex-1 truncate text-sm font-semibold ${
+                            isYou ? 'text-cinema-gold' : 'text-white'
+                          }`}
+                        >
+                          {row.name}
+                          {isYou ? ' (você)' : ''}
+                        </span>
+                        <span className="font-display shrink-0 text-lg text-cinema-cyan">
+                          {row.score}
+                        </span>
+                        <span className="rank-row-hint" aria-hidden>
+                          ver perfil
+                        </span>
+                      </button>
                     </li>
                   )
                 })}
@@ -236,6 +254,14 @@ export function HubScreen({
                 : 'Personagem'
           }
           today={today}
+          minDate={
+            calendarFor === 'character' ? characterEpoch : undefined
+          }
+          hint={
+            calendarFor === 'character'
+              ? 'Começa em 30/10/2026 · dias anteriores bloqueados · arquivo: 0 pts'
+              : undefined
+          }
           onClose={() => setCalendarFor(null)}
           onPick={(date) => {
             if (calendarFor === 'daily') onPlayDaily(date)

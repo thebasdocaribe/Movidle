@@ -8,8 +8,12 @@ CREATE TABLE IF NOT EXISTS characters (
   film_title  text,
   image_path  text NOT NULL,
   attribution text,
+  sort_order  int NOT NULL DEFAULT 0,
   created_at  timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE characters
+  ADD COLUMN IF NOT EXISTS sort_order int NOT NULL DEFAULT 0;
 
 CREATE UNIQUE INDEX IF NOT EXISTS characters_name_lower_idx
   ON characters (lower(name));

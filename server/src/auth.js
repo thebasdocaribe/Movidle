@@ -216,8 +216,10 @@ export async function getRank(mode, limit = 20) {
   // Daily: quem já jogou o daily aparece (mesmo com 0 pts / derrota)
   if (mode === 'daily') {
     const { rows } = await query(
-      `SELECT u.username AS name,
+      `SELECT u.id::text AS user_id,
+              COALESCE(NULLIF(u.display_name, ''), u.username) AS name,
               u.username,
+              u.avatar_url,
               p.total_score AS score,
               p.first_try_streak AS streak
        FROM user_progress p
@@ -235,8 +237,10 @@ export async function getRank(mode, limit = 20) {
 
   if (mode === 'cast') {
     const { rows } = await query(
-      `SELECT u.username AS name,
+      `SELECT u.id::text AS user_id,
+              COALESCE(NULLIF(u.display_name, ''), u.username) AS name,
               u.username,
+              u.avatar_url,
               p.total_score AS score,
               p.first_try_streak AS streak
        FROM user_progress p
@@ -253,8 +257,10 @@ export async function getRank(mode, limit = 20) {
   }
 
   const { rows } = await query(
-    `SELECT u.username AS name,
+    `SELECT u.id::text AS user_id,
+            COALESCE(NULLIF(u.display_name, ''), u.username) AS name,
             u.username,
+            u.avatar_url,
             p.total_score AS score,
             p.first_try_streak AS streak
      FROM user_progress p
@@ -263,6 +269,30 @@ export async function getRank(mode, limit = 20) {
      ORDER BY p.total_score DESC, p.updated_at ASC
      LIMIT $2`,
     [mode, limit],
+  )
+  return rows
+}
+
+/** Busca simples de perfis públicos (sem follow/amigos). */
+export async function searchUsers(q, limit = 24) {
+  const term = String(q || '').trim().toLowerCase()
+  if (term.length >= 1) {
+    const { rows } = await query(
+      `SELECT id::text AS id, username, display_name, avatar_url, bio
+       FROM users
+       WHERE lower(username) LIKE $1 OR lower(display_name) LIKE $1
+       ORDER BY username ASC
+       LIMIT $2`,
+      [`%${term}%`, limit],
+    )
+    return rows
+  }
+  const { rows } = await query(
+    `SELECT id::text AS id, username, display_name, avatar_url, bio
+     FROM users
+     ORDER BY created_at DESC NULLS LAST, username ASC
+     LIMIT $1`,
+    [limit],
   )
   return rows
 }

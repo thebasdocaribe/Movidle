@@ -18,6 +18,7 @@ import {
   findUserByUsername,
   getProgress,
   getRank,
+  searchUsers,
   getCastDailyPlayResult,
   getCharacterDailyPlayResult,
   getDailyPlayResult,
@@ -28,6 +29,7 @@ import {
   signToken,
   verifyPassword,
 } from './auth.js'
+import { CHARACTER_EPOCH } from './characterCatalog.js'
 import { query } from './db.js'
 import { enrichHintsWithTmdb, tmdbConfigured } from './tmdb.js'
 import {
@@ -664,28 +666,35 @@ async function getCharacterById(id) {
   return rows[0] || null
 }
 
+/** Índice 0 = Odeo no CHARACTER_EPOCH; datas anteriores ao lançamento = null. */
+function characterDayIndex(dateStr) {
+  const epoch = Date.parse(`${CHARACTER_EPOCH}T12:00:00Z`)
+  const day = Date.parse(`${dateStr}T12:00:00Z`)
+  if (!Number.isFinite(epoch) || !Number.isFinite(day)) return null
+  const idx = Math.floor((day - epoch) / 86400000)
+  return idx < 0 ? null : idx
+}
+
 async function ensureCharacterDaily(dateStr) {
-  const { rows: existing } = await query(
-    `SELECT c.id::text AS puzzle_key, c.id, c.name, c.name_pt, c.aliases,
-            c.film_title, c.image_path, c.attribution
-     FROM character_daily d
-     JOIN characters c ON c.id = d.character_id
-     WHERE d.puzzle_date = $1::date`,
-    [dateStr],
-  )
-  if (existing[0]) return existing[0]
+  const idx = characterDayIndex(dateStr)
+  if (idx === null) return null
 
   const { rows: pool } = await query(
-    `SELECT id FROM characters ORDER BY name ASC`,
+    `SELECT id FROM characters
+     WHERE image_path LIKE '/characters/%'
+     ORDER BY sort_order ASC NULLS LAST, name ASC`,
   )
   if (pool.length === 0) return null
-  const movieId = pool[dayNumber(dateStr) % pool.length].id
+
+  const characterId = pool[idx % pool.length].id
   await query(
     `INSERT INTO character_daily (puzzle_date, character_id)
      VALUES ($1::date, $2::uuid)
-     ON CONFLICT (puzzle_date) DO NOTHING`,
-    [dateStr, movieId],
+     ON CONFLICT (puzzle_date) DO UPDATE
+       SET character_id = EXCLUDED.character_id`,
+    [dateStr, characterId],
   )
+
   const { rows } = await query(
     `SELECT c.id::text AS puzzle_key, c.id, c.name, c.name_pt, c.aliases,
             c.film_title, c.image_path, c.attribution
@@ -712,6 +721,12 @@ function publicCharacterPuzzle(ch, extra = {}) {
 app.get('/api/character/daily', async (req, res) => {
   try {
     const date = String(req.query.date || todayBRT())
+    if (characterDayIndex(date) === null) {
+      res.status(404).json({
+        error: 'Personagem diário começa em 30/10/2026 — sem dias anteriores',
+      })
+      return
+    }
     const ch = await ensureCharacterDaily(date)
     if (!ch) {
       res.status(404).json({ error: 'Sem personagens cadastrados' })
@@ -759,10 +774,11 @@ app.get('/api/character/next', async (req, res) => {
       params.push(exclude)
       where = `NOT (id::text = ANY($${params.length}::text[]))`
     }
+    const photoOnly = `image_path LIKE '/characters/%'`
     let { rows } = await query(
       `SELECT id::text AS puzzle_key, id, name, name_pt, aliases,
               film_title, image_path, attribution
-       FROM characters WHERE ${where}
+       FROM characters WHERE (${where}) AND ${photoOnly}
        ORDER BY random() LIMIT 1`,
       params,
     )
@@ -770,7 +786,8 @@ app.get('/api/character/next', async (req, res) => {
       ;({ rows } = await query(
         `SELECT id::text AS puzzle_key, id, name, name_pt, aliases,
                 film_title, image_path, attribution
-         FROM characters ORDER BY random() LIMIT 1`,
+         FROM characters WHERE ${photoOnly}
+         ORDER BY random() LIMIT 1`,
       ))
     }
     if (rows.length === 0) {
@@ -987,17 +1004,47 @@ function isStrongPassword(password) {
   )
 }
 
+/** Conquistas — placeholder até o sistema real. */
+const PLACEHOLDER_ACHIEVEMENTS = [
+  {
+    id: 'first_win',
+    title: 'Primeira luz',
+    desc: 'Vença qualquer modo',
+    locked: true,
+  },
+  {
+    id: 'take_one',
+    title: 'Take 1',
+    desc: 'Acerte no primeiro take',
+    locked: true,
+  },
+  {
+    id: 'daily_week',
+    title: 'Semana no set',
+    desc: '7 dailies seguidos',
+    locked: true,
+  },
+  {
+    id: 'cast_hunter',
+    title: 'Caçador de elenco',
+    desc: '10 vitórias no Elenco',
+    locked: true,
+  },
+  {
+    id: 'who_is_that',
+    title: 'Quem é esse?',
+    desc: 'Acerte um personagem',
+    locked: true,
+  },
+  {
+    id: 'marathon',
+    title: 'Maratonista',
+    desc: '50 pts na Maratona',
+    locked: true,
+  },
+]
+
 function publicUser(user) {
-  let favorites = []
-  try {
-    favorites = Array.isArray(user.favorite_movies)
-      ? user.favorite_movies
-      : typeof user.favorite_movies === 'string'
-        ? JSON.parse(user.favorite_movies)
-        : []
-  } catch {
-    favorites = []
-  }
   return {
     id: user.id,
     username: user.username,
@@ -1006,7 +1053,18 @@ function publicUser(user) {
     emailVerified: Boolean(user.email_verified),
     avatarUrl: user.avatar_url || null,
     bio: user.bio || '',
-    favorites: favorites.slice(0, 5),
+  }
+}
+
+function publicProfileCard(user, progress = null) {
+  return {
+    id: user.id,
+    username: user.username,
+    displayName: user.display_name || user.username,
+    avatarUrl: user.avatar_url || null,
+    bio: user.bio || '',
+    progress: progress || null,
+    achievements: PLACEHOLDER_ACHIEVEMENTS,
   }
 }
 
@@ -1286,9 +1344,12 @@ app.patch('/api/me/profile', authRequired, async (req, res) => {
     const displayName = String(
       req.body?.displayName || req.body?.username || '',
     ).trim()
-    const bio = String(req.body?.bio || '').slice(0, 500)
+    const bio =
+      req.body?.bio !== undefined
+        ? String(req.body.bio || '').slice(0, 500)
+        : undefined
     let avatarUrl = req.body?.avatarUrl
-    if (avatarUrl != null) {
+    if (avatarUrl !== undefined && avatarUrl != null) {
       avatarUrl = String(avatarUrl).trim()
       if (avatarUrl.length > 350_000) {
         res.status(400).json({ error: 'Avatar muito grande (máx ~250KB)' })
@@ -1296,20 +1357,6 @@ app.patch('/api/me/profile', authRequired, async (req, res) => {
       }
       if (avatarUrl === '') avatarUrl = null
     }
-    let favorites = req.body?.favorites
-    if (!Array.isArray(favorites)) favorites = undefined
-    if (favorites) {
-      favorites = favorites
-        .slice(0, 5)
-        .map((f) => ({
-          movieId: String(f.movieId || ''),
-          title: String(f.title || '').slice(0, 120),
-          titlePt: f.titlePt ? String(f.titlePt).slice(0, 120) : null,
-          posterUrl: f.posterUrl ? String(f.posterUrl).slice(0, 300) : null,
-        }))
-        .filter((f) => f.movieId || f.title)
-    }
-
     if (username) {
       if (!/^[a-z0-9_]{3,32}$/.test(username)) {
         res.status(400).json({
@@ -1343,10 +1390,6 @@ app.patch('/api/me/profile', authRequired, async (req, res) => {
       params.push(avatarUrl)
       sets.push(`avatar_url = $${params.length}`)
     }
-    if (favorites !== undefined) {
-      params.push(JSON.stringify(favorites))
-      sets.push(`favorite_movies = $${params.length}::jsonb`)
-    }
     if (sets.length === 0) {
       res.status(400).json({ error: 'Nada pra atualizar' })
       return
@@ -1376,12 +1419,49 @@ app.get('/api/rank', async (req, res) => {
       mode,
       entries: rows.map((r, i) => ({
         rank: i + 1,
+        userId: r.user_id,
         name: r.name,
         username: r.username,
+        avatarUrl: r.avatar_url || null,
         score: r.score,
         streak: r.streak,
       })),
     })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+/** Lista / busca perfis públicos */
+app.get('/api/users', async (req, res) => {
+  try {
+    const q = String(req.query.q || '')
+    const rows = await searchUsers(q, 24)
+    res.json({
+      users: rows.map((u) => ({
+        id: u.id,
+        username: u.username,
+        displayName: u.display_name || u.username,
+        avatarUrl: u.avatar_url || null,
+        bio: u.bio || '',
+      })),
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+/** Perfil público (foto, bio, conquistas) */
+app.get('/api/users/:username', async (req, res) => {
+  try {
+    const username = String(req.params.username || '').trim()
+    const user = await findUserByUsername(username)
+    if (!user) {
+      res.status(404).json({ error: 'Perfil não encontrado' })
+      return
+    }
+    const progress = await getProgress(user.id)
+    res.json({ profile: publicProfileCard(user, progress) })
   } catch (err) {
     res.status(500).json({ error: String(err.message) })
   }
