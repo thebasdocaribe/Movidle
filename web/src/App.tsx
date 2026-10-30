@@ -78,23 +78,36 @@ export default function App() {
       setBootstrapping(false)
       return
     }
-    fetchMe()
-      .then((res) => {
+
+    // Mantém sessão: só apaga token se for 401 (não em cold start / rede)
+    async function restoreSession(attempt = 0): Promise<void> {
+      try {
+        const res = await fetchMe()
         setUser(res.user)
         setProgress({ ...emptyProgress(), ...res.progress })
         setDailyPlayedToday(res.dailyPlayedToday)
         setCastPlayedToday(Boolean(res.castPlayedToday))
         if (duel) setScreen('duel')
-      })
-      .catch(() => {
-        setToken(null)
-        setUser(null)
+      } catch (err) {
+        const msg = (err as Error).message || ''
+        const unauthorized =
+          /401|não autenticado|unauthorized|token|sessão/i.test(msg)
+        if (!unauthorized && attempt < 2) {
+          await new Promise((r) => setTimeout(r, 1200 * (attempt + 1)))
+          return restoreSession(attempt + 1)
+        }
+        if (unauthorized) {
+          setToken(null)
+          setUser(null)
+        }
         if (duel) {
           setPendingDuel(true)
           setShowAuth(true)
         }
-      })
-      .finally(() => setBootstrapping(false))
+      }
+    }
+
+    void restoreSession().finally(() => setBootstrapping(false))
   }, [])
 
   function goHome() {
@@ -172,7 +185,9 @@ export default function App() {
         onHome={goHome}
         onAuth={() => setShowAuth(true)}
         onLogout={logout}
+        onUserUpdate={(u) => setUser(u)}
         loggedIn={Boolean(user)}
+        user={user}
         username={user?.username}
         showFooter={screen === 'hub'}
       >

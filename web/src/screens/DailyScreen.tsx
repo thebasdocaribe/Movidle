@@ -150,6 +150,21 @@ export function DailyScreen({
           prev.includes(data.movieId!) ? prev : [...prev, data.movieId!],
         )
       }
+      // Já jogou o diário de hoje → reabre no resultado
+      const pr = data.priorResult
+      if (mode === 'daily' && pr && !isArchive) {
+        setEndState({
+          kind: pr.won ? 'win' : 'lose',
+          points: pr.points ?? 0,
+          take: pr.take || LAST_TAKE + 1,
+          filmTitle: pr.titlePt || pr.title || '?',
+          year: pr.year,
+          posterUrl: pr.posterUrl || data.posterUrl || null,
+          multiplier: 1,
+        })
+        setAttempt(Math.max(0, (pr.take || 1) - 1))
+        setPhase('ended')
+      }
       return data
     } catch (err) {
       setLoadError((err as Error).message || 'Falha ao carregar')
@@ -180,7 +195,8 @@ export function DailyScreen({
   const dailyLocked = Boolean(
     user &&
       mode === 'daily' &&
-      (daily?.alreadyPlayed || (!isArchive && dailyPlayedToday)),
+      !isArchive &&
+      (daily?.alreadyPlayed || dailyPlayedToday),
   )
 
   // Pré-carrega o MP4 assim que o puzzle chega (evita tela preta no 1º take)
@@ -302,11 +318,7 @@ export function DailyScreen({
     if (!daily) return
     // Guest joga livre; daily 1x/dia só trava conta logada
     if (dailyLocked) {
-      setScoreHint(
-        isArchive
-          ? 'Você já jogou este dia do calendário'
-          : 'Você já jogou o daily de hoje',
-      )
+      setScoreHint('Você já jogou o daily de hoje')
       return
     }
     setScoreHint(null)
@@ -661,9 +673,7 @@ export function DailyScreen({
                     </p>
                   ) : dailyLocked ? (
                     <p className="max-w-md font-display text-xl leading-tight text-cinema-gold sm:text-2xl">
-                      {isArchive
-                        ? 'VOCÊ JÁ JOGOU ESTE DIA'
-                        : 'VOCÊ JÁ JOGOU O DAILY DE HOJE'}
+                      VOCÊ JÁ JOGOU O DAILY DE HOJE
                     </p>
                   ) : (
                     <p className="max-w-md font-display text-xl leading-tight text-cinema-gold sm:text-2xl">
@@ -672,7 +682,7 @@ export function DailyScreen({
                         : mode === 'classic'
                           ? 'ACERTOU? SOMA PONTOS E SEGUE'
                           : isArchive
-                            ? 'ARQUIVO · JOGA SEM PONTOS NO RANK'
+                            ? 'ARQUIVO · JOGA À VONTADE · 0 PTS'
                             : 'UM FILME POR DIA · SEM REPETIR'}
                     </p>
                   )}
@@ -682,11 +692,7 @@ export function DailyScreen({
                     disabled={loading || !!loadError || !daily || dailyLocked}
                     className="mode-btn mode-btn-primary mode-btn-inline mt-2 px-10 py-3 font-display text-3xl tracking-widest disabled:opacity-40"
                   >
-                    {dailyLocked
-                      ? isArchive
-                        ? 'JÁ JOGADO'
-                        : 'VOLTA AMANHÃ'
-                      : 'PLAY'}
+                    {dailyLocked ? 'VOLTA AMANHÃ' : 'PLAY'}
                   </button>
                 </div>
               ) : null}
@@ -807,7 +813,9 @@ export function DailyScreen({
                             .toFixed(2)
                             .replace(/\.00$/, '')}
                           {mode === 'daily'
-                            ? ' · daily encerrado'
+                            ? dailyLocked
+                              ? ' · você já jogou hoje'
+                              : ' · daily encerrado'
                             : ' · próximo filme'}
                         </p>
                       </>
@@ -820,6 +828,11 @@ export function DailyScreen({
                           0 pts · era {endState.filmTitle}
                           {endState.year ? ` (${endState.year})` : ''}
                         </p>
+                        {dailyLocked ? (
+                          <p className="mt-1 text-xs text-cinema-muted">
+                            Você já jogou o daily de hoje
+                          </p>
+                        ) : null}
                       </>
                     )}
                     {mode === 'classic' ? (

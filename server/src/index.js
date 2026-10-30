@@ -13,10 +13,14 @@ import {
   createPasswordResetToken,
   createUser,
   findUserByEmail,
+  findUserById,
   findUserByLogin,
   findUserByUsername,
   getProgress,
   getRank,
+  getCastDailyPlayResult,
+  getCharacterDailyPlayResult,
+  getDailyPlayResult,
   hasPlayedCastDaily,
   hasPlayedDaily,
   isValidEmail,
@@ -438,8 +442,21 @@ app.get('/api/daily', async (req, res) => {
     }
 
     let alreadyPlayed = false
+    let priorResult = null
     if (req.user) {
-      alreadyPlayed = await hasPlayedDaily(req.user.id, date)
+      const play = await getDailyPlayResult(req.user.id, date)
+      alreadyPlayed = Boolean(play)
+      if (play) {
+        priorResult = {
+          won: play.won,
+          take: play.take,
+          points: play.points,
+          title: puzzle.title,
+          titlePt: puzzle.title_pt,
+          year: puzzle.year,
+          posterUrl: puzzle.poster_path,
+        }
+      }
     }
 
     const solvedCount = await countDailySolved(date)
@@ -450,6 +467,7 @@ app.get('/api/daily', async (req, res) => {
         date,
         puzzleId: date,
         alreadyPlayed,
+        priorResult,
         solvedCount,
       }),
     )
@@ -493,8 +511,21 @@ app.get('/api/cast/daily', async (req, res) => {
     }
 
     let alreadyPlayed = false
+    let priorResult = null
     if (req.user) {
-      alreadyPlayed = await hasPlayedCastDaily(req.user.id, date)
+      const play = await getCastDailyPlayResult(req.user.id, date)
+      alreadyPlayed = Boolean(play)
+      if (play) {
+        priorResult = {
+          won: play.won,
+          take: play.take,
+          points: play.points,
+          title: puzzle.title,
+          titlePt: puzzle.title_pt,
+          year: puzzle.year,
+          posterUrl: puzzle.poster_wide_path || puzzle.poster_path,
+        }
+      }
     }
 
     res.json(
@@ -502,6 +533,7 @@ app.get('/api/cast/daily', async (req, res) => {
         date,
         puzzleId: date,
         alreadyPlayed,
+        priorResult,
       }),
     )
   } catch (err) {
@@ -686,19 +718,28 @@ app.get('/api/character/daily', async (req, res) => {
       return
     }
     let alreadyPlayed = false
+    let priorResult = null
     if (req.user) {
-      const { rows } = await query(
-        `SELECT 1 FROM user_character_daily_plays
-         WHERE user_id = $1 AND puzzle_date = $2::date`,
-        [req.user.id, date],
-      )
-      alreadyPlayed = rows.length > 0
+      const play = await getCharacterDailyPlayResult(req.user.id, date)
+      alreadyPlayed = Boolean(play)
+      if (play) {
+        priorResult = {
+          won: play.won,
+          take: play.take,
+          points: play.points,
+          name: ch.name,
+          namePt: ch.name_pt,
+          filmTitle: ch.film_title,
+          imageUrl: ch.image_path,
+        }
+      }
     }
     res.json(
       publicCharacterPuzzle(ch, {
         date,
         puzzleId: date,
         alreadyPlayed,
+        priorResult,
       }),
     )
   } catch (err) {
@@ -813,14 +854,15 @@ app.post('/api/character/guess', async (req, res) => {
     if (req.user && reveal) {
       const today = todayBRT()
       const isArchive = Boolean(dateKey && dateKey < today)
-      if (!endless && dateKey) {
+      // Só bloqueia personagem de HOJE; arquivo pode repetir (0 pts)
+      if (!endless && dateKey && !isArchive) {
         const { rows: played } = await query(
           `SELECT 1 FROM user_character_daily_plays
            WHERE user_id = $1 AND puzzle_date = $2::date`,
           [req.user.id, dateKey],
         )
         if (played.length > 0) {
-          res.status(409).json({ error: 'Você já jogou este dia' })
+          res.status(409).json({ error: 'Você já jogou o personagem de hoje' })
           return
         }
       }
@@ -856,12 +898,21 @@ app.post('/api/character/guess', async (req, res) => {
         )
       }
 
-      if (!endless && dateKey) {
+      if (!endless && dateKey && !isArchive) {
         await query(
           `INSERT INTO user_character_daily_plays (user_id, puzzle_date, won, take, points)
            VALUES ($1, $2::date, $3, $4, $5)
            ON CONFLICT (user_id, puzzle_date) DO NOTHING`,
           [req.user.id, dateKey, correct, attempt, points],
+        )
+      }
+      if (!endless && dateKey && isArchive) {
+        await query(
+          `INSERT INTO user_character_daily_plays (user_id, puzzle_date, won, take, points)
+           VALUES ($1, $2::date, $3, $4, 0)
+           ON CONFLICT (user_id, puzzle_date) DO UPDATE SET
+             won = EXCLUDED.won, take = EXCLUDED.take, points = 0`,
+          [req.user.id, dateKey, correct, attempt],
         )
       }
       progress = await getProgress(req.user.id)
@@ -937,12 +988,25 @@ function isStrongPassword(password) {
 }
 
 function publicUser(user) {
+  let favorites = []
+  try {
+    favorites = Array.isArray(user.favorite_movies)
+      ? user.favorite_movies
+      : typeof user.favorite_movies === 'string'
+        ? JSON.parse(user.favorite_movies)
+        : []
+  } catch {
+    favorites = []
+  }
   return {
     id: user.id,
     username: user.username,
     displayName: user.display_name,
     email: user.email,
     emailVerified: Boolean(user.email_verified),
+    avatarUrl: user.avatar_url || null,
+    bio: user.bio || '',
+    favorites: favorites.slice(0, 5),
   }
 }
 
@@ -1194,12 +1258,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
 
 app.get('/api/me', authRequired, async (req, res) => {
   try {
-    const { rows } = await query(
-      `SELECT id, username, display_name, email, email_verified
-       FROM users WHERE id = $1`,
-      [req.user.id],
-    )
-    const user = rows[0]
+    const user = await findUserById(req.user.id)
     if (!user) {
       res.status(404).json({ error: 'Usuário não encontrado' })
       return
@@ -1214,6 +1273,91 @@ app.get('/api/me', authRequired, async (req, res) => {
       dailyPlayedToday: alreadyPlayed,
       castPlayedToday,
     })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.patch('/api/me/profile', authRequired, async (req, res) => {
+  try {
+    const username = String(req.body?.username || '')
+      .trim()
+      .toLowerCase()
+    const displayName = String(
+      req.body?.displayName || req.body?.username || '',
+    ).trim()
+    const bio = String(req.body?.bio || '').slice(0, 500)
+    let avatarUrl = req.body?.avatarUrl
+    if (avatarUrl != null) {
+      avatarUrl = String(avatarUrl).trim()
+      if (avatarUrl.length > 350_000) {
+        res.status(400).json({ error: 'Avatar muito grande (máx ~250KB)' })
+        return
+      }
+      if (avatarUrl === '') avatarUrl = null
+    }
+    let favorites = req.body?.favorites
+    if (!Array.isArray(favorites)) favorites = undefined
+    if (favorites) {
+      favorites = favorites
+        .slice(0, 5)
+        .map((f) => ({
+          movieId: String(f.movieId || ''),
+          title: String(f.title || '').slice(0, 120),
+          titlePt: f.titlePt ? String(f.titlePt).slice(0, 120) : null,
+          posterUrl: f.posterUrl ? String(f.posterUrl).slice(0, 300) : null,
+        }))
+        .filter((f) => f.movieId || f.title)
+    }
+
+    if (username) {
+      if (!/^[a-z0-9_]{3,32}$/.test(username)) {
+        res.status(400).json({
+          error: 'Username: 3–32 chars, a-z, 0-9 e _',
+        })
+        return
+      }
+      const taken = await findUserByUsername(username)
+      if (taken && taken.id !== req.user.id) {
+        res.status(409).json({ error: 'Username já em uso' })
+        return
+      }
+    }
+
+    const sets = []
+    const params = []
+    if (username) {
+      params.push(username)
+      sets.push(`username = $${params.length}`)
+      params.push(displayName || username)
+      sets.push(`display_name = $${params.length}`)
+    } else if (displayName) {
+      params.push(displayName)
+      sets.push(`display_name = $${params.length}`)
+    }
+    if (bio !== undefined) {
+      params.push(bio)
+      sets.push(`bio = $${params.length}`)
+    }
+    if (avatarUrl !== undefined) {
+      params.push(avatarUrl)
+      sets.push(`avatar_url = $${params.length}`)
+    }
+    if (favorites !== undefined) {
+      params.push(JSON.stringify(favorites))
+      sets.push(`favorite_movies = $${params.length}::jsonb`)
+    }
+    if (sets.length === 0) {
+      res.status(400).json({ error: 'Nada pra atualizar' })
+      return
+    }
+    params.push(req.user.id)
+    await query(
+      `UPDATE users SET ${sets.join(', ')} WHERE id = $${params.length}`,
+      params,
+    )
+    const user = await findUserById(req.user.id)
+    res.json({ user: publicUser(user) })
   } catch (err) {
     res.status(500).json({ error: String(err.message) })
   }
@@ -1253,6 +1397,9 @@ app.post('/api/round/finish', authRequired, async (req, res) => {
     const outcome = req.body?.outcome === 'win' ? 'win' : 'lose'
     const take = Number(req.body?.take)
     const maxTake = mode === 'cast' ? CAST_MAX_TAKE : 6
+    /** Casting infinito / Maratona: sem trava de “já jogou hoje” */
+    const endlessRound =
+      Boolean(req.body?.endless) || mode === 'classic'
 
     if (!puzzleId || !Number.isInteger(take) || take < 1 || take > maxTake) {
       res.status(400).json({ error: 'Dados inválidos' })
@@ -1266,32 +1413,28 @@ app.post('/api/round/finish', authRequired, async (req, res) => {
     }
 
     const today = todayBRT()
-    const playDate =
-      mode === 'daily' || mode === 'cast'
-        ? isDateId(puzzleId)
-          ? puzzleId
-          : today
-        : null
-    /** Arquivo (calendário): jogável, mas 0 pts e sem streak/rank */
+    // Só diário (data) entra em playDate. Casting endless NUNCA.
+    let playDate = null
+    if (!endlessRound) {
+      if (mode === 'daily') {
+        playDate = isDateId(puzzleId) ? puzzleId : today
+      } else if (mode === 'cast' && isDateId(puzzleId)) {
+        playDate = puzzleId
+      }
+    }
+    /** Arquivo (calendário): jogável à vontade, 0 pts */
     const isArchive = Boolean(playDate && playDate < today)
 
-    if (mode === 'daily' && playDate) {
+    // Só bloqueia o diário DE HOJE (arquivo pode repetir; endless nunca)
+    if (!endlessRound && mode === 'daily' && playDate && !isArchive) {
       if (await hasPlayedDaily(req.user.id, playDate)) {
-        res.status(409).json({
-          error: isArchive
-            ? 'Você já jogou este dia'
-            : 'Você já jogou o daily de hoje',
-        })
+        res.status(409).json({ error: 'Você já jogou o daily de hoje' })
         return
       }
     }
-    if (mode === 'cast' && playDate) {
+    if (!endlessRound && mode === 'cast' && playDate && !isArchive) {
       if (await hasPlayedCastDaily(req.user.id, playDate)) {
-        res.status(409).json({
-          error: isArchive
-            ? 'Você já jogou o elenco deste dia'
-            : 'Você já jogou o elenco de hoje',
-        })
+        res.status(409).json({ error: 'Você já jogou o elenco de hoje' })
         return
       }
     }
@@ -1331,7 +1474,7 @@ app.post('/api/round/finish', authRequired, async (req, res) => {
       )
     }
 
-    if (mode === 'daily' && playDate) {
+    if (mode === 'daily' && playDate && !isArchive) {
       await query(
         `INSERT INTO user_daily_plays (user_id, puzzle_date, won, take, points)
          VALUES ($1, $2::date, $3, $4, $5)
@@ -1339,12 +1482,31 @@ app.post('/api/round/finish', authRequired, async (req, res) => {
         [req.user.id, playDate, outcome === 'win', take, scored.points],
       )
     }
-    if (mode === 'cast' && playDate) {
+    if (mode === 'cast' && playDate && !isArchive) {
       await query(
         `INSERT INTO user_cast_daily_plays (user_id, puzzle_date, won, take, points)
          VALUES ($1, $2::date, $3, $4, $5)
          ON CONFLICT (user_id, puzzle_date) DO NOTHING`,
         [req.user.id, playDate, outcome === 'win', take, scored.points],
+      )
+    }
+    // Arquivo: grava tentativa com 0 pts (permite jogar de novo; não trava)
+    if (isArchive && mode === 'daily' && playDate) {
+      await query(
+        `INSERT INTO user_daily_plays (user_id, puzzle_date, won, take, points)
+         VALUES ($1, $2::date, $3, $4, 0)
+         ON CONFLICT (user_id, puzzle_date) DO UPDATE SET
+           won = EXCLUDED.won, take = EXCLUDED.take, points = 0`,
+        [req.user.id, playDate, outcome === 'win', take],
+      )
+    }
+    if (isArchive && mode === 'cast' && playDate) {
+      await query(
+        `INSERT INTO user_cast_daily_plays (user_id, puzzle_date, won, take, points)
+         VALUES ($1, $2::date, $3, $4, 0)
+         ON CONFLICT (user_id, puzzle_date) DO UPDATE SET
+           won = EXCLUDED.won, take = EXCLUDED.take, points = 0`,
+        [req.user.id, playDate, outcome === 'win', take],
       )
     }
 
@@ -1426,7 +1588,7 @@ app.get('/api/autocomplete', async (req, res) => {
     }
 
     const { rows } = await query(
-      `SELECT title, title_pt, year, aliases
+      `SELECT id::text AS movie_id, title, title_pt, year, aliases, poster_path
        FROM movies
        ORDER BY title ASC`,
     )
@@ -1448,9 +1610,11 @@ app.get('/api/autocomplete', async (req, res) => {
       }
       if (best) {
         scored.push({
+          movieId: row.movie_id,
           title: row.title,
           titlePt: row.title_pt,
           year: row.year,
+          posterUrl: row.poster_path,
           label: row.year != null ? `${best.label} (${row.year})` : best.label,
           rank: best.rank,
           sortKey: best.norm,

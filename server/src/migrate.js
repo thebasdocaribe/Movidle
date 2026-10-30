@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { seedCharacterCatalog } from './characterCatalog.js'
 import { pool } from './db.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -13,6 +14,7 @@ const MIGRATION_FILES = [
   'daily_stats.sql',
   'cast_mode.sql',
   'character_mode.sql',
+  'profile.sql',
 ]
 
 /** Clips em web/public/clips (vão pro dist no build). */
@@ -74,6 +76,15 @@ export async function migrate() {
          AND (clip_path IS NULL OR clip_path = '')`,
     )
     console.log('[migrate] clip_path atualizado')
+
+    try {
+      const charStats = await seedCharacterCatalog(client)
+      console.log(
+        `[migrate] personagens: +${charStats.inserted} novos, ${charStats.updated} atualizados (${charStats.total} no catálogo)`,
+      )
+    } catch (err) {
+      console.warn('[migrate] seed personagens:', err.message)
+    }
   } finally {
     client.release()
   }

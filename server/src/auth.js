@@ -6,7 +6,8 @@ import { query } from './db.js'
 const JWT_SECRET = process.env.JWT_SECRET || 'cineblitz-dev-secret-change-me'
 const TOKEN_TTL_MS = 60 * 60 * 1000
 
-const USER_COLS = `id, username, display_name, email, email_verified, password_hash`
+const USER_COLS = `id, username, display_name, email, email_verified, password_hash,
+  avatar_url, bio, favorite_movies`
 
 export function signToken(user) {
   return jwt.sign(
@@ -282,4 +283,35 @@ export async function hasPlayedCastDaily(userId, dateStr) {
     [userId, dateStr],
   )
   return rows.length > 0
+}
+
+/** Resultado salvo do diário (pra reabrir a tela no estado final). */
+export async function getDailyPlayResult(userId, dateStr) {
+  const { rows } = await query(
+    `SELECT won, take, points
+     FROM user_daily_plays
+     WHERE user_id = $1 AND puzzle_date = $2::date`,
+    [userId, dateStr],
+  )
+  return rows[0] || null
+}
+
+export async function getCastDailyPlayResult(userId, dateStr) {
+  const { rows } = await query(
+    `SELECT won, take, points
+     FROM user_cast_daily_plays
+     WHERE user_id = $1 AND puzzle_date = $2::date`,
+    [userId, dateStr],
+  )
+  return rows[0] || null
+}
+
+export async function getCharacterDailyPlayResult(userId, dateStr) {
+  const { rows } = await query(
+    `SELECT won, take, points
+     FROM user_character_daily_plays
+     WHERE user_id = $1 AND puzzle_date = $2::date`,
+    [userId, dateStr],
+  )
+  return rows[0] || null
 }

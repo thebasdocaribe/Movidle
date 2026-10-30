@@ -53,6 +53,14 @@ export function CharacterScreen({
   const guessRef = useRef<HTMLInputElement>(null)
 
   const prog = modeProgress(progress, 'character')
+  const todayKey = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date())
+  const activeDate = endless ? null : puzzleDate || todayKey
+  const isArchive = Boolean(activeDate && activeDate < todayKey)
 
   async function load(exclude: string[] = playedIds) {
     setLoading(true)
@@ -66,6 +74,16 @@ export function CharacterScreen({
         setPlayedIds((prev) =>
           prev.includes(data.puzzleId) ? prev : [...prev, data.puzzleId],
         )
+      }
+      const pr = data.priorResult
+      if (!endless && pr && !isArchive) {
+        setWon(Boolean(pr.won))
+        setEnded(true)
+        setPoints(pr.points ?? 0)
+        setRevealName(pr.namePt || pr.name || '?')
+        setRevealFilm(pr.filmTitle || null)
+        setAttempt(CHARACTER_MAX_TAKE - 1)
+        setHint('Você já jogou · resultado do dia')
       }
     } catch (err) {
       setLoadError((err as Error).message)
@@ -81,6 +99,7 @@ export function CharacterScreen({
     setWrong([])
     setGuess('')
     setRevealName(null)
+    setRevealFilm(null)
     setPlayedIds([])
     void load([])
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -129,7 +148,7 @@ export function CharacterScreen({
       return
     }
 
-    if (!endless && user && puzzle.alreadyPlayed) {
+    if (!endless && !isArchive && user && puzzle.alreadyPlayed) {
       setHint('Você já jogou o personagem de hoje')
       return
     }
@@ -199,7 +218,9 @@ export function CharacterScreen({
     }
   }
 
-  const blocked = Boolean(!endless && user && puzzle?.alreadyPlayed)
+  const blocked = Boolean(
+    !endless && !isArchive && !ended && user && puzzle?.alreadyPlayed,
+  )
 
   return (
     <div className="min-h-0 flex-1">

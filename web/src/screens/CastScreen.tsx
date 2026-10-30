@@ -222,7 +222,8 @@ export function CastScreen({
 
   const prog = modeProgress(progress, 'cast')
   const unlocked = ended ? MAX_TAKE : Math.min(attempt + 1, MAX_TAKE)
-  const sharp = Boolean(ended && won)
+  /** Despixeliza no fim — acerto ou erro */
+  const sharp = ended
   const columns = sharp ? 1 : CAST_MOSAIC_COLUMNS
 
   const hints: CastHint[] = useMemo(() => daily?.hints ?? [], [daily])
@@ -240,6 +241,16 @@ export function CastScreen({
           prev.includes(data.puzzleId) ? prev : [...prev, data.puzzleId],
         )
       }
+      const pr = data.priorResult
+      if (!endless && pr && !isArchive) {
+        setWon(Boolean(pr.won))
+        setEnded(true)
+        setPoints(pr.points ?? 0)
+        setRevealTitle(pr.titlePt || pr.title || '?')
+        setRevealYear(pr.year)
+        setAttempt(MAX_TAKE - 1)
+        setHint('Você já jogou · resultado do dia')
+      }
       return data
     } catch (err) {
       setLoadError((err as Error).message)
@@ -255,6 +266,10 @@ export function CastScreen({
     setWon(false)
     setWrongGuesses([])
     setGuess('')
+    setRevealTitle(null)
+    setRevealYear(undefined)
+    setPoints(0)
+    setHint(null)
     setPlayedIds([])
     void loadPuzzle([])
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -282,6 +297,7 @@ export function CastScreen({
       puzzleId: daily.puzzleId,
       outcome,
       take,
+      endless,
     })
     onProgress(finished.progress)
     if (!endless && !isArchive) onCastPlayed()
@@ -308,16 +324,8 @@ export function CastScreen({
 
   async function skipEmptyConfirm() {
     if (!daily || busy || ended) return
-    if (
-      !endless &&
-      user &&
-      (daily.alreadyPlayed || (!isArchive && castPlayedToday))
-    ) {
-      setHint(
-        isArchive
-          ? 'Você já jogou o elenco deste dia'
-          : 'Você já jogou o elenco de hoje',
-      )
+    if (!endless && !isArchive && user && (daily.alreadyPlayed || castPlayedToday)) {
+      setHint('Você já jogou o elenco de hoje')
       return
     }
     if (attempt + 1 >= MAX_TAKE) {
@@ -352,16 +360,8 @@ export function CastScreen({
       return
     }
 
-    if (
-      !endless &&
-      user &&
-      (daily.alreadyPlayed || (!isArchive && castPlayedToday))
-    ) {
-      setHint(
-        isArchive
-          ? 'Você já jogou o elenco deste dia'
-          : 'Você já jogou o elenco de hoje',
-      )
+    if (!endless && !isArchive && user && (daily.alreadyPlayed || castPlayedToday)) {
+      setHint('Você já jogou o elenco de hoje')
       return
     }
 
@@ -421,8 +421,10 @@ export function CastScreen({
 
   const blocked = Boolean(
     !endless &&
+      !isArchive &&
+      !ended &&
       user &&
-      (daily?.alreadyPlayed || (!isArchive && castPlayedToday)),
+      (daily?.alreadyPlayed || castPlayedToday),
   )
 
   return (

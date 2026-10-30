@@ -1,6 +1,6 @@
-/** Estágios estilo Gamedle: detalhe → rosto → corpo inteiro */
+/** Estágios estilo Gamedle: detalhe → corpo inteiro */
 export const CHARACTER_STAGES = [
-  { label: 'Pés', position: '50% 95%', zoom: 4.2 },
+  { label: 'Pernas', position: '50% 92%', zoom: 4.2 },
   { label: 'Braço', position: '12% 55%', zoom: 3.6 },
   { label: 'Cabelo', position: '50% 6%', zoom: 3.4 },
   { label: 'Rosto', position: '50% 22%', zoom: 2.6 },
@@ -23,6 +23,7 @@ export function CharacterCrop({ src, stage, reveal = false }: CharacterCropProps
     ? CHARACTER_STAGES.length - 1
     : Math.min(Math.max(stage, 0), CHARACTER_STAGES.length - 1)
   const s = CHARACTER_STAGES[idx]
+  const fullFrame = reveal || s.zoom <= 1
 
   return (
     <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#050308]">
@@ -30,12 +31,18 @@ export function CharacterCrop({ src, stage, reveal = false }: CharacterCropProps
         src={src}
         alt=""
         draggable={false}
-        className="pointer-events-none h-full w-full select-none object-cover"
-        style={{
-          objectPosition: s.position,
-          transform: `scale(${s.zoom})`,
-          transformOrigin: s.position,
-        }}
+        className={`pointer-events-none h-full w-full select-none ${
+          fullFrame ? 'object-contain' : 'object-cover'
+        }`}
+        style={
+          fullFrame
+            ? undefined
+            : {
+                objectPosition: s.position,
+                transform: `scale(${s.zoom})`,
+                transformOrigin: s.position,
+              }
+        }
       />
       {!reveal ? (
         <p className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-0.5 text-[10px] font-bold tracking-wide text-cinema-gold uppercase">

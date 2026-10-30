@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react'
+import type { AuthUser } from '../auth'
 import { AboutModal } from './AboutModal'
 import { BugReportModal } from './BugReportModal'
+import { ProfileModal } from './ProfileModal'
 import { SideMenu } from './SideMenu'
 import { SiteFooter } from './SiteFooter'
 
@@ -9,9 +11,17 @@ type AppShellProps = {
   onHome: () => void
   onAuth?: () => void
   onLogout?: () => void
+  onUserUpdate?: (user: AuthUser) => void
   loggedIn: boolean
+  user?: AuthUser | null
   username?: string | null
   showFooter?: boolean
+}
+
+function avatarSrc(user?: AuthUser | null) {
+  if (user?.avatarUrl) return user.avatarUrl
+  const name = user?.username || 'U'
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1a0a12&color=ffc44d&size=64&bold=true`
 }
 
 export function AppShell({
@@ -19,13 +29,16 @@ export function AppShell({
   onHome,
   onAuth,
   onLogout,
+  onUserUpdate,
   loggedIn,
+  user,
   username,
   showFooter = true,
 }: AppShellProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
   const [bugOpen, setBugOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
 
   return (
     <div className="hub-stage flex min-h-svh flex-col">
@@ -38,7 +51,32 @@ export function AppShell({
         >
           CINEBLITZ
         </button>
-        <div className="flex justify-end">
+        <div className="flex items-center justify-end gap-2">
+          {loggedIn ? (
+            <button
+              type="button"
+              onClick={() => setProfileOpen(true)}
+              className="flex max-w-[9.5rem] items-center gap-1.5 border border-cinema-gold/50 bg-black/30 py-1 pr-2 pl-1 text-left hover:border-cinema-gold sm:max-w-[12rem]"
+              title="Meu perfil"
+            >
+              <img
+                src={avatarSrc(user)}
+                alt=""
+                className="h-7 w-7 rounded-full object-cover"
+              />
+              <span className="truncate text-[11px] font-bold tracking-wide text-cinema-gold uppercase">
+                @{username}
+              </span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onAuth?.()}
+              className="mode-btn mode-btn-primary mode-btn-inline px-3 py-1.5 font-display text-lg tracking-wide sm:px-4 sm:text-xl"
+            >
+              ENTRAR
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
@@ -70,6 +108,7 @@ export function AppShell({
         onAbout={() => setAboutOpen(true)}
         onBug={() => setBugOpen(true)}
         onAuth={onAuth}
+        onProfile={loggedIn ? () => setProfileOpen(true) : undefined}
         loggedIn={loggedIn}
         username={username}
         onLogout={onLogout}
@@ -77,6 +116,15 @@ export function AppShell({
 
       {aboutOpen ? <AboutModal onClose={() => setAboutOpen(false)} /> : null}
       {bugOpen ? <BugReportModal onClose={() => setBugOpen(false)} /> : null}
+      {profileOpen && user ? (
+        <ProfileModal
+          user={user}
+          onClose={() => setProfileOpen(false)}
+          onSaved={(u) => {
+            onUserUpdate?.(u)
+          }}
+        />
+      ) : null}
     </div>
   )
 }

@@ -1,6 +1,25 @@
-import { authHeaders, type AuthUser, type ProgressMap } from './auth'
+import {
+  authHeaders,
+  type AuthUser,
+  type FavoriteFilm,
+  type ProgressMap,
+} from './auth'
 
 export type GameMode = 'daily' | 'classic' | 'cast' | 'character'
+
+export type PriorPlayResult = {
+  won: boolean
+  take?: number | null
+  points: number
+  title?: string
+  titlePt?: string
+  year?: number
+  posterUrl?: string | null
+  name?: string
+  namePt?: string
+  filmTitle?: string
+  imageUrl?: string
+}
 
 export type DailyPayload = {
   puzzleId: string
@@ -12,6 +31,8 @@ export type DailyPayload = {
   posterUrl?: string | null
   attribution: string | null
   alreadyPlayed?: boolean
+  /** Se já jogou: reabre no estado final */
+  priorResult?: PriorPlayResult | null
   /** Quantas pessoas já acertaram o daily de hoje */
   solvedCount?: number
 }
@@ -40,7 +61,11 @@ export type AutocompleteItem = {
   titlePt?: string | null
   year?: number | null
   label: string
+  movieId?: string
+  posterUrl?: string | null
 }
+
+export type { FavoriteFilm }
 
 export type RankEntry = {
   rank: number
@@ -81,7 +106,8 @@ async function parseJson<T>(res: Response): Promise<T> {
     throw new Error(`Resposta inválida da API (HTTP ${res.status})`)
   }
   if (!res.ok) {
-    throw new Error(data?.error || `HTTP ${res.status}`)
+    const detail = data?.error || `HTTP ${res.status}`
+    throw new Error(res.status === 401 ? `401 ${detail}` : detail)
   }
   return data
 }
@@ -143,6 +169,7 @@ export type CastDailyPayload = {
   maxTakes: number
   hints: CastHint[]
   alreadyPlayed?: boolean
+  priorResult?: PriorPlayResult | null
   endless?: boolean
 }
 
@@ -185,6 +212,7 @@ export type CharacterPayload = {
   maxTakes: number
   date?: string
   alreadyPlayed?: boolean
+  priorResult?: PriorPlayResult | null
   endless?: boolean
 }
 
@@ -338,6 +366,20 @@ export function fetchMe() {
   )
 }
 
+export function updateProfile(body: {
+  username?: string
+  displayName?: string
+  bio?: string
+  avatarUrl?: string | null
+  favorites?: FavoriteFilm[]
+}) {
+  return fetch('/api/me/profile', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body),
+  }).then((r) => parseJson<{ user: AuthUser }>(r))
+}
+
 export function fetchRank(mode: GameMode) {
   return fetch(`/api/rank?mode=${mode}`, {
     headers: { ...authHeaders() },
@@ -349,6 +391,8 @@ export function finishRound(body: {
   puzzleId: string
   outcome: 'win' | 'lose'
   take: number
+  /** Casting/Maratona: não bloqueia nem grava daily 1x */
+  endless?: boolean
 }) {
   return fetch('/api/round/finish', {
     method: 'POST',

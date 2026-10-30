@@ -8,7 +8,7 @@ ALTER TABLE movies
 ALTER TABLE user_progress DROP CONSTRAINT IF EXISTS user_progress_mode_check;
 ALTER TABLE user_progress
   ADD CONSTRAINT user_progress_mode_check
-  CHECK (mode IN ('daily', 'classic', 'cast'));
+  CHECK (mode IN ('daily', 'classic', 'cast', 'character'));
 
 CREATE TABLE IF NOT EXISTS user_cast_daily_plays (
   user_id      uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
