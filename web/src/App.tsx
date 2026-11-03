@@ -17,6 +17,9 @@ import { HubScreen } from './screens/HubScreen'
 import { ProfileScreen } from './screens/ProfileScreen'
 import { OscarsScreen } from './screens/OscarsScreen'
 import { ProfilesBrowseScreen } from './screens/ProfilesBrowseScreen'
+import { AchievementToastHost } from './components/AchievementToast'
+import { todayBRT, yesterdayOf } from './components/DayCalendarModal'
+import type { Achievement } from './api'
 
 type Screen =
   | 'hub'
@@ -44,6 +47,16 @@ export default function App() {
   const [pendingDuel, setPendingDuel] = useState(false)
   const [playDate, setPlayDate] = useState<string | null>(null)
   const [profileUsername, setProfileUsername] = useState<string | null>(null)
+  /** De onde abriu o perfil — Voltar volta pra lista, não pro hub */
+  const [profileReturnTo, setProfileReturnTo] = useState<'hub' | 'profiles'>(
+    'hub',
+  )
+  const [achToasts, setAchToasts] = useState<Achievement[]>([])
+
+  function pushAchievements(list?: Achievement[] | null) {
+    if (!list?.length) return
+    setAchToasts((prev) => [...prev, ...list])
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -128,16 +141,31 @@ export default function App() {
     setDuelCode(null)
     setPlayDate(null)
     setProfileUsername(null)
+    setProfileReturnTo('hub')
   }
 
-  function openProfile(username?: string | null) {
+  function openProfile(
+    username?: string | null,
+    returnTo: 'hub' | 'profiles' = 'hub',
+  ) {
     setProfileUsername(username || user?.username || null)
+    setProfileReturnTo(returnTo)
     setScreen('profile')
   }
 
   function openBrowseProfiles() {
     setProfileUsername(null)
+    setProfileReturnTo('hub')
     setScreen('profiles')
+  }
+
+  function backFromProfile() {
+    if (profileReturnTo === 'profiles') {
+      setProfileUsername(null)
+      setScreen('profiles')
+      return
+    }
+    goHome()
   }
 
   function openOscars() {
@@ -185,6 +213,7 @@ export default function App() {
     setScreen('hub')
     setDuelCode(null)
     setProfileUsername(null)
+    setProfileReturnTo('hub')
   }
 
   if (bootstrapping) {
@@ -239,7 +268,7 @@ export default function App() {
           <ProfileScreen
             username={profileUsername}
             viewer={user}
-            onBack={goHome}
+            onBack={backFromProfile}
             onSaved={(u) => {
               setUser(u)
               setProfileUsername(u.username)
@@ -248,7 +277,7 @@ export default function App() {
         ) : screen === 'profiles' ? (
           <ProfilesBrowseScreen
             onBack={goHome}
-            onOpenProfile={(uname) => openProfile(uname)}
+            onOpenProfile={(uname) => openProfile(uname, 'profiles')}
           />
         ) : screen === 'oscars' ? (
           <OscarsScreen onBack={goHome} />
@@ -273,10 +302,15 @@ export default function App() {
             user={user}
             progress={progress}
             onProgress={(p) => setProgress({ ...emptyProgress(), ...p })}
+            onAchievements={pushAchievements}
             castPlayedToday={castPlayedToday}
             onCastPlayed={() => setCastPlayedToday(true)}
             puzzleDate={screen === 'cast' ? playDate : null}
             onBack={goHome}
+            onPlayYesterday={() =>
+              openMode('cast', yesterdayOf(todayBRT()))
+            }
+            onPlayEndless={() => openMode('cast-endless')}
           />
         ) : (
           <DailyScreen
@@ -284,13 +318,23 @@ export default function App() {
             user={user}
             progress={progress}
             onProgress={(p) => setProgress({ ...emptyProgress(), ...p })}
+            onAchievements={pushAchievements}
             onDailyPlayed={() => setDailyPlayedToday(true)}
             dailyPlayedToday={dailyPlayedToday}
             puzzleDate={mode === 'daily' ? playDate : null}
             onBack={goHome}
+            onPlayYesterday={() =>
+              openMode('daily', yesterdayOf(todayBRT()))
+            }
+            onPlayEndless={() => openMode('classic')}
           />
         )}
       </AppShell>
+
+      <AchievementToastHost
+        queue={achToasts}
+        onConsumed={() => setAchToasts((prev) => prev.slice(1))}
+      />
 
       {showAuth ? (
         <AuthModal

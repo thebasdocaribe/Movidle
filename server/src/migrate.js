@@ -14,6 +14,7 @@ const MIGRATION_FILES = [
   'duel.sql',
   'daily_stats.sql',
   'cast_mode.sql',
+  'cast_endless.sql',
   'character_mode.sql',
   'profile.sql',
   'daily_rotation.sql',

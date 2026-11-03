@@ -1,0 +1,569 @@
+{
+  "catalogNow": 365,
+  "candidatesNew": 3485,
+  "wouldImport": 2435,
+  "sample": [
+    {
+      "id": 8966,
+      "title": "Crepúsculo",
+      "year": 2008,
+      "pop": 32,
+      "votes": 14830,
+      "force": true
+    },
+    {
+      "id": 216015,
+      "title": "Cinquenta Tons de Cinza",
+      "year": 2015,
+      "pop": 29,
+      "votes": 12616,
+      "force": true
+    },
+    {
+      "id": 73861,
+      "title": "Terror sem Limites",
+      "year": 2010,
+      "pop": 22,
+      "votes": 2313,
+      "force": true
+    },
+    {
+      "id": 829557,
+      "title": "365 Dias: Hoje",
+      "year": 2022,
+      "pop": 18,
+      "votes": 1889,
+      "force": true
+    },
+    {
+      "id": 50620,
+      "title": "A Saga Crepúsculo: Amanhecer - Parte 2",
+      "year": 2012,
+      "pop": 16,
+      "votes": 9569,
+      "force": true
+    },
+    {
+      "id": 50619,
+      "title": "A Saga Crepúsculo: Amanhecer - Parte 1",
+      "year": 2011,
+      "pop": 16,
+      "votes": 9487,
+      "force": true
+    },
+    {
+      "id": 24021,
+      "title": "A Saga Crepúsculo: Eclipse",
+      "year": 2010,
+      "pop": 16,
+      "votes": 9470,
+      "force": true
+    },
+    {
+      "id": 539972,
+      "title": "Kraven: O Caçador",
+      "year": 2024,
+      "pop": 14,
+      "votes": 2587,
+      "force": true
+    },
+    {
+      "id": 762975,
+      "title": "Continência ao Amor",
+      "year": 2022,
+      "pop": 13,
+      "votes": 2974,
+      "force": true
+    },
+    {
+      "id": 537915,
+      "title": "After",
+      "year": 2019,
+      "pop": 12,
+      "votes": 8589,
+      "force": true
+    },
+    {
+      "id": 829560,
+      "title": "365 Dias Finais",
+      "year": 2022,
+      "pop": 12,
+      "votes": 1358,
+      "force": true
+    },
+    {
+      "id": 512195,
+      "title": "Alerta Vermelho",
+      "year": 2021,
+      "pop": 11,
+      "votes": 6732,
+      "force": true
+    },
+    {
+      "id": 76757,
+      "title": "O Destino de Júpiter",
+      "year": 2015,
+      "pop": 11,
+      "votes": 7296,
+      "force": true
+    },
+    {
+      "id": 466282,
+      "title": "Para Todos os Garotos que Já Amei",
+      "year": 2018,
+      "pop": 11,
+      "votes": 8806,
+      "force": true
+    },
+    {
+      "id": 804150,
+      "title": "O Urso do Pó Branco",
+      "year": 2023,
+      "pop": 11,
+      "votes": 2584,
+      "force": true
+    },
+    {
+      "id": 166424,
+      "title": "Quarteto Fantástico",
+      "year": 2015,
+      "pop": 11,
+      "votes": 6607,
+      "force": true
+    },
+    {
+      "id": 634492,
+      "title": "Madame Teia",
+      "year": 2024,
+      "pop": 10,
+      "votes": 2758,
+      "force": true
+    },
+    {
+      "id": 526896,
+      "title": "Morbius",
+      "year": 2022,
+      "pop": 10,
+      "votes": 5066,
+      "force": true
+    },
+    {
+      "id": 10676,
+      "title": "Halloween III: A Noite das Bruxas",
+      "year": 1982,
+      "pop": 10,
+      "votes": 1620,
+      "force": true
+    },
+    {
+      "id": 9757,
+      "title": "Norbit - Uma Comédia de Peso",
+      "year": 2007,
+      "pop": 10,
+      "votes": 2731,
+      "force": true
+    },
+    {
+      "id": 725201,
+      "title": "Agente Oculto",
+      "year": 2022,
+      "pop": 10,
+      "votes": 4572,
+      "force": true
+    },
+    {
+      "id": 848538,
+      "title": "Argylle: O Superespião",
+      "year": 2024,
+      "pop": 9,
+      "votes": 1882,
+      "force": true
+    },
+    {
+      "id": 10196,
+      "title": "O Último Mestre do Ar",
+      "year": 2010,
+      "pop": 9,
+      "votes": 4405,
+      "force": true
+    },
+    {
+      "id": 37169,
+      "title": "A Centopéia Humana",
+      "year": 2009,
+      "pop": 9,
+      "votes": 2509,
+      "force": true
+    },
+    {
+      "id": 415,
+      "title": "Batman & Robin",
+      "year": 1997,
+      "pop": 9,
+      "votes": 5621,
+      "force": true
+    }
+  ],
+  "topForce": [
+    {
+      "id": 8966,
+      "popularity": 32.237,
+      "vote_count": 14830,
+      "poster_path": "/o4ki1gYHkP6IWNdwjHvI9vzfpuC.jpg",
+      "title": "Crepúsculo",
+      "release_date": "2008-11-20",
+      "force": true
+    },
+    {
+      "id": 216015,
+      "popularity": 28.8636,
+      "vote_count": 12616,
+      "poster_path": "/fAfsfaRyQV5LKNvYoqlav0Gr3uC.jpg",
+      "title": "Cinquenta Tons de Cinza",
+      "release_date": "2015-02-11",
+      "force": true
+    },
+    {
+      "id": 73861,
+      "popularity": 22.0056,
+      "vote_count": 2313,
+      "poster_path": "/r7MR0GmKe4pE0OX43LXMztNz8Z8.jpg",
+      "title": "Terror sem Limites",
+      "release_date": "2010-01-06",
+      "force": true
+    },
+    {
+      "id": 829557,
+      "popularity": 18.4426,
+      "vote_count": 1889,
+      "poster_path": "/3104lH1U1XfUXo0ZLawnIjXS0NC.jpg",
+      "title": "365 Dias: Hoje",
+      "release_date": "2022-04-26",
+      "force": true
+    },
+    {
+      "id": 50620,
+      "popularity": 15.8345,
+      "vote_count": 9569,
+      "poster_path": "/1clnx7FymVEo1NC3Yikf1GrEfq7.jpg",
+      "title": "A Saga Crepúsculo: Amanhecer - Parte 2",
+      "release_date": "2012-11-13",
+      "force": true
+    },
+    {
+      "id": 50619,
+      "popularity": 15.7046,
+      "vote_count": 9487,
+      "poster_path": "/a6PexAo0jJRLlPNBfdiXXr0HYyz.jpg",
+      "title": "A Saga Crepúsculo: Amanhecer - Parte 1",
+      "release_date": "2011-11-16",
+      "force": true
+    },
+    {
+      "id": 24021,
+      "popularity": 15.6771,
+      "vote_count": 9470,
+      "poster_path": "/a8qPjwfKA1MwjEoVPhTf1ptVzdE.jpg",
+      "title": "A Saga Crepúsculo: Eclipse",
+      "release_date": "2010-06-23",
+      "force": true
+    },
+    {
+      "id": 539972,
+      "popularity": 14.2882,
+      "vote_count": 2587,
+      "poster_path": "/pWvQsP9o1MQ4vQNjpL9QeYFXKOs.jpg",
+      "title": "Kraven: O Caçador",
+      "release_date": "2024-12-11",
+      "force": true
+    },
+    {
+      "id": 762975,
+      "popularity": 12.9114,
+      "vote_count": 2974,
+      "poster_path": "/ncBNV5G7EBLPK2X6cO55krYrPRw.jpg",
+      "title": "Continência ao Amor",
+      "release_date": "2022-07-29",
+      "force": true
+    },
+    {
+      "id": 537915,
+      "popularity": 11.8227,
+      "vote_count": 8589,
+      "poster_path": "/u3B2YKUjWABcxXZ6Nm9h10hLUbh.jpg",
+      "title": "After",
+      "release_date": "2019-04-11",
+      "force": true
+    },
+    {
+      "id": 829560,
+      "popularity": 11.6517,
+      "vote_count": 1358,
+      "poster_path": "/2pxKwxMbd5l3BxK5fBgVCWYweH2.jpg",
+      "title": "365 Dias Finais",
+      "release_date": "2022-08-18",
+      "force": true
+    },
+    {
+      "id": 512195,
+      "popularity": 11.4638,
+      "vote_count": 6732,
+      "poster_path": "/pe17f8VDfzbvbHSAKAlcORtBHmW.jpg",
+      "title": "Alerta Vermelho",
+      "release_date": "2021-11-04",
+      "force": true
+    },
+    {
+      "id": 76757,
+      "popularity": 11.2908,
+      "vote_count": 7296,
+      "poster_path": "/zcqNZetVd3ES4jsygaugF30zow4.jpg",
+      "title": "O Destino de Júpiter",
+      "release_date": "2015-02-04",
+      "force": true
+    },
+    {
+      "id": 466282,
+      "popularity": 11.2201,
+      "vote_count": 8806,
+      "poster_path": "/clbkaZ7uy6mdBjrWWPBfnzF8sQP.jpg",
+      "title": "Para Todos os Garotos que Já Amei",
+      "release_date": "2018-08-17",
+      "force": true
+    },
+    {
+      "id": 804150,
+      "popularity": 11.1178,
+      "vote_count": 2584,
+      "poster_path": "/ccHersGzILjxv7mwxlUtshjzrZk.jpg",
+      "title": "O Urso do Pó Branco",
+      "release_date": "2023-02-22",
+      "force": true
+    },
+    {
+      "id": 166424,
+      "popularity": 10.7684,
+      "vote_count": 6607,
+      "poster_path": "/XJ8jZ4hGyusnN41NnxR0vv5ghS.jpg",
+      "title": "Quarteto Fantástico",
+      "release_date": "2015-08-05",
+      "force": true
+    },
+    {
+      "id": 634492,
+      "popularity": 10.4705,
+      "vote_count": 2758,
+      "poster_path": "/zWEm5oy2tE9ku1KSNM089FmZJ2p.jpg",
+      "title": "Madame Teia",
+      "release_date": "2024-02-14",
+      "force": true
+    },
+    {
+      "id": 526896,
+      "popularity": 10.3638,
+      "vote_count": 5066,
+      "poster_path": "/Av8Z2jZhEm1FLkFzMThzz9hndJF.jpg",
+      "title": "Morbius",
+      "release_date": "2022-03-30",
+      "force": true
+    },
+    {
+      "id": 10676,
+      "popularity": 9.826,
+      "vote_count": 1620,
+      "poster_path": "/9URqVdJxGbytiWo8PeZ3MTBLOuA.jpg",
+      "title": "Halloween III: A Noite das Bruxas",
+      "release_date": "1982-10-22",
+      "force": true
+    },
+    {
+      "id": 9757,
+      "popularity": 9.8212,
+      "vote_count": 2731,
+      "poster_path": "/oKMs9mj4tvFGa8gTSduL2P65ddo.jpg",
+      "title": "Norbit - Uma Comédia de Peso",
+      "release_date": "2007-02-08",
+      "force": true
+    },
+    {
+      "id": 725201,
+      "popularity": 9.6206,
+      "vote_count": 4572,
+      "poster_path": "/1f10KUKW7KyNt8bF8NHmwbBQ9fs.jpg",
+      "title": "Agente Oculto",
+      "release_date": "2022-07-13",
+      "force": true
+    },
+    {
+      "id": 848538,
+      "popularity": 9.3893,
+      "vote_count": 1882,
+      "poster_path": "/1ojCiMpYmCciIFuEcgLOOGLbUND.jpg",
+      "title": "Argylle: O Superespião",
+      "release_date": "2024-01-31",
+      "force": true
+    },
+    {
+      "id": 10196,
+      "popularity": 9.2742,
+      "vote_count": 4405,
+      "poster_path": "/sQGFIDDScR6tX3KXotHaQywewYU.jpg",
+      "title": "O Último Mestre do Ar",
+      "release_date": "2010-06-30",
+      "force": true
+    },
+    {
+      "id": 37169,
+      "popularity": 9.1555,
+      "vote_count": 2509,
+      "poster_path": "/9CJBXYOs1dpmMZzvHm8XTbKfNos.jpg",
+      "title": "A Centopéia Humana",
+      "release_date": "2009-10-31",
+      "force": true
+    },
+    {
+      "id": 415,
+      "popularity": 8.8851,
+      "vote_count": 5621,
+      "poster_path": "/i7hEUpDuMN2LOrCEifFyGSHZQSY.jpg",
+      "title": "Batman & Robin",
+      "release_date": "1997-06-20",
+      "force": true
+    },
+    {
+      "id": 378236,
+      "popularity": 8.8795,
+      "vote_count": 3412,
+      "poster_path": "/g4LW0JOeHyOFRsN6PAyWrH4qbG.jpg",
+      "title": "Emoji: O Filme",
+      "release_date": "2017-07-23",
+      "force": true
+    },
+    {
+      "id": 536869,
+      "popularity": 8.1409,
+      "vote_count": 1068,
+      "poster_path": "/5XIZDh3n6BZAy00PqXpK1D16tZg.jpg",
+      "title": "Cats",
+      "release_date": "2019-12-19",
+      "force": true
+    },
+    {
+      "id": 664413,
+      "popularity": 8.034,
+      "vote_count": 9626,
+      "poster_path": "/3b1uR8Jggt1hWgtBbp42Mt3cwWe.jpg",
+      "title": "365 Dias",
+      "release_date": "2020-02-07",
+      "force": true
+    },
+    {
+      "id": 365177,
+      "popularity": 7.4262,
+      "vote_count": 1605,
+      "poster_path": "/xqPSxMaJ36etkUif4VggAX9tLu0.jpg",
+      "title": "Borderlands: O Destino do Universo Está em Jogo",
+      "release_date": "2024-08-07",
+      "force": true
+    },
+    {
+      "id": 8645,
+      "popularity": 7.2538,
+      "vote_count": 4149,
+      "poster_path": "/4miUoIJADDOY4MXrnpoRxHX670Z.jpg",
+      "title": "Fim dos Tempos",
+      "release_date": "2008-06-11",
+      "force": true
+    },
+    {
+      "id": 87818,
+      "popularity": 7.0224,
+      "vote_count": 2601,
+      "poster_path": "/9QBDBlxUdRD0CQPOJXxLCFINIsm.jpg",
+      "title": "Para Maiores",
+      "release_date": "2013-01-24",
+      "force": true
+    },
+    {
+      "id": 71880,
+      "popularity": 6.787,
+      "vote_count": 2285,
+      "poster_path": "/cklXRmdNUmXSkM0gMAz30pkzGGx.jpg",
+      "title": "Cada um Tem a Gêmea que Merece",
+      "release_date": "2011-11-11",
+      "force": true
+    },
+    {
+      "id": 848326,
+      "popularity": 6.6798,
+      "vote_count": 2749,
+      "poster_path": "/sPmGw8DOpH856QjhCfetSK9yzI5.jpg",
+      "title": "Rebel Moon - Parte 1: A Menina do Fogo",
+      "release_date": "2023-12-15",
+      "force": true
+    },
+    {
+      "id": 9760,
+      "popularity": 6.6151,
+      "vote_count": 1761,
+      "poster_path": "/jkC8e0HaEwZWltjxPO8RhG6HlL2.jpg",
+      "title": "Deu a Louca em Hollywood",
+      "release_date": "2007-01-25",
+      "force": true
+    },
+    {
+      "id": 218043,
+      "popularity": 6.5269,
+      "vote_count": 1445,
+      "poster_path": "/3fHwNFmm0Kcs2VP5y3Pob7Dc3K1.jpg",
+      "title": "O Apocalipse",
+      "release_date": "2014-10-03",
+      "force": true
+    },
+    {
+      "id": 454983,
+      "popularity": 6.477,
+      "vote_count": 7542,
+      "poster_path": "/n2P84bRyMhfabyPZ0nhBxHyngya.jpg",
+      "title": "A Barraca do Beijo",
+      "release_date": "2018-05-11",
+      "force": true
+    },
+    {
+      "id": 82700,
+      "popularity": 6.3907,
+      "vote_count": 7032,
+      "poster_path": "/1Kcjf0DXimg44Z1bEuzXUjJHNqi.jpg",
+      "title": "Depois da Terra",
+      "release_date": "2013-05-30",
+      "force": true
+    },
+    {
+      "id": 205321,
+      "popularity": 6.0111,
+      "vote_count": 1763,
+      "poster_path": "/atEmHkVFTSGRYt2PeCiziQqbZnI.jpg",
+      "title": "Sharknado",
+      "release_date": "2013-07-11",
+      "force": true
+    },
+    {
+      "id": 248504,
+      "popularity": 5.7463,
+      "vote_count": 738,
+      "poster_path": "/uguzkptzBLzwse1LENsAXTU9LEV.jpg",
+      "title": "Sharknado 2: A Segunda Onda",
+      "release_date": "2014-07-31",
+      "force": true
+    },
+    {
+      "id": 11411,
+      "popularity": 5.3466,
+      "vote_count": 1473,
+      "poster_path": "/AgPJ7SGp7RxESgS6UKmHVIgelOt.jpg",
+      "title": "Superman IV: Em Busca da Paz",
+      "release_date": "1987-07-24",
+      "force": true
+    }
+  ]
+}

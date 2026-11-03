@@ -113,6 +113,7 @@ export type RoundFinishResult = {
   titlePt?: string
   year?: number
   posterUrl?: string
+  unlockedAchievements?: Achievement[]
 }
 
 async function parseJson<T>(res: Response): Promise<T> {
@@ -195,6 +196,8 @@ export type CastDailyPayload = {
   alreadyPlayed?: boolean
   priorResult?: PriorPlayResult | null
   endless?: boolean
+  /** easy | mid | hard | elite — só no infinito */
+  difficulty?: string
 }
 
 export function fetchCastDaily(date?: string) {

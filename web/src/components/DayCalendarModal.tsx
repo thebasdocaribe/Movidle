@@ -35,6 +35,14 @@ export function todayBRT(): string {
   }).format(new Date())
 }
 
+/** Dia anterior ao `today` (YYYY-MM-DD), em calendário civil. */
+export function yesterdayOf(today: string): string {
+  const { y, m, d } = parseKey(today)
+  const dt = new Date(Date.UTC(y, m, d))
+  dt.setUTCDate(dt.getUTCDate() - 1)
+  return toKey(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate())
+}
+
 export function DayCalendarModal({
   title,
   today,

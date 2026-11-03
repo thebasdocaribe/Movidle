@@ -5,6 +5,7 @@ import {
   fetchDaily,
   finishRound,
   postGuess,
+  type Achievement,
   type AutocompleteItem,
   type DailyPayload,
   type GameMode,
@@ -30,11 +31,14 @@ type DailyScreenProps = {
   user: AuthUser | null
   progress: ProgressMap
   onProgress: (p: ProgressMap) => void
+  onAchievements?: (list: Achievement[]) => void
   dailyPlayedToday: boolean
   onDailyPlayed: () => void
   /** YYYY-MM-DD do calendário; null = hoje */
   puzzleDate?: string | null
   onBack: () => void
+  onPlayYesterday?: () => void
+  onPlayEndless?: () => void
 }
 
 const COUNTDOWN_FROM = 3
@@ -58,10 +62,13 @@ export function DailyScreen({
   user,
   progress,
   onProgress,
+  onAchievements,
   dailyPlayedToday,
   onDailyPlayed,
   puzzleDate = null,
   onBack,
+  onPlayYesterday,
+  onPlayEndless,
 }: DailyScreenProps) {
   const [phase, setPhase] = useState<Phase>('idle')
   const [countdown, setCountdown] = useState(COUNTDOWN_FROM)
@@ -344,6 +351,9 @@ export function DailyScreen({
       take,
     })
     onProgress(finished.progress)
+    if (finished.unlockedAchievements?.length) {
+      onAchievements?.(finished.unlockedAchievements)
+    }
     const prog = modeProgress(finished.progress, mode)
     setSessionScore(prog.totalScore)
     setSessionHits(prog.wins)
@@ -844,13 +854,33 @@ export function DailyScreen({
                         PRÓXIMO FILME
                       </button>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={onBack}
-                        className="mode-btn mode-btn-inline mt-4 border-cinema-gold px-6 py-2.5 font-display text-xl text-cinema-gold"
-                      >
-                        VOLTAR AO LOBBY
-                      </button>
+                      <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                        {!isArchive && onPlayYesterday ? (
+                          <button
+                            type="button"
+                            onClick={onPlayYesterday}
+                            className="mode-btn mode-btn-inline border-cinema-line px-4 py-2 font-display text-lg text-white"
+                          >
+                            ONTEM
+                          </button>
+                        ) : null}
+                        {onPlayEndless ? (
+                          <button
+                            type="button"
+                            onClick={onPlayEndless}
+                            className="mode-btn mode-btn-primary mode-btn-inline px-4 py-2 font-display text-lg"
+                          >
+                            ILIMITADO
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={onBack}
+                          className="mode-btn mode-btn-inline border-cinema-gold px-4 py-2 font-display text-lg text-cinema-gold"
+                        >
+                          LOBBY
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>

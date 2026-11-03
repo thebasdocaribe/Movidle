@@ -589,7 +589,180 @@ app.get('/api/cast/daily', async (req, res) => {
   }
 })
 
-/** Elenco infinito: filmes com cast_json preenchido */
+/** Gates do Poster infinito (vitórias por faixa → sobe o nível). */
+const CAST_ENDLESS_GATES = {
+  easy: 10,
+  mid: 20,
+  hard: 10,
+  elite: 10,
+}
+
+const CAST_ENDLESS_TIER_POOL = {
+  easy: { label: 'easy', minVotes: 8000, pool: 50, order: 'votes_desc' },
+  mid: { label: 'mid', minVotes: 2500, pool: 80, order: 'votes_desc' },
+  hard: {
+    label: 'hard',
+    minVotes: 200,
+    maxVotes: 5000,
+    pool: 100,
+    order: 'random',
+  },
+  elite: { label: 'elite', maxVotes: 1800, pool: 120, order: 'votes_asc' },
+}
+
+function emptyCastEndlessProgress() {
+  return { easyWins: 0, midWins: 0, hardWins: 0, eliteWins: 0, totalWins: 0 }
+}
+
+function normalizeCastEndlessRow(row) {
+  const easyWins = row?.easy_wins ?? 0
+  const midWins = row?.mid_wins ?? 0
+  const hardWins = row?.hard_wins ?? 0
+  const eliteWins = row?.elite_wins ?? 0
+  return {
+    easyWins,
+    midWins,
+    hardWins,
+    eliteWins,
+    totalWins: easyWins + midWins + hardWins + eliteWins,
+  }
+}
+
+/** Faixa atual: só sobe depois de cumprir o gate; não volta ao errar. */
+function castEndlessCurrentTier(progress) {
+  if (progress.easyWins < CAST_ENDLESS_GATES.easy) return 'easy'
+  if (progress.midWins < CAST_ENDLESS_GATES.mid) return 'mid'
+  if (progress.hardWins < CAST_ENDLESS_GATES.hard) return 'hard'
+  return 'elite'
+}
+
+async function getCastEndlessProgress(userId) {
+  const { rows } = await query(
+    `SELECT easy_wins, mid_wins, hard_wins, elite_wins
+     FROM user_cast_endless WHERE user_id = $1`,
+    [userId],
+  )
+  return normalizeCastEndlessRow(rows[0])
+}
+
+async function recordCastEndlessWin(userId) {
+  const before = await getCastEndlessProgress(userId)
+  const tier = castEndlessCurrentTier(before)
+  const col =
+    tier === 'easy'
+      ? 'easy_wins'
+      : tier === 'mid'
+        ? 'mid_wins'
+        : tier === 'hard'
+          ? 'hard_wins'
+          : 'elite_wins'
+
+  await query(
+    `INSERT INTO user_cast_endless (user_id, ${col}, updated_at)
+     VALUES ($1, 1, now())
+     ON CONFLICT (user_id) DO UPDATE SET
+       ${col} = user_cast_endless.${col} + 1,
+       updated_at = now()`,
+    [userId],
+  )
+  return getCastEndlessProgress(userId)
+}
+
+async function pickCastEndlessMovie(exclude, tierLabel = 'easy') {
+  const tier =
+    CAST_ENDLESS_TIER_POOL[tierLabel] || CAST_ENDLESS_TIER_POOL.easy
+  const baseWhere = `director IS NOT NULL
+      AND cast_json IS NOT NULL
+      AND cast_json != '{}'::jsonb
+      AND cast_json != '[]'::jsonb`
+  const voteExpr = `COALESCE(
+      NULLIF((cast_json -> '_tmdb' ->> 'vote_count')::numeric, 0),
+      CASE WHEN cast_json ? '_tmdb' THEN 0 ELSE 10000 END
+    )`
+
+  async function run(opts) {
+    const { minVotes, maxVotes, order, poolSize, useExclude } = opts
+    const params = []
+    const filters = [baseWhere]
+
+    if (useExclude && exclude.length > 0) {
+      params.push(exclude)
+      filters.push(`NOT (id::text = ANY($${params.length}::text[]))`)
+    }
+    if (minVotes != null) {
+      params.push(minVotes)
+      filters.push(`${voteExpr} >= $${params.length}`)
+    }
+    if (maxVotes != null) {
+      params.push(maxVotes)
+      filters.push(`${voteExpr} <= $${params.length}`)
+    }
+
+    const orderSql =
+      order === 'votes_asc'
+        ? 'vc ASC NULLS LAST, random()'
+        : order === 'random'
+          ? 'random()'
+          : 'vc DESC NULLS LAST, random()'
+
+    const { rows } = await query(
+      `SELECT * FROM (
+         SELECT id::text AS puzzle_key,
+                id AS movie_id,
+                title, title_pt, aliases, poster_path, poster_wide_path,
+                clip_path, attribution, year, director, cast_json,
+                ${voteExpr} AS vc
+         FROM movies
+         WHERE ${filters.join(' AND ')}
+         ORDER BY ${orderSql}
+         LIMIT ${Math.max(1, poolSize)}
+       ) pool
+       ORDER BY random()
+       LIMIT 1`,
+      params,
+    )
+    return rows[0] || null
+  }
+
+  const tries = [
+    {
+      minVotes: tier.minVotes ?? null,
+      maxVotes: tier.maxVotes ?? null,
+      order: tier.order,
+      poolSize: tier.pool,
+      useExclude: true,
+    },
+    {
+      minVotes: 1000,
+      maxVotes: null,
+      order: 'votes_desc',
+      poolSize: 80,
+      useExclude: true,
+    },
+    {
+      minVotes: null,
+      maxVotes: null,
+      order: 'random',
+      poolSize: 1,
+      useExclude: true,
+    },
+    {
+      minVotes: null,
+      maxVotes: null,
+      order: 'random',
+      poolSize: 1,
+      useExclude: false,
+    },
+  ]
+
+  for (const t of tries) {
+    const row = await run(t)
+    if (row) return { row, tier: tier.label }
+  }
+  return { row: null, tier: tier.label }
+}
+
+/** Elenco infinito: dificuldade pelo progresso persistido do user (gate). */
 app.get('/api/cast/next', async (req, res) => {
   try {
     const exclude = String(req.query.exclude || '')
@@ -597,50 +770,26 @@ app.get('/api/cast/next', async (req, res) => {
       .map((s) => s.trim())
       .filter(Boolean)
 
-    const params = []
-    let where = `director IS NOT NULL
-      AND cast_json IS NOT NULL
-      AND cast_json != '{}'::jsonb
-      AND cast_json != '[]'::jsonb`
-    if (exclude.length > 0) {
-      params.push(exclude)
-      where += ` AND NOT (id::text = ANY($${params.length}::text[]))`
+    let progress = emptyCastEndlessProgress()
+    let tierLabel = 'easy'
+    if (req.user?.id) {
+      progress = await getCastEndlessProgress(req.user.id)
+      tierLabel = castEndlessCurrentTier(progress)
     }
 
-    let { rows } = await query(
-      `SELECT id::text AS puzzle_key,
-              id AS movie_id,
-              title, title_pt, aliases, poster_path, poster_wide_path,
-              clip_path, attribution, year, director, cast_json
-       FROM movies
-       WHERE ${where}
-       ORDER BY random()
-       LIMIT 1`,
-      params,
-    )
+    const { row, tier } = await pickCastEndlessMovie(exclude, tierLabel)
 
-    if (rows.length === 0 && exclude.length > 0) {
-      ;({ rows } = await query(
-        `SELECT id::text AS puzzle_key,
-                id AS movie_id,
-                title, title_pt, aliases, poster_path, poster_wide_path,
-                clip_path, attribution, year, director, cast_json
-         FROM movies
-         WHERE director IS NOT NULL
-           AND cast_json IS NOT NULL
-           AND cast_json != '{}'::jsonb
-           AND cast_json != '[]'::jsonb
-         ORDER BY random()
-         LIMIT 1`,
-      ))
-    }
-
-    if (rows.length === 0) {
+    if (!row) {
       res.status(404).json({ error: 'Sem posters disponíveis' })
       return
     }
 
-    res.json(await publicCastPuzzle(rows[0], { endless: true }))
+    const payload = await publicCastPuzzle(row, { endless: true })
+    res.json({
+      ...payload,
+      difficulty: tier,
+      endlessProgress: progress,
+    })
   } catch (err) {
     res.status(500).json({ error: String(err.message) })
   }
@@ -1053,45 +1202,78 @@ function isStrongPassword(password) {
   )
 }
 
-/** Conquistas — placeholder até o sistema real. */
-const PLACEHOLDER_ACHIEVEMENTS = [
-  {
-    id: 'first_win',
-    title: 'Primeira luz',
-    desc: 'Vença qualquer modo',
-    locked: true,
-  },
-  {
-    id: 'take_one',
-    title: 'Take 1',
-    desc: 'Acerte no primeiro take',
-    locked: true,
-  },
-  {
-    id: 'daily_week',
-    title: 'Semana no set',
-    desc: '7 dailies seguidos',
-    locked: true,
-  },
-  {
-    id: 'cast_hunter',
-    title: 'Caçador de posters',
-    desc: '10 vitórias no Poster',
-    locked: true,
-  },
-  {
-    id: 'who_is_that',
-    title: 'Quem é esse?',
-    desc: 'Acerte um personagem',
-    locked: true,
-  },
-  {
-    id: 'marathon',
-    title: 'Maratonista',
-    desc: '50 pts na Maratona',
-    locked: true,
-  },
-]
+function buildAchievements({ progress, endless }) {
+  const dailyWins = progress?.daily?.wins ?? 0
+  const classicScore = progress?.classic?.totalScore ?? 0
+  const castWins = progress?.cast?.wins ?? 0
+  const characterWins = progress?.character?.wins ?? 0
+  const endlessTotal = endless?.totalWins ?? 0
+  const anyWin =
+    dailyWins + castWins + characterWins + (classicScore > 0 ? 1 : 0) > 0
+
+  return [
+    {
+      id: 'first_win',
+      title: 'Primeira luz',
+      desc: 'Vença qualquer modo',
+      locked: !anyWin,
+    },
+    {
+      id: 'take_one',
+      title: 'Take 1',
+      desc: 'Acerte no primeiro take',
+      locked: true,
+    },
+    {
+      id: 'daily_week',
+      title: 'Semana no set',
+      desc: '7 dailies seguidos',
+      locked: true,
+    },
+    {
+      id: 'cast_hunter',
+      title: 'Caçador de posters',
+      desc: '10 vitórias no Poster',
+      locked: castWins < 10,
+    },
+    {
+      id: 'endless_10',
+      title: 'Cartaz quente',
+      desc: 'Acerte 10 posters do modo infinito',
+      locked: endlessTotal < 10,
+    },
+    {
+      id: 'endless_30',
+      title: 'Sala de montagem',
+      desc: 'Acerte 30 posters do modo infinito',
+      locked: endlessTotal < 30,
+    },
+    {
+      id: 'endless_40',
+      title: 'Cópia final',
+      desc: 'Acerte 40 posters do modo infinito',
+      locked: endlessTotal < 40,
+    },
+    {
+      id: 'endless_50',
+      title: 'Lenda do set',
+      desc: 'Acerte 50 posters do modo infinito',
+      locked: endlessTotal < 50,
+    },
+    {
+      id: 'who_is_that',
+      title: 'Quem é esse?',
+      desc: 'Acerte um personagem',
+      locked: characterWins < 1,
+    },
+    {
+      id: 'marathon',
+      title: 'Maratonista',
+      desc: '50 pts na Maratona',
+      locked: classicScore < 50,
+    },
+  ]
+}
 
 function publicUser(user) {
   return {
@@ -1105,7 +1287,8 @@ function publicUser(user) {
   }
 }
 
-function publicProfileCard(user, progress = null) {
+async function publicProfileCard(user, progress = null) {
+  const endless = await getCastEndlessProgress(user.id)
   return {
     id: user.id,
     username: user.username,
@@ -1113,7 +1296,8 @@ function publicProfileCard(user, progress = null) {
     avatarUrl: user.avatar_url || null,
     bio: user.bio || '',
     progress: progress || null,
-    achievements: PLACEHOLDER_ACHIEVEMENTS,
+    endlessProgress: endless,
+    achievements: buildAchievements({ progress, endless }),
   }
 }
 
@@ -1510,7 +1694,7 @@ app.get('/api/users/:username', async (req, res) => {
       return
     }
     const progress = await getProgress(user.id)
-    res.json({ profile: publicProfileCard(user, progress) })
+    res.json({ profile: await publicProfileCard(user, progress) })
   } catch (err) {
     res.status(500).json({ error: String(err.message) })
   }
@@ -1572,6 +1756,13 @@ app.post('/api/round/finish', authRequired, async (req, res) => {
     }
 
     let scored = { points: 0, multiplier: 1, nextStreak: 0 }
+
+    const progressBefore = await getProgress(req.user.id)
+    const endlessBefore = await getCastEndlessProgress(req.user.id)
+    const achievementsBefore = buildAchievements({
+      progress: progressBefore,
+      endless: endlessBefore,
+    })
 
     if (!isArchive) {
       const { rows: progRows } = await query(
@@ -1642,12 +1833,34 @@ app.post('/api/round/finish', authRequired, async (req, res) => {
       )
     }
 
+    let endlessProgress = endlessBefore
+    if (
+      mode === 'cast' &&
+      endlessRound &&
+      outcome === 'win' &&
+      !isArchive
+    ) {
+      endlessProgress = await recordCastEndlessWin(req.user.id)
+    }
+
     const progress = await getProgress(req.user.id)
+    const achievementsAfter = buildAchievements({
+      progress,
+      endless: endlessProgress,
+    })
+    const unlockedAchievements = achievementsAfter.filter((a) => {
+      if (a.locked) return false
+      const prev = achievementsBefore.find((b) => b.id === a.id)
+      return Boolean(prev?.locked)
+    })
+
     res.json({
       points: scored.points,
       multiplier: scored.multiplier,
       archive: isArchive,
       progress,
+      endlessProgress,
+      unlockedAchievements,
       title: puzzle.title,
       titlePt: primaryTitle(puzzle),
       year: puzzle.year,

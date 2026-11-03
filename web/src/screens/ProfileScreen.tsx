@@ -392,9 +392,6 @@ export function ProfileScreen({
                 <h2 className="font-display text-2xl text-cinema-gold">
                   Conquistas
                 </h2>
-                <span className="text-[10px] font-bold tracking-wide text-cinema-muted uppercase">
-                  Em breve
-                </span>
               </div>
               <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {achievements.map((a) => (
