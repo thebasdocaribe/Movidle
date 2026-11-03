@@ -114,7 +114,6 @@ export function AppShell({
         onBrowseProfiles={onBrowseProfiles}
         onOscars={onOscars}
         loggedIn={loggedIn}
-        username={username}
         onLogout={onLogout}
       />
 

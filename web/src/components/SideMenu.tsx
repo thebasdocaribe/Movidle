@@ -9,7 +9,6 @@ type SideMenuProps = {
   onBrowseProfiles?: () => void
   onOscars?: () => void
   loggedIn: boolean
-  username?: string | null
   onLogout?: () => void
 }
 
@@ -24,7 +23,6 @@ export function SideMenu({
   onBrowseProfiles,
   onOscars,
   loggedIn,
-  username,
   onLogout,
 }: SideMenuProps) {
   if (!open) return null
