@@ -34,8 +34,10 @@ export function PixelPoster({
 
     function paint() {
       if (cancelled || !canvas || !wrap) return
-      const cw = wrap.clientWidth || 640
-      const ch = wrap.clientHeight || 360
+      const cw = Math.max(1, wrap.clientWidth || 640)
+      const ch = Math.max(1, wrap.clientHeight || 360)
+      if (!img.complete || !img.naturalWidth || !img.naturalHeight) return
+
       canvas.width = cw
       canvas.height = ch
       const ctx = canvas.getContext('2d')
@@ -47,15 +49,18 @@ export function PixelPoster({
       if (sharp || columns <= 1) {
         ctx.imageSmoothingEnabled = true
         // contain
-        const scale = Math.min(cw / img.width, ch / img.height)
-        const dw = img.width * scale
-        const dh = img.height * scale
+        const scale = Math.min(cw / img.naturalWidth, ch / img.naturalHeight)
+        const dw = Math.max(1, img.naturalWidth * scale)
+        const dh = Math.max(1, img.naturalHeight * scale)
         ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh)
         return
       }
 
       const cols = Math.max(6, Math.floor(columns))
-      const rows = Math.max(4, Math.round((cols * img.height) / img.width))
+      const rows = Math.max(
+        4,
+        Math.round((cols * img.naturalHeight) / img.naturalWidth) || 4,
+      )
       const tmp = document.createElement('canvas')
       tmp.width = cols
       tmp.height = rows
@@ -65,9 +70,9 @@ export function PixelPoster({
       tctx.drawImage(img, 0, 0, cols, rows)
 
       ctx.imageSmoothingEnabled = false
-      const scale = Math.min(cw / img.width, ch / img.height)
-      const dw = img.width * scale
-      const dh = img.height * scale
+      const scale = Math.min(cw / img.naturalWidth, ch / img.naturalHeight)
+      const dw = Math.max(1, img.naturalWidth * scale)
+      const dh = Math.max(1, img.naturalHeight * scale)
       const dx = (cw - dw) / 2
       const dy = (ch - dh) / 2
       ctx.drawImage(tmp, dx, dy, dw, dh)

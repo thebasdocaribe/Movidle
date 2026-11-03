@@ -7,6 +7,40 @@ import {
   todayBRT,
 } from '../components/DayCalendarModal'
 
+/** Countdown até meia-noite America/Sao_Paulo (reset dos diários). */
+function useDailyResetCountdown() {
+  const [label, setLabel] = useState('—:—:—')
+
+  useEffect(() => {
+    function tick() {
+      const brtParts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Sao_Paulo',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hourCycle: 'h23',
+      }).formatToParts(new Date())
+
+      const get = (type: string) =>
+        Number(brtParts.find((p) => p.type === type)?.value || 0)
+      const secToday = get('hour') * 3600 + get('minute') * 60 + get('second')
+      let left = 24 * 3600 - secToday
+      if (left <= 0) left = 24 * 3600
+
+      const hh = String(Math.floor(left / 3600)).padStart(2, '0')
+      const mm = String(Math.floor((left % 3600) / 60)).padStart(2, '0')
+      const ss = String(left % 60).padStart(2, '0')
+      setLabel(`${hh}:${mm}:${ss}`)
+    }
+
+    tick()
+    const id = window.setInterval(tick, 1000)
+    return () => window.clearInterval(id)
+  }, [])
+
+  return label
+}
+
 type HubScreenProps = {
   user: AuthUser | null
   progress: ProgressMap
@@ -41,6 +75,7 @@ export function HubScreen({
     'daily' | 'cast' | 'character' | null
   >(null)
   const today = todayBRT()
+  const dailyResetIn = useDailyResetCountdown()
   /** Personagem: contagem começa em 30/10/2026 (dia 1 = Odeo). */
   const characterEpoch = '2026-10-30'
 
@@ -85,9 +120,15 @@ export function HubScreen({
         {/* Gamedle-like: Diários | Ilimitados+Multi */}
         <div className="grid gap-3 md:grid-cols-2 md:items-start md:gap-4">
           <section className="panel-frame p-2.5 sm:p-3">
-            <h2 className="font-display mb-2 border-b border-cinema-line pb-1.5 text-2xl text-cinema-gold">
-              Diários
-            </h2>
+            <div className="mb-2 border-b border-cinema-line pb-1.5">
+              <h2 className="font-display text-2xl text-cinema-gold">Diários</h2>
+              <p className="mt-0.5 text-[11px] font-semibold tracking-wide text-cinema-muted">
+                Próxima:{' '}
+                <span className="font-mono text-cinema-cyan tabular-nums">
+                  {dailyResetIn}
+                </span>
+              </p>
+            </div>
             <div className="flex flex-col gap-2">
               <ModeButton
                 title="CLÁSSICO"

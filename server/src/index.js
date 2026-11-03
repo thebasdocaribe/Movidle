@@ -116,7 +116,8 @@ const POINTS_BY_TAKE = [100, 50, 25, 15, 10, 5]
 const CAST_MAX_TAKE = 7
 
 app.use(cors())
-app.use(express.json())
+/** Avatares vão em data URL no JSON — default 100kb do Express estoura (413). */
+app.use(express.json({ limit: '1mb' }))
 app.use(authOptional)
 
 function todayBRT() {
@@ -1399,8 +1400,8 @@ app.patch('/api/me/profile', authRequired, async (req, res) => {
     let avatarUrl = req.body?.avatarUrl
     if (avatarUrl !== undefined && avatarUrl != null) {
       avatarUrl = String(avatarUrl).trim()
-      if (avatarUrl.length > 350_000) {
-        res.status(400).json({ error: 'Avatar muito grande (máx ~250KB)' })
+      if (avatarUrl.length > 900_000) {
+        res.status(400).json({ error: 'Avatar muito grande — use outra foto' })
         return
       }
       if (avatarUrl === '') avatarUrl = null

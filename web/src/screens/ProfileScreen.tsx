@@ -19,6 +19,42 @@ function avatarFallback(name: string) {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1a0a12&color=ffc44d&size=160&bold=true`
 }
 
+/** Reduz avatar pra ~256px JPEG — evita 413 no /api/me/profile. */
+function compressAvatarFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const max = 256
+      const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight))
+      const w = Math.max(1, Math.round(img.naturalWidth * scale))
+      const h = Math.max(1, Math.round(img.naturalHeight * scale))
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        reject(new Error('Canvas indisponível'))
+        return
+      }
+      ctx.drawImage(img, 0, 0, w, h)
+      let quality = 0.85
+      let dataUrl = canvas.toDataURL('image/jpeg', quality)
+      while (dataUrl.length > 220_000 && quality > 0.45) {
+        quality -= 0.1
+        dataUrl = canvas.toDataURL('image/jpeg', quality)
+      }
+      resolve(dataUrl)
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('Não deu pra ler a imagem'))
+    }
+    img.src = url
+  })
+}
+
 function CameraIcon({ className = 'h-5 w-5' }: { className?: string }) {
   return (
     <svg
@@ -115,25 +151,26 @@ export function ProfileScreen({
     }
   }
 
-  function onFile(file: File | null) {
+  async function onFile(file: File | null) {
     if (!file || !isOwn) return
     if (!file.type.startsWith('image/')) {
       setError('Escolha uma imagem')
       return
     }
-    if (file.size > 220_000) {
-      setError('Foto máx. ~200KB — comprime um pouco e tenta de novo')
-      return
-    }
-    const reader = new FileReader()
-    reader.onload = () => {
-      const dataUrl = String(reader.result || '')
-      if (!dataUrl) return
+    setBusy(true)
+    setError(null)
+    try {
+      const dataUrl = await compressAvatarFile(file)
       setAvatarUrl(dataUrl)
-      if (editing) return
-      void persistAvatar(dataUrl)
+      if (editing) {
+        setBusy(false)
+        return
+      }
+      await persistAvatar(dataUrl)
+    } catch (err) {
+      setError((err as Error).message || 'Falha ao processar a foto')
+      setBusy(false)
     }
-    reader.readAsDataURL(file)
   }
 
   async function save(e: FormEvent) {
