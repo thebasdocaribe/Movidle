@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { seedCharacterCatalog } from './characterCatalog.js'
+import { seedMoviesCatalog } from './moviesCatalog.js'
 import { pool } from './db.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -62,6 +63,15 @@ export async function migrate() {
       }
     } else {
       console.log(`[migrate] catálogo já tem ${countRows[0].n} filmes`)
+    }
+
+    try {
+      const movieStats = await seedMoviesCatalog(client)
+      console.log(
+        `[migrate] filmes catálogo: +${movieStats.inserted} novos, ${movieStats.updated} atualizados (${movieStats.total} no dump)`,
+      )
+    } catch (err) {
+      console.warn('[migrate] seed filmes:', err.message)
     }
 
     for (const [title, clipPath] of CLIP_BY_TITLE) {

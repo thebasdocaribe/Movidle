@@ -246,39 +246,37 @@ async function ensureDailyPuzzle(dateStr) {
   return getPuzzleByDate(dateStr)
 }
 
-/** Elenco diário: pool próprio (não reusa o clássico). */
+/** Poster diário: pool próprio (nunca o mesmo filme do clássico no mesmo dia). */
 async function ensureCastDaily(dateStr) {
-  const existing = await getCastPuzzleByDate(dateStr)
-  if (existing) return existing
+  const classicSameDay = await getPuzzleByDate(dateStr)
+  const classicId = classicSameDay?.movie_id
+    ? String(classicSameDay.movie_id)
+    : null
 
-  // Dias legados: quem já jogou elenco quando ele = clássico → congela o clássico
-  const { rows: legacyPlays } = await query(
-    `SELECT 1 FROM user_cast_daily_plays WHERE puzzle_date = $1::date LIMIT 1`,
-    [dateStr],
-  )
-  if (legacyPlays.length > 0) {
-    const classic = await getPuzzleByDate(dateStr)
-    if (classic?.movie_id) {
-      await query(
-        `INSERT INTO cast_daily (puzzle_date, movie_id)
-         VALUES ($1::date, $2::uuid)
-         ON CONFLICT (puzzle_date) DO NOTHING`,
-        [dateStr, classic.movie_id],
-      )
-      await query(
-        `INSERT INTO daily_pool_used (mode, item_id, used_on)
-         VALUES ('cast', $1::uuid, $2::date)
-         ON CONFLICT (mode, item_id) DO NOTHING`,
-        [classic.movie_id, dateStr],
-      )
-      return getCastPuzzleByDate(dateStr)
-    }
+  const existing = await getCastPuzzleByDate(dateStr)
+  if (existing) {
+    const sameAsClassic =
+      classicId && String(existing.movie_id) === classicId
+    if (!sameAsClassic) return existing
+
+    // Bug legado: cast = clássico. Re-sorteia só se ninguém jogou poster hoje.
+    const { rows: plays } = await query(
+      `SELECT 1 FROM user_cast_daily_plays WHERE puzzle_date = $1::date LIMIT 1`,
+      [dateStr],
+    )
+    if (plays.length > 0) return existing
+
+    await query(`DELETE FROM cast_daily WHERE puzzle_date = $1::date`, [
+      dateStr,
+    ])
+    await query(
+      `DELETE FROM daily_pool_used
+       WHERE mode = 'cast' AND item_id = $1::uuid AND used_on = $2::date`,
+      [existing.movie_id, dateStr],
+    )
   }
 
-  const classicSameDay = await getPuzzleByDate(dateStr)
-  const excludeIds = classicSameDay?.movie_id
-    ? [String(classicSameDay.movie_id)]
-    : []
+  const excludeIds = classicId ? [classicId] : []
 
   const movieId = await drawWithoutReplacement({
     mode: 'cast',

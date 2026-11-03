@@ -138,13 +138,19 @@ function PersonThumb({
   imageUrl?: string | null
   show: boolean
 }) {
-  const [src, setSrc] = useState(
-    imageUrl || (name && name !== '—' ? avatarUrl(name) : ''),
-  )
+  // /cast/*.jpg local quase nunca existe — não usar como src (cai em iniciais)
+  const resolvedUrl =
+    imageUrl && !imageUrl.startsWith('/cast/')
+      ? imageUrl
+      : name && name !== '—'
+        ? avatarUrl(name)
+        : ''
+
+  const [src, setSrc] = useState(resolvedUrl)
 
   useEffect(() => {
-    setSrc(imageUrl || (name && name !== '—' ? avatarUrl(name) : ''))
-  }, [imageUrl, name])
+    setSrc(resolvedUrl)
+  }, [resolvedUrl])
 
   if (!show) {
     return (
