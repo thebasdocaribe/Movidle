@@ -16,6 +16,7 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import pg from 'pg'
+import { buildCastJsonFromTmdb } from './lib/castFromTmdb.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 dotenv.config({ path: path.join(__dirname, '../.env') })
@@ -24,7 +25,6 @@ const ROOT = path.resolve(__dirname, '../..')
 const CATALOG_PATH = path.join(__dirname, '../data/movies_catalog.json')
 const TMDB = 'https://api.themoviedb.org/3'
 const IMG = 'https://image.tmdb.org/t/p/w500'
-const PERSON_IMG = 'https://image.tmdb.org/t/p/w185'
 
 const args = process.argv.slice(2)
 const dryRun = args.includes('--dry-run')
@@ -89,86 +89,6 @@ function yearOf(m) {
   const d = m.release_date || ''
   const y = Number(d.slice(0, 4))
   return Number.isFinite(y) ? y : null
-}
-
-function regionFrom(details) {
-  const c = details.production_countries?.[0]?.iso_3166_1
-  const map = {
-    US: 'EUA',
-    BR: 'Brasil',
-    GB: 'Reino Unido',
-    UK: 'Reino Unido',
-    FR: 'França',
-    DE: 'Alemanha',
-    IT: 'Itália',
-    ES: 'Espanha',
-    JP: 'Japão',
-    KR: 'Coreia do Sul',
-    CN: 'China',
-    MX: 'México',
-    CA: 'Canadá',
-    AU: 'Austrália',
-    NZ: 'Nova Zelândia',
-    SE: 'Suécia',
-    NO: 'Noruega',
-    DK: 'Dinamarca',
-    FI: 'Finlândia',
-    IE: 'Irlanda',
-    NL: 'Holanda',
-    BE: 'Bélgica',
-    PT: 'Portugal',
-    AR: 'Argentina',
-    CL: 'Chile',
-    IN: 'Índia',
-    LV: 'Letônia',
-  }
-  return map[c] || c || '—'
-}
-
-function personSlot(p) {
-  if (!p?.name) return null
-  return {
-    name: p.name,
-    image_url: p.profile_path ? `${PERSON_IMG}${p.profile_path}` : null,
-  }
-}
-
-function buildCastJson(details, credits, meta) {
-  const crew = credits.crew || []
-  const cast = credits.cast || []
-  const writers = crew.filter(
-    (c) =>
-      c.job === 'Screenplay' ||
-      c.job === 'Writer' ||
-      c.job === 'Story' ||
-      c.department === 'Writing',
-  )
-  const writer = writers[0] || null
-  const lead = cast[0] || null
-  const secondary = cast[1] || null
-  const antHit =
-    cast.find((c) =>
-      /antagon|villain|killer|monster|murder/i.test(c.character || ''),
-    ) ||
-    cast[2] ||
-    null
-  const director = crew.find((c) => c.job === 'Director') || null
-
-  return {
-    region: regionFrom(details),
-    director_image_url: director?.profile_path
-      ? `${PERSON_IMG}${director.profile_path}`
-      : null,
-    screenwriter: personSlot(writer),
-    protagonist: personSlot(lead),
-    antagonist: antHit ? personSlot(antHit) : { none: true },
-    secondary: personSlot(secondary),
-    _tmdb: {
-      id: meta.id,
-      popularity: meta.popularity ?? details.popularity ?? 0,
-      vote_count: meta.vote_count ?? details.vote_count ?? 0,
-    },
-  }
 }
 
 function directorOf(credits) {
@@ -573,7 +493,7 @@ async function main() {
         continue
       }
 
-      const castJson = buildCastJson(details, credits, c)
+      const castJson = buildCastJsonFromTmdb(details, credits, c)
       const director = directorOf(credits)
       const aliases = aliasesFor(details)
       if (titlePt && titlePt !== title) aliases.push(titlePt)

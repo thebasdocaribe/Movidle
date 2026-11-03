@@ -9383,23 +9383,28 @@
     "director": "David Yates",
     "cast_json": {
       "region": "Reino Unido",
-      "secondary": {
-        "name": "Emma Watson",
-        "image_url": "https://image.tmdb.org/t/p/w185/mf0OANvWYSzU1d8yggrhyw8IbIz.jpg"
-      },
-      "antagonist": {
-        "name": "Rupert Grint",
-        "image_url": "https://image.tmdb.org/t/p/w185/iFlkpTaOF6fGLqxz8b0PhI0i0zN.jpg"
+      "director_image_url": "https://image.tmdb.org/t/p/w185/hAHOxR0NK4cZDumqNIpDoEdGVAh.jpg",
+      "screenwriter": {
+        "name": "Steve Kloves",
+        "image_url": "https://image.tmdb.org/t/p/w185/cqXWKsUKcAClzlwzMuShLWVBQPz.jpg"
       },
       "protagonist": {
         "name": "Daniel Radcliffe",
         "image_url": "https://image.tmdb.org/t/p/w185/uUFfo8RANo7tuckB6AZAnESne55.jpg"
       },
-      "screenwriter": {
-        "name": "J.K. Rowling",
-        "image_url": "https://image.tmdb.org/t/p/w185/8VDx3K8NBGJDEWr4KdsGsuT8wuj.jpg"
+      "antagonist": {
+        "name": "Ralph Fiennes",
+        "image_url": "https://image.tmdb.org/t/p/w185/tJr9GcmGNHhLVVEH3i7QYbj6hBi.jpg"
       },
-      "director_image_url": "https://image.tmdb.org/t/p/w185/hAHOxR0NK4cZDumqNIpDoEdGVAh.jpg"
+      "secondary": {
+        "name": "Emma Watson",
+        "image_url": "https://image.tmdb.org/t/p/w185/mf0OANvWYSzU1d8yggrhyw8IbIz.jpg"
+      },
+      "_tmdb": {
+        "id": 12445,
+        "popularity": 35.2868,
+        "vote_count": 22681
+      }
     }
   },
   {
@@ -16861,8 +16866,8 @@
         "image_url": "https://image.tmdb.org/t/p/w185/uUFfo8RANo7tuckB6AZAnESne55.jpg"
       },
       "antagonist": {
-        "name": "Emma Watson",
-        "image_url": "https://image.tmdb.org/t/p/w185/mf0OANvWYSzU1d8yggrhyw8IbIz.jpg"
+        "name": "Ian Hart",
+        "image_url": "https://image.tmdb.org/t/p/w185/xMC8aPDwhEZcjRHEFcgytSr3BzM.jpg"
       },
       "secondary": {
         "name": "Rupert Grint",
@@ -17598,8 +17603,8 @@
         "image_url": "https://image.tmdb.org/t/p/w185/uUFfo8RANo7tuckB6AZAnESne55.jpg"
       },
       "antagonist": {
-        "name": "Rupert Grint",
-        "image_url": "https://image.tmdb.org/t/p/w185/iFlkpTaOF6fGLqxz8b0PhI0i0zN.jpg"
+        "name": "Ralph Fiennes",
+        "image_url": "https://image.tmdb.org/t/p/w185/tJr9GcmGNHhLVVEH3i7QYbj6hBi.jpg"
       },
       "secondary": {
         "name": "Emma Watson",
@@ -17713,16 +17718,16 @@
       "region": "Reino Unido",
       "director_image_url": "https://image.tmdb.org/t/p/w185/yCyEz90NqjEXKZ7HYcEhDXlLlPc.jpg",
       "screenwriter": {
-        "name": "J.K. Rowling",
-        "image_url": "https://image.tmdb.org/t/p/w185/8VDx3K8NBGJDEWr4KdsGsuT8wuj.jpg"
+        "name": "Steve Kloves",
+        "image_url": "https://image.tmdb.org/t/p/w185/cqXWKsUKcAClzlwzMuShLWVBQPz.jpg"
       },
       "protagonist": {
         "name": "Daniel Radcliffe",
         "image_url": "https://image.tmdb.org/t/p/w185/uUFfo8RANo7tuckB6AZAnESne55.jpg"
       },
       "antagonist": {
-        "name": "Emma Watson",
-        "image_url": "https://image.tmdb.org/t/p/w185/mf0OANvWYSzU1d8yggrhyw8IbIz.jpg"
+        "name": "Christian Coulson",
+        "image_url": "https://image.tmdb.org/t/p/w185/kFwnSTUCCRFWSvqQAU1cykrLqPK.jpg"
       },
       "secondary": {
         "name": "Rupert Grint",
@@ -18048,8 +18053,8 @@
         "image_url": "https://image.tmdb.org/t/p/w185/uUFfo8RANo7tuckB6AZAnESne55.jpg"
       },
       "antagonist": {
-        "name": "Emma Watson",
-        "image_url": "https://image.tmdb.org/t/p/w185/mf0OANvWYSzU1d8yggrhyw8IbIz.jpg"
+        "name": "Timothy Spall",
+        "image_url": "https://image.tmdb.org/t/p/w185/pcR6t8kpAgGwIUo4UjlP5gyKkNA.jpg"
       },
       "secondary": {
         "name": "Rupert Grint",
@@ -18171,8 +18176,8 @@
         "image_url": "https://image.tmdb.org/t/p/w185/uUFfo8RANo7tuckB6AZAnESne55.jpg"
       },
       "antagonist": {
-        "name": "Emma Watson",
-        "image_url": "https://image.tmdb.org/t/p/w185/mf0OANvWYSzU1d8yggrhyw8IbIz.jpg"
+        "name": "Ralph Fiennes",
+        "image_url": "https://image.tmdb.org/t/p/w185/tJr9GcmGNHhLVVEH3i7QYbj6hBi.jpg"
       },
       "secondary": {
         "name": "Rupert Grint",
@@ -18663,8 +18668,8 @@
         "image_url": "https://image.tmdb.org/t/p/w185/uUFfo8RANo7tuckB6AZAnESne55.jpg"
       },
       "antagonist": {
-        "name": "Emma Watson",
-        "image_url": "https://image.tmdb.org/t/p/w185/mf0OANvWYSzU1d8yggrhyw8IbIz.jpg"
+        "name": "Frank Dillane",
+        "image_url": "https://image.tmdb.org/t/p/w185/eitUc8e045y8dDfBSm681hU471g.jpg"
       },
       "secondary": {
         "name": "Rupert Grint",
@@ -19114,8 +19119,8 @@
         "image_url": "https://image.tmdb.org/t/p/w185/uUFfo8RANo7tuckB6AZAnESne55.jpg"
       },
       "antagonist": {
-        "name": "Emma Watson",
-        "image_url": "https://image.tmdb.org/t/p/w185/mf0OANvWYSzU1d8yggrhyw8IbIz.jpg"
+        "name": "Ralph Fiennes",
+        "image_url": "https://image.tmdb.org/t/p/w185/tJr9GcmGNHhLVVEH3i7QYbj6hBi.jpg"
       },
       "secondary": {
         "name": "Rupert Grint",
