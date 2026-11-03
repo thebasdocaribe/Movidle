@@ -1,11 +1,12 @@
 /**
- * TMDB person photo lookup (server-side).
- * Env: TMDB_API_KEY (v3) — never expose to the browser.
- * https://www.themoviedb.org/settings/api
+ * TMDB person photo lookup (fallback).
+ * Preferir image_url já gravada no cast_json (credits.profile_path).
+ * Env: TMDB_API_KEY (v3)
  */
 
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w185'
 const cache = new Map()
+const LOOKUP_TIMEOUT_MS = 450
 
 function apiKey() {
   return process.env.TMDB_API_KEY?.trim() || ''
@@ -30,7 +31,9 @@ export async function fetchPersonPhotoUrl(name) {
     url.searchParams.set('query', q)
     url.searchParams.set('include_adult', 'false')
 
-    const res = await fetch(url)
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS),
+    })
     if (!res.ok) {
       cache.set(cacheKey, null)
       return null
@@ -46,15 +49,30 @@ export async function fetchPersonPhotoUrl(name) {
   }
 }
 
-/** Local /cast/*.jpg placeholders → try TMDB; keep absolute http(s) URLs. */
 export function shouldLookupTmdb(imageUrl) {
   if (!imageUrl) return true
-  if (imageUrl.startsWith('/cast/')) return true
+  if (String(imageUrl).startsWith('http')) return false
+  if (String(imageUrl).startsWith('/cast/')) return true
   return false
 }
 
+/**
+ * Só busca TMDB para slots sem URL https.
+ * Se todos já têm foto baked, retorna na hora (sem latência de rede).
+ */
 export async function enrichHintsWithTmdb(hints) {
-  if (!tmdbConfigured() || !Array.isArray(hints)) return hints
+  if (!Array.isArray(hints)) return hints
+  if (!tmdbConfigured()) return hints
+
+  const needs = hints.filter(
+    (h) =>
+      h &&
+      !h.empty &&
+      h.kind !== 'region' &&
+      h.kind !== 'year' &&
+      shouldLookupTmdb(h.imageUrl),
+  )
+  if (needs.length === 0) return hints
 
   return Promise.all(
     hints.map(async (h) => {

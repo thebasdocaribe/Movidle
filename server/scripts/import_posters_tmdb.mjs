@@ -117,9 +117,14 @@ function regionFrom(details) {
   return map[c] || c || '—'
 }
 
+const PERSON_IMG = 'https://image.tmdb.org/t/p/w185'
+
 function personSlot(p) {
   if (!p?.name) return null
-  return { name: p.name, image_url: null }
+  return {
+    name: p.name,
+    image_url: p.profile_path ? `${PERSON_IMG}${p.profile_path}` : null,
+  }
 }
 
 function buildCastJson(details, credits) {
@@ -141,9 +146,13 @@ function buildCastJson(details, credits) {
     cast.find((c) => /antagon|villain|killer|monster/i.test(c.character || '')) ||
     cast[2] ||
     null
+  const director = crew.find((c) => c.job === 'Director') || null
 
   return {
     region: regionFrom(details),
+    director_image_url: director?.profile_path
+      ? `${PERSON_IMG}${director.profile_path}`
+      : null,
     screenwriter: personSlot(writer),
     protagonist: personSlot(lead),
     antagonist: antHit ? personSlot(antHit) : { none: true },

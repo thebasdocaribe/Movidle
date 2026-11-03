@@ -46,7 +46,14 @@ import {
   sendVerifyEmail,
 } from './mail.js'
 import { migrate } from './migrate.js'
-import { matchesCharacter, matchesTitle, normalizeGuess } from './normalize.js'
+import {
+  formatCharacterLabel,
+  formatMovieLabel,
+  matchesCharacter,
+  matchesTitle,
+  normalizeGuess,
+  primaryTitle,
+} from './normalize.js'
 import { CAST_POINTS, scoreRound } from './scoring.js'
 
 const CHARACTER_MAX_TAKE = 6
@@ -317,19 +324,10 @@ async function getMovieById(movieId) {
   return rows[0] || null
 }
 
-function slugifyPerson(name) {
-  return String(name || '')
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-}
-
-function personThumb(name, imageUrl) {
-  if (imageUrl) return imageUrl
-  if (!name || name === '—') return null
-  return `/cast/${slugifyPerson(name)}.jpg`
+function personThumb(_name, imageUrl) {
+  if (imageUrl && String(imageUrl).startsWith('http')) return imageUrl
+  if (imageUrl && !String(imageUrl).startsWith('/cast/')) return imageUrl
+  return null
 }
 
 function creditName(entry, emptyLabel) {
@@ -526,7 +524,7 @@ app.get('/api/daily', async (req, res) => {
           take: play.take,
           points: play.points,
           title: puzzle.title,
-          titlePt: puzzle.title_pt,
+          titlePt: primaryTitle(puzzle),
           year: puzzle.year,
           posterUrl: puzzle.poster_path,
         }
@@ -570,7 +568,7 @@ app.get('/api/cast/daily', async (req, res) => {
           take: play.take,
           points: play.points,
           title: puzzle.title,
-          titlePt: puzzle.title_pt,
+          titlePt: primaryTitle(puzzle),
           year: puzzle.year,
           posterUrl: puzzle.poster_wide_path || puzzle.poster_path,
         }
@@ -692,7 +690,7 @@ app.post('/api/cast/guess', async (req, res) => {
       ...(reveal
         ? {
             title: puzzle.title,
-            titlePt: puzzle.title_pt,
+            titlePt: primaryTitle(puzzle),
             year: puzzle.year,
             posterUrl: puzzle.poster_path,
           }
@@ -797,7 +795,7 @@ app.get('/api/character/daily', async (req, res) => {
           take: play.take,
           points: play.points,
           name: ch.name,
-          namePt: ch.name_pt,
+          namePt: ch.name_pt || ch.name,
           filmTitle: ch.film_title,
           imageUrl: ch.image_path,
         }
@@ -875,12 +873,8 @@ app.get('/api/character/autocomplete', async (req, res) => {
     res.json({
       suggestions: rows.map((r) => ({
         title: r.name,
-        titlePt: r.name_pt,
-        label: r.name_pt
-          ? `${r.name_pt} (${r.name})`
-          : r.film_title
-            ? `${r.name} · ${r.film_title}`
-            : r.name,
+        titlePt: r.name_pt || r.name,
+        label: formatCharacterLabel(r),
       })),
     })
   } catch (err) {
@@ -998,7 +992,7 @@ app.post('/api/character/guess', async (req, res) => {
       ...(reveal
         ? {
             name: ch.name,
-            namePt: ch.name_pt,
+            namePt: ch.name_pt || ch.name,
             filmTitle: ch.film_title,
             imageUrl: ch.image_path,
           }
@@ -1654,7 +1648,7 @@ app.post('/api/round/finish', authRequired, async (req, res) => {
       archive: isArchive,
       progress,
       title: puzzle.title,
-      titlePt: puzzle.title_pt,
+      titlePt: primaryTitle(puzzle),
       year: puzzle.year,
       posterUrl: puzzle.poster_path,
     })
@@ -1742,19 +1736,20 @@ app.get('/api/autocomplete', async (req, res) => {
         const starts = n.startsWith(q)
         const rank = starts ? 0 : 1
         if (!best || rank < best.rank || (rank === best.rank && n < best.norm)) {
-          best = { label: c, norm: n, rank }
+          best = { norm: n, rank }
         }
       }
       if (best) {
+        const titlePt = row.title_pt || row.title
         scored.push({
           movieId: row.movie_id,
           title: row.title,
-          titlePt: row.title_pt,
+          titlePt,
           year: row.year,
           posterUrl: row.poster_path,
-          label: row.year != null ? `${best.label} (${row.year})` : best.label,
+          label: formatMovieLabel(row),
           rank: best.rank,
-          sortKey: best.norm,
+          sortKey: normalizeGuess(titlePt || row.title),
         })
       }
     }
@@ -1817,7 +1812,7 @@ app.post('/api/guess', async (req, res) => {
       ...(reveal
         ? {
             title: puzzle.title,
-            titlePt: puzzle.title_pt,
+            titlePt: primaryTitle(puzzle),
             year: puzzle.year,
             posterUrl: puzzle.poster_path,
           }
@@ -1845,7 +1840,7 @@ app.post('/api/give-up', async (req, res) => {
     res.json({
       points: 0,
       title: puzzle.title,
-      titlePt: puzzle.title_pt,
+      titlePt: primaryTitle(puzzle),
       year: puzzle.year,
       posterUrl: puzzle.poster_path,
     })

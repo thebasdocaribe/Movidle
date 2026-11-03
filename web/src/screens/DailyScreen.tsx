@@ -536,7 +536,7 @@ export function DailyScreen({
   }
 
   function pickSuggestion(item: AutocompleteItem) {
-    setGuess(item.title)
+    setGuess(item.titlePt || item.title)
     setSuggestions([])
     setShowSuggestions(false)
     guessRef.current?.focus()
