@@ -557,7 +557,7 @@ app.get('/api/cast/daily', async (req, res) => {
     const date = String(req.query.date || todayBRT())
     const puzzle = await ensureCastDaily(date)
     if (!puzzle) {
-      res.status(404).json({ error: 'Sem filmes com elenco cadastrado' })
+      res.status(404).json({ error: 'Sem posters com elenco cadastrado' })
       return
     }
 
@@ -639,7 +639,7 @@ app.get('/api/cast/next', async (req, res) => {
     }
 
     if (rows.length === 0) {
-      res.status(404).json({ error: 'Sem filmes com elenco' })
+      res.status(404).json({ error: 'Sem posters disponíveis' })
       return
     }
 
@@ -1082,8 +1082,8 @@ const PLACEHOLDER_ACHIEVEMENTS = [
   },
   {
     id: 'cast_hunter',
-    title: 'Caçador de elenco',
-    desc: '10 vitórias no Elenco',
+    title: 'Caçador de posters',
+    desc: '10 vitórias no Poster',
     locked: true,
   },
   {
@@ -1573,7 +1573,7 @@ app.post('/api/round/finish', authRequired, async (req, res) => {
     }
     if (!endlessRound && mode === 'cast' && playDate && !isArchive) {
       if (await hasPlayedCastDaily(req.user.id, playDate)) {
-        res.status(409).json({ error: 'Você já jogou o elenco de hoje' })
+        res.status(409).json({ error: 'Você já jogou o poster de hoje' })
         return
       }
     }

@@ -38,8 +38,8 @@ export const OSCAR_PLACEHOLDERS: OscarDef[] = [
   },
   {
     id: 'cast_hunter',
-    title: 'Caçador de elenco',
-    description: 'Vença 10 partidas no Elenco.',
+    title: 'Caçador de posters',
+    description: 'Vença 10 partidas no Poster.',
     icon: '◎',
     rarityPct: 12,
     progress: { current: 0, max: 10 },
@@ -62,7 +62,7 @@ export const OSCAR_PLACEHOLDERS: OscarDef[] = [
   {
     id: 'perfect_day',
     title: 'Dia perfeito',
-    description: 'Vença Clássico, Elenco e Personagem no mesmo dia.',
+    description: 'Vença Clássico, Poster e Personagem no mesmo dia.',
     icon: '◈',
     rarityPct: 3.1,
   },

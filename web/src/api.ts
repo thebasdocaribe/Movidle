@@ -427,7 +427,7 @@ export function finishRound(body: {
   puzzleId: string
   outcome: 'win' | 'lose'
   take: number
-  /** Casting/Maratona: não bloqueia nem grava daily 1x */
+  /** Poster/Maratona: não bloqueia nem grava daily 1x */
   endless?: boolean
 }) {
   return fetch('/api/round/finish', {

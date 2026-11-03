@@ -62,7 +62,7 @@ export function HubScreen({
               <span className="text-center sm:text-right">
                 Clássico +{progress.daily.totalScore}
                 <span className="mx-1.5 opacity-40">·</span>
-                Elenco +{progress.cast?.totalScore ?? 0}
+                Poster +{progress.cast?.totalScore ?? 0}
                 <span className="mx-1.5 opacity-40">·</span>
                 Maratona +{progress.classic.totalScore}
               </span>
@@ -92,15 +92,15 @@ export function HubScreen({
               <ModeButton
                 title="CLÁSSICO"
                 tag="Diário"
-                subtitle="Adivinhe pelo clipe"
+                subtitle="Adivinhe o filme pelo clipe"
                 accent="green"
                 onClick={() => onPlayDaily()}
                 onCalendar={() => setCalendarFor('daily')}
               />
               <ModeButton
-                title="ELENCO"
+                title="POSTER"
                 tag="Diário"
-                subtitle="Adivinhe pela capa + créditos"
+                subtitle="Adivinhe o poster pelo elenco"
                 accent="yellow"
                 onClick={() => onPlayCast()}
                 onCalendar={() => setCalendarFor('cast')}
@@ -108,7 +108,7 @@ export function HubScreen({
               <ModeButton
                 title="PERSONAGEM"
                 tag="Diário"
-                subtitle="Adivinhe pelo recorte"
+                subtitle="Adivinhe o personagem pelo recorte"
                 accent="purple"
                 onClick={() => onPlayCharacter()}
                 onCalendar={() => setCalendarFor('character')}
@@ -117,28 +117,6 @@ export function HubScreen({
           </section>
 
           <div className="flex flex-col gap-3">
-            <section className="panel-frame p-2.5 sm:p-3">
-              <h2 className="font-display mb-2 border-b border-cinema-line pb-1.5 text-2xl text-cinema-gold">
-                Ilimitados
-              </h2>
-              <div className="flex flex-col gap-2">
-                <ModeButton
-                  title="MARATONA"
-                  tag="Livre"
-                  subtitle="Clipe sem parar"
-                  accent="blue"
-                  onClick={onPlayClassic}
-                />
-                <ModeButton
-                  title="CASTING"
-                  tag="Livre"
-                  subtitle="Elenco sem parar"
-                  accent="yellow"
-                  onClick={onPlayCastEndless}
-                />
-              </div>
-            </section>
-
             <section className="panel-frame p-2.5 sm:p-3">
               <h2 className="font-display mb-2 border-b border-cinema-line pb-1.5 text-2xl text-cinema-gold">
                 Multijogador
@@ -150,6 +128,28 @@ export function HubScreen({
                 accent="purple"
                 onClick={onPlayDuel}
               />
+            </section>
+
+            <section className="panel-frame p-2.5 sm:p-3">
+              <h2 className="font-display mb-2 border-b border-cinema-line pb-1.5 text-2xl text-cinema-gold">
+                Ilimitados
+              </h2>
+              <div className="flex flex-col gap-2">
+                <ModeButton
+                  title="MARATONA"
+                  tag="Livre"
+                  subtitle="Clipes sem parar"
+                  accent="blue"
+                  onClick={onPlayClassic}
+                />
+                <ModeButton
+                  title="POSTER"
+                  tag="Livre"
+                  subtitle="Posters sem parar"
+                  accent="yellow"
+                  onClick={onPlayCastEndless}
+                />
+              </div>
             </section>
           </div>
         </div>
@@ -164,7 +164,7 @@ export function HubScreen({
                 {(
                   [
                     ['daily', 'Clássico'],
-                    ['cast', 'Elenco'],
+                    ['cast', 'Poster'],
                     ['classic', 'Maratona'],
                   ] as const
                 ).map(([key, label]) => (
@@ -250,7 +250,7 @@ export function HubScreen({
             calendarFor === 'daily'
               ? 'Clássico'
               : calendarFor === 'cast'
-                ? 'Elenco'
+                ? 'Poster'
                 : 'Personagem'
           }
           today={today}

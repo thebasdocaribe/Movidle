@@ -63,10 +63,13 @@ input:disabled {
 }
 
 .hub-stage {
-  background:
-    radial-gradient(ellipse 90% 55% at 50% 0%, rgba(255, 42, 60, 0.28), transparent 58%),
-    radial-gradient(ellipse 50% 40% at 15% 85%, rgba(80, 20, 90, 0.35), transparent 55%),
-    linear-gradient(180deg, #1a0a12 0%, #05060a 48%, #0a0610 100%);
+  /* Teste estilo Gamedle: mosaico de capas + véu pra UI ler */
+  background-color: #05060a;
+  background-image: url('/bg/poster-mosaic.jpg');
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   position: relative;
   overflow: hidden;
 }
@@ -77,43 +80,50 @@ input:disabled {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(90, 8, 18, 0.85) 0%, transparent 14%, transparent 86%, rgba(90, 8, 18, 0.85) 100%),
-    repeating-linear-gradient(
-      90deg,
-      transparent 0,
-      transparent 48px,
-      rgba(255, 255, 255, 0.015) 48px,
-      rgba(255, 255, 255, 0.015) 49px
-    );
+    linear-gradient(
+      180deg,
+      rgba(5, 6, 10, 0.55) 0%,
+      rgba(5, 6, 10, 0.72) 45%,
+      rgba(5, 6, 10, 0.88) 100%
+    ),
+    radial-gradient(ellipse 90% 55% at 50% 0%, rgba(255, 42, 60, 0.18), transparent 58%);
   z-index: 0;
 }
 
 .hub-stage::after {
+  /* Fade suave no rodapé — mosaico continua visível nas laterais */
   content: '';
   pointer-events: none;
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 28%;
-  background: linear-gradient(
-    180deg,
-    transparent,
-    rgba(0, 0, 0, 0.55) 40%,
-    rgba(0, 0, 0, 0.85)
-  );
-  box-shadow: inset 0 -40px 60px rgba(0, 0, 0, 0.5);
+  height: 42%;
+  background:
+    radial-gradient(
+      ellipse 70% 85% at 50% 100%,
+      rgba(0, 0, 0, 0.78) 0%,
+      rgba(0, 0, 0, 0.35) 45%,
+      transparent 72%
+    ),
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(0, 0, 0, 0.25) 55%,
+      rgba(0, 0, 0, 0.55) 100%
+    );
   z-index: 0;
 }
 
 .panel-frame {
   position: relative;
   border: 3px solid #5a3a5a;
-  background: linear-gradient(180deg, rgba(28, 12, 28, 0.92), rgba(12, 6, 14, 0.95));
+  background: linear-gradient(180deg, rgba(20, 10, 20, 0.94), rgba(8, 5, 12, 0.96));
   box-shadow:
     0 0 0 1px #1a0a1a,
     inset 0 0 0 1px rgba(255, 196, 77, 0.12),
-    0 18px 40px rgba(0, 0, 0, 0.45);
+    0 18px 40px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
 }
 
 .panel-frame::before,

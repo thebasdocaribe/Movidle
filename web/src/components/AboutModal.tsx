@@ -26,7 +26,7 @@ export function AboutModal({ onClose }: AboutModalProps) {
         </h2>
         <div className="mt-4 space-y-3 text-sm leading-relaxed text-cinema-muted">
           <p className="text-white">
-            CineBlitz é um jogo de adivinhar o filme — diário, infinito, elenco e
+            CineBlitz é um jogo de adivinhar o filme — diário, infinito, poster e
             duelo 1v1. Inspirado em Wordle, Framed e derivados.
           </p>
           <p>

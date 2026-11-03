@@ -332,7 +332,7 @@ export function ProfileScreen({
                     <p className="text-[11px] text-cinema-muted">
                       Clássico +{prog.daily?.totalScore ?? 0}
                       <span className="mx-1.5 opacity-40">·</span>
-                      Elenco +{prog.cast?.totalScore ?? 0}
+                      Poster +{prog.cast?.totalScore ?? 0}
                       <span className="mx-1.5 opacity-40">·</span>
                       Maratona +{prog.classic?.totalScore ?? 0}
                     </p>

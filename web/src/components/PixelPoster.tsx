@@ -92,8 +92,13 @@ export function PixelPoster({
   )
 }
 
-/** Menos colunas = mais pixelado */
+/**
+ * Menos colunas = mais pixelado.
+ * Começa ~nível da antiga dica 3; última dica ainda mosaico.
+ * Nítido só no fim da partida (CastScreen passa sharp).
+ */
 export function castMosaicColumns(takeIndex: number): number {
-  const cols = [10, 14, 18, 24, 32, 48, 72]
-  return cols[Math.min(takeIndex, cols.length - 1)] ?? 72
+  const cols = [16, 20, 24, 28, 32, 36, 40]
+  const i = Math.min(Math.max(0, takeIndex), cols.length - 1)
+  return cols[i] ?? 40
 }

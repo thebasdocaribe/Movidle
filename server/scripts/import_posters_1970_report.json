@@ -1,0 +1,378 @@
+{
+  "decade": 1970,
+  "ok": 51,
+  "fail": [],
+  "warn": [
+    {
+      "label": "house",
+      "title": "A Revolução dos Bichos",
+      "year": 1954,
+      "note": "fora da década 1970s"
+    },
+    {
+      "label": "house",
+      "title": "A Revolução dos Bichos",
+      "year": 1954,
+      "note": "ano esperado ~1977"
+    }
+  ],
+  "movies": [
+    {
+      "label": "poderoso chefão",
+      "title": "O Poderoso Chefão",
+      "year": 1972,
+      "poster": "/posters/319.jpg",
+      "tmdbId": 238
+    },
+    {
+      "label": "taxi driver",
+      "title": "Taxi Driver: Motorista de Táxi",
+      "year": 1976,
+      "poster": "/posters/320.jpg",
+      "tmdbId": 103
+    },
+    {
+      "label": "star wars uma nova esperança",
+      "title": "Guerra nas Estrelas",
+      "year": 1977,
+      "poster": "/posters/321.jpg",
+      "tmdbId": 11
+    },
+    {
+      "label": "alien",
+      "title": "Alien: O Oitavo Passageiro",
+      "year": 1979,
+      "poster": "/posters/322.jpg",
+      "tmdbId": 348
+    },
+    {
+      "label": "jaws",
+      "title": "Tubarão",
+      "year": 1975,
+      "poster": "/posters/323.jpg",
+      "tmdbId": 578
+    },
+    {
+      "label": "laranja mecânica",
+      "title": "Laranja Mecânica",
+      "year": 1971,
+      "poster": "/posters/324.jpg",
+      "tmdbId": 185
+    },
+    {
+      "label": "apocalypse now",
+      "title": "Apocalypse Now",
+      "year": 1979,
+      "poster": "/posters/325.jpg",
+      "tmdbId": 28
+    },
+    {
+      "label": "rocky horror Picture show",
+      "title": "The Rocky Horror Picture Show",
+      "year": 1975,
+      "poster": "/posters/326.jpg",
+      "tmdbId": 36685
+    },
+    {
+      "label": "halloween",
+      "title": "Halloween - A Noite do Terror",
+      "year": 1978,
+      "poster": "/posters/327.jpg",
+      "tmdbId": 948
+    },
+    {
+      "label": "carrie",
+      "title": "Carrie, A Estranha",
+      "year": 1976,
+      "poster": "/posters/328.jpg",
+      "tmdbId": 7340
+    },
+    {
+      "label": "um estranho no ninho",
+      "title": "Um Estranho no Ninho",
+      "year": 1975,
+      "poster": "/posters/329.jpg",
+      "tmdbId": 510
+    },
+    {
+      "label": "massacre da serra elétrica",
+      "title": "O Massacre da Serra Elétrica",
+      "year": 1974,
+      "poster": "/posters/330.jpg",
+      "tmdbId": 30497
+    },
+    {
+      "label": "o exorcista",
+      "title": "O Exorcista",
+      "year": 1973,
+      "poster": "/posters/331.jpg",
+      "tmdbId": 9552
+    },
+    {
+      "label": "grease",
+      "title": "Grease: Nos Tempos da Brilhantina",
+      "year": 1978,
+      "poster": "/posters/332.jpg",
+      "tmdbId": 621
+    },
+    {
+      "label": "rocky um lutador",
+      "title": "Rocky: Um Lutador",
+      "year": 1976,
+      "poster": "/posters/333.jpg",
+      "tmdbId": 1366
+    },
+    {
+      "label": "eraserhead",
+      "title": "Eraserhead",
+      "year": 1977,
+      "poster": "/posters/334.jpg",
+      "tmdbId": 985
+    },
+    {
+      "label": "suspiria",
+      "title": "Suspiria",
+      "year": 1977,
+      "poster": "/posters/335.jpg",
+      "tmdbId": 11906
+    },
+    {
+      "label": "stalker",
+      "title": "Stalker",
+      "year": 1979,
+      "poster": "/posters/336.jpg",
+      "tmdbId": 1398
+    },
+    {
+      "label": "monty python",
+      "title": "Monty Python em Busca do Cálice Sagrado",
+      "year": 1975,
+      "poster": "/posters/337.jpg",
+      "tmdbId": 762
+    },
+    {
+      "label": "house",
+      "title": "A Revolução dos Bichos",
+      "year": 1954,
+      "poster": "/posters/338.jpg",
+      "tmdbId": 11848
+    },
+    {
+      "label": "fantastic planet",
+      "title": "Planeta Fantástico",
+      "year": 1973,
+      "poster": "/posters/339.jpg",
+      "tmdbId": 16306
+    },
+    {
+      "label": "wickerman",
+      "title": "O Homem de Palha",
+      "year": 1973,
+      "poster": "/posters/340.jpg",
+      "tmdbId": 16307
+    },
+    {
+      "label": "the deer Hunter",
+      "title": "O Franco Atirador",
+      "year": 1978,
+      "poster": "/posters/341.jpg",
+      "tmdbId": 11778
+    },
+    {
+      "label": "solaris",
+      "title": "Laranja Mecânica",
+      "year": 1971,
+      "poster": "/posters/342.jpg",
+      "tmdbId": 185
+    },
+    {
+      "label": "the devild",
+      "title": "Os Demônios",
+      "year": 1971,
+      "poster": "/posters/343.jpg",
+      "tmdbId": 31767
+    },
+    {
+      "label": "salo",
+      "title": "Backstage sul set di Salò",
+      "year": 1975,
+      "poster": "/posters/344.jpg",
+      "tmdbId": 1523709
+    },
+    {
+      "label": "phantom Paradise",
+      "title": "O Fantasma do Paraíso",
+      "year": 1974,
+      "poster": "/posters/345.jpg",
+      "tmdbId": 27327
+    },
+    {
+      "label": "mad max 1",
+      "title": "Mad Max",
+      "year": 1979,
+      "poster": "/posters/346.jpg",
+      "tmdbId": 9659
+    },
+    {
+      "label": "black cristimas",
+      "title": "Noite do Terror",
+      "year": 1974,
+      "poster": "/posters/347.jpg",
+      "tmdbId": 16938
+    },
+    {
+      "label": "dawn od the dead",
+      "title": "Despertar dos Mortos",
+      "year": 1978,
+      "poster": "/posters/348.jpg",
+      "tmdbId": 923
+    },
+    {
+      "label": "pink plamingos",
+      "title": "Pink Flamingos",
+      "year": 1972,
+      "poster": "/posters/349.jpg",
+      "tmdbId": 692
+    },
+    {
+      "label": "Superman",
+      "title": "Superman: O Filme",
+      "year": 1978,
+      "poster": "/posters/350.jpg",
+      "tmdbId": 1924
+    },
+    {
+      "label": "Robin hood",
+      "title": "Robin Hood",
+      "year": 1973,
+      "poster": "/posters/351.jpg",
+      "tmdbId": 11886
+    },
+    {
+      "label": "Young Frankenstein",
+      "title": "O Jovem Frankenstein",
+      "year": 1974,
+      "poster": "/posters/352.jpg",
+      "tmdbId": 3034
+    },
+    {
+      "label": "the omen",
+      "title": "A Profecia",
+      "year": 1976,
+      "poster": "/posters/353.jpg",
+      "tmdbId": 794
+    },
+    {
+      "label": "the Warriors",
+      "title": "Os Selvagens da Noite",
+      "year": 1979,
+      "poster": "/posters/354.jpg",
+      "tmdbId": 11474
+    },
+    {
+      "label": "deepred",
+      "title": "Prelúdio para Matar",
+      "year": 1975,
+      "poster": "/posters/355.jpg",
+      "tmdbId": 20126
+    },
+    {
+      "label": "the hills have eyes",
+      "title": "Quadrilha de Sádicos",
+      "year": 1977,
+      "poster": "/posters/356.jpg",
+      "tmdbId": 12262
+    },
+    {
+      "label": "el topo",
+      "title": "El Topo",
+      "year": 1970,
+      "poster": "/posters/357.jpg",
+      "tmdbId": 13041
+    },
+    {
+      "label": "lady snowblood",
+      "title": "Lady Snowblood: Vingança na Neve",
+      "year": 1973,
+      "poster": "/posters/358.jpg",
+      "tmdbId": 2487
+    },
+    {
+      "label": "Deliverance",
+      "title": "Amargo Pesadelo",
+      "year": 1972,
+      "poster": "/posters/359.jpg",
+      "tmdbId": 10669
+    },
+    {
+      "label": "cries",
+      "title": "Viskningar och Rop: En Film om Hur en Film Blir Till",
+      "year": 1972,
+      "poster": "/posters/360.jpg",
+      "tmdbId": 1730991
+    },
+    {
+      "label": "wanda",
+      "title": "Wanda",
+      "year": 1970,
+      "poster": "/posters/361.jpg",
+      "tmdbId": 80560
+    },
+    {
+      "label": "the man who sleeps",
+      "title": "Un homme qui dort",
+      "year": 1974,
+      "poster": "/posters/362.jpg",
+      "tmdbId": 104086
+    },
+    {
+      "label": "the man who fell to Earth",
+      "title": "O Homem Que Caiu na Terra",
+      "year": 1976,
+      "poster": "/posters/363.jpg",
+      "tmdbId": 991
+    },
+    {
+      "label": "saturday night fever",
+      "title": "Os Embalos de Sábado à Noite",
+      "year": 1977,
+      "poster": "/posters/364.jpg",
+      "tmdbId": 11009
+    },
+    {
+      "label": "dirty Harry",
+      "title": "Perseguidor Implacável",
+      "year": 1971,
+      "poster": "/posters/365.jpg",
+      "tmdbId": 984
+    },
+    {
+      "label": "sorcerer",
+      "title": "O Comboio do Medo",
+      "year": 1977,
+      "poster": "/posters/366.jpg",
+      "tmdbId": 38985
+    },
+    {
+      "label": "rocky 2",
+      "title": "Rocky II: A Revanche",
+      "year": 1979,
+      "poster": "/posters/367.jpg",
+      "tmdbId": 1367
+    },
+    {
+      "label": "barry lyndron",
+      "title": "Barry Lyndon",
+      "year": 1975,
+      "poster": "/posters/368.jpg",
+      "tmdbId": 3175
+    },
+    {
+      "label": "dog day afternoon",
+      "title": "Um Dia de Cão",
+      "year": 1975,
+      "poster": "/posters/369.jpg",
+      "tmdbId": 968
+    }
+  ]
+}

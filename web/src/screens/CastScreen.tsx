@@ -9,10 +9,7 @@ import {
   type CastDailyPayload,
   type CastHint,
 } from '../api'
-import { PixelPoster } from '../components/PixelPoster'
-
-/** Pixelização fixa (~nível da 4ª dica antiga). 10 = mosaico demais; 24 = legível/difícil */
-const CAST_MOSAIC_COLUMNS = 24
+import { PixelPoster, castMosaicColumns } from '../components/PixelPoster'
 import type { AuthUser, ProgressMap } from '../auth'
 import { modeProgress } from '../auth'
 import { multiplierForStreak } from '../scoring'
@@ -222,9 +219,9 @@ export function CastScreen({
 
   const prog = modeProgress(progress, 'cast')
   const unlocked = ended ? MAX_TAKE : Math.min(attempt + 1, MAX_TAKE)
-  /** Despixeliza no fim — acerto ou erro */
+  /** Despixeliza a cada dica; 100% nítido só quando a partida acaba */
   const sharp = ended
-  const columns = sharp ? 1 : CAST_MOSAIC_COLUMNS
+  const columns = sharp ? 1 : castMosaicColumns(attempt)
 
   const hints: CastHint[] = useMemo(() => daily?.hints ?? [], [daily])
 
@@ -325,7 +322,7 @@ export function CastScreen({
   async function skipEmptyConfirm() {
     if (!daily || busy || ended) return
     if (!endless && !isArchive && user && (daily.alreadyPlayed || castPlayedToday)) {
-      setHint('Você já jogou o elenco de hoje')
+      setHint('Você já jogou o poster de hoje')
       return
     }
     if (attempt + 1 >= MAX_TAKE) {
@@ -361,7 +358,7 @@ export function CastScreen({
     }
 
     if (!endless && !isArchive && user && (daily.alreadyPlayed || castPlayedToday)) {
-      setHint('Você já jogou o elenco de hoje')
+      setHint('Você já jogou o poster de hoje')
       return
     }
 
@@ -439,7 +436,7 @@ export function CastScreen({
             ← Lobby
           </button>
           <h1 className="font-display text-2xl text-white sm:text-3xl">
-            {endless ? 'CASTING' : 'ELENCO'}
+            POSTER
           </h1>
           <p className="text-[10px] text-cinema-muted">
             +{prog.totalScore} · ×
@@ -478,36 +475,57 @@ export function CastScreen({
                   </div>
                 )}
                 {ended ? (
-                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/80 p-4 text-center">
-                    <p className="font-display text-4xl text-cinema-gold">
-                      {won ? 'ACERTOU!' : 'FIM'}
-                    </p>
-                    {won ? (
-                      <p className="font-display text-2xl text-cinema-red">
-                        +{points} PTS
-                      </p>
+                  <div className="absolute inset-0 z-10 flex items-stretch bg-black/90 px-3 py-3 sm:px-6 sm:py-4">
+                    {daily.posterUrl ? (
+                      <img
+                        src={daily.posterUrl}
+                        alt=""
+                        className="win-soft my-auto h-[70%] max-h-64 w-auto shrink-0 border-2 border-cinema-gold/70 object-cover sm:max-h-72 sm:w-40"
+                      />
                     ) : null}
-                    <p className="mt-2 text-white">
-                      {revealTitle}
-                      {revealYear ? ` (${revealYear})` : ''}
-                    </p>
-                    {endless ? (
-                      <button
-                        type="button"
-                        onClick={() => void goNextEndless()}
-                        className="mode-btn mode-btn-primary mode-btn-inline mt-4 px-4 py-2"
-                      >
-                        PRÓXIMO FILME
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={onBack}
-                        className="mode-btn mode-btn-inline mt-4 border-cinema-gold px-4 py-2 text-cinema-gold"
-                      >
-                        LOBBY
-                      </button>
-                    )}
+                    <div className="flex min-w-0 flex-1 flex-col items-center justify-center px-3 text-center sm:px-6">
+                      {won ? (
+                        <>
+                          <p className="win-soft font-display text-4xl leading-none text-cinema-gold sm:text-6xl">
+                            ACERTOU!
+                          </p>
+                          <p className="win-soft mt-1 font-display text-3xl text-cinema-red sm:text-4xl">
+                            +{points} PTS
+                          </p>
+                          <p className="win-soft mt-2 text-lg font-semibold text-white sm:text-xl">
+                            {revealTitle}
+                            {revealYear ? ` (${revealYear})` : ''}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="win-soft font-display text-5xl text-cinema-muted sm:text-6xl">
+                            FIM
+                          </p>
+                          <p className="mt-2 text-base text-white sm:text-lg">
+                            0 pts · era {revealTitle}
+                            {revealYear ? ` (${revealYear})` : ''}
+                          </p>
+                        </>
+                      )}
+                      {endless ? (
+                        <button
+                          type="button"
+                          onClick={() => void goNextEndless()}
+                          className="mode-btn mode-btn-primary mode-btn-inline mt-4 px-6 py-2.5 font-display text-xl"
+                        >
+                          PRÓXIMO FILME
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={onBack}
+                          className="mode-btn mode-btn-inline mt-4 border-cinema-gold px-6 py-2.5 font-display text-xl text-cinema-gold"
+                        >
+                          LOBBY
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ) : null}
               </div>
@@ -645,7 +663,7 @@ export function CastScreen({
               <p className="text-center font-display text-xl text-cinema-gold">
                 {isArchive
                   ? 'VOCÊ JÁ JOGOU ESTE DIA'
-                  : 'VOCÊ JÁ JOGOU O ELENCO DE HOJE'}
+                  : 'VOCÊ JÁ JOGOU O POSTER DE HOJE'}
               </p>
             ) : null}
 
