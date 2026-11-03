@@ -30,6 +30,7 @@ import {
   verifyPassword,
 } from './auth.js'
 import { CHARACTER_EPOCH } from './characterCatalog.js'
+import { drawWithoutReplacement } from './dailyRotation.js'
 import { query } from './db.js'
 import { enrichHintsWithTmdb, tmdbConfigured } from './tmdb.js'
 import {
@@ -167,50 +168,68 @@ async function getPuzzleByDate(dateStr) {
   }
 }
 
-function dayNumber(dateStr) {
-  // meio-dia UTC evita bug de fuso no parse
-  return Math.floor(Date.parse(`${dateStr}T12:00:00Z`) / 86400000)
-}
-
-/** Se não existe daily pra data, escolhe filme estável (mesmo pra todo mundo) e grava. */
-async function moviesWithClips() {
+async function listClassicEligibleIds() {
   const { rows } = await query(
-    `SELECT id
-     FROM movies
-     WHERE clip_path IS NOT NULL AND clip_path <> ''
-     ORDER BY title ASC`,
+    `SELECT id::text AS id FROM movies
+     WHERE clip_path IS NOT NULL AND clip_path <> ''`,
   )
-  return rows
+  return rows.map((r) => r.id)
 }
 
-/** Clássico diário: só filmes com clipe (não pôster). */
+async function listCastEligibleIds() {
+  const { rows } = await query(
+    `SELECT id::text AS id FROM movies
+     WHERE director IS NOT NULL
+       AND cast_json IS NOT NULL
+       AND cast_json != '{}'::jsonb
+       AND cast_json != '[]'::jsonb`,
+  )
+  return rows.map((r) => r.id)
+}
+
+async function listCharacterEligibleIds() {
+  const { rows } = await query(
+    `SELECT id::text AS id FROM characters
+     WHERE image_path LIKE '/characters/%'`,
+  )
+  return rows.map((r) => r.id)
+}
+
+async function getCastPuzzleByDate(dateStr) {
+  const { rows } = await query(
+    `SELECT d.puzzle_date::text AS puzzle_key,
+            m.id AS movie_id,
+            m.title, m.title_pt, m.aliases, m.poster_path, m.poster_wide_path,
+            m.clip_path, m.attribution, m.year, m.director, m.cast_json
+     FROM cast_daily d
+     JOIN movies m ON m.id = d.movie_id
+     WHERE d.puzzle_date = $1::date`,
+    [dateStr],
+  )
+  return rows[0] || null
+}
+
+/** Clássico diário: clipe; sorteio sem repetir até esgotar o pool. */
 async function ensureDailyPuzzle(dateStr) {
   const existing = await getPuzzleByDate(dateStr)
   if (existing?.clip_path) return existing
 
-  const movies = await moviesWithClips()
-  if (movies.length === 0) {
-    // Sem clips no banco — devolve o que tiver (dev/seed incompleto)
+  // Evita o mesmo filme do elenco no mesmo dia (se já existir)
+  const castSameDay = await getCastPuzzleByDate(dateStr)
+  const excludeIds = castSameDay?.movie_id ? [String(castSameDay.movie_id)] : []
+
+  const movieId = await drawWithoutReplacement({
+    mode: 'classic',
+    dateStr,
+    listEligible: listClassicEligibleIds,
+    excludeIds,
+  })
+  if (!movieId) {
     if (existing) return existing
     return null
   }
 
-  // Nunca repetir enquanto ainda houver filme com clip não usado.
-  const { rows: used } = await query(
-    `SELECT DISTINCT movie_id::text AS id
-     FROM daily_puzzles
-     WHERE puzzle_date < $1::date`,
-    [dateStr],
-  )
-  const usedIds = new Set(used.map((r) => r.id))
-  let pool = movies.filter((m) => !usedIds.has(String(m.id)))
-  if (pool.length === 0) pool = movies
-
-  const index = dayNumber(dateStr) % pool.length
-  const movieId = pool[index].id
-
   if (existing && !existing.clip_path) {
-    // Corrige dia antigo sorteado sem clipe (calendário / seed)
     await query(
       `UPDATE daily_puzzles SET movie_id = $2::uuid WHERE puzzle_date = $1::date`,
       [dateStr, movieId],
@@ -225,6 +244,58 @@ async function ensureDailyPuzzle(dateStr) {
   }
 
   return getPuzzleByDate(dateStr)
+}
+
+/** Elenco diário: pool próprio (não reusa o clássico). */
+async function ensureCastDaily(dateStr) {
+  const existing = await getCastPuzzleByDate(dateStr)
+  if (existing) return existing
+
+  // Dias legados: quem já jogou elenco quando ele = clássico → congela o clássico
+  const { rows: legacyPlays } = await query(
+    `SELECT 1 FROM user_cast_daily_plays WHERE puzzle_date = $1::date LIMIT 1`,
+    [dateStr],
+  )
+  if (legacyPlays.length > 0) {
+    const classic = await getPuzzleByDate(dateStr)
+    if (classic?.movie_id) {
+      await query(
+        `INSERT INTO cast_daily (puzzle_date, movie_id)
+         VALUES ($1::date, $2::uuid)
+         ON CONFLICT (puzzle_date) DO NOTHING`,
+        [dateStr, classic.movie_id],
+      )
+      await query(
+        `INSERT INTO daily_pool_used (mode, item_id, used_on)
+         VALUES ('cast', $1::uuid, $2::date)
+         ON CONFLICT (mode, item_id) DO NOTHING`,
+        [classic.movie_id, dateStr],
+      )
+      return getCastPuzzleByDate(dateStr)
+    }
+  }
+
+  const classicSameDay = await getPuzzleByDate(dateStr)
+  const excludeIds = classicSameDay?.movie_id
+    ? [String(classicSameDay.movie_id)]
+    : []
+
+  const movieId = await drawWithoutReplacement({
+    mode: 'cast',
+    dateStr,
+    listEligible: listCastEligibleIds,
+    excludeIds,
+  })
+  if (!movieId) return null
+
+  await query(
+    `INSERT INTO cast_daily (puzzle_date, movie_id)
+     VALUES ($1::date, $2::uuid)
+     ON CONFLICT (puzzle_date) DO NOTHING`,
+    [dateStr, movieId],
+  )
+
+  return getCastPuzzleByDate(dateStr)
 }
 
 async function getMovieById(movieId) {
@@ -406,8 +477,11 @@ async function publicCastPuzzle(puzzle, extra = {}) {
   }
 }
 
-async function resolvePuzzle(puzzleId) {
-  if (isDateId(puzzleId)) return getPuzzleByDate(puzzleId)
+async function resolvePuzzle(puzzleId, mode = 'daily') {
+  if (isDateId(puzzleId)) {
+    if (mode === 'cast') return getCastPuzzleByDate(puzzleId)
+    return getPuzzleByDate(puzzleId)
+  }
   return getMovieById(puzzleId)
 }
 
@@ -481,35 +555,10 @@ app.get('/api/daily', async (req, res) => {
 app.get('/api/cast/daily', async (req, res) => {
   try {
     const date = String(req.query.date || todayBRT())
-    let puzzle = await ensureDailyPuzzle(date)
+    const puzzle = await ensureCastDaily(date)
     if (!puzzle) {
-      res.status(404).json({ error: 'Sem filmes no catálogo' })
+      res.status(404).json({ error: 'Sem filmes com elenco cadastrado' })
       return
-    }
-    // Se o daily do dia não tem elenco, pega um PD com cast_json
-    const cj = puzzle.cast_json
-    const hasCastMeta =
-      (cj && typeof cj === 'object' && !Array.isArray(cj) && Object.keys(cj).length > 0) ||
-      (Array.isArray(cj) && cj.length > 0)
-    if (!puzzle.director || !hasCastMeta) {
-      const { rows } = await query(
-        `SELECT id::text AS puzzle_key,
-                id AS movie_id,
-                title, title_pt, aliases, poster_path, poster_wide_path,
-                clip_path, attribution, year, director, cast_json
-         FROM movies
-         WHERE director IS NOT NULL
-           AND cast_json IS NOT NULL
-           AND cast_json != '{}'::jsonb
-           AND cast_json != '[]'::jsonb
-         ORDER BY title ASC`,
-      )
-      if (rows.length === 0) {
-        res.status(404).json({ error: 'Sem filmes com elenco cadastrado' })
-        return
-      }
-      puzzle = rows[dayNumber(date) % rows.length]
-      puzzle.puzzle_key = date
     }
 
     let alreadyPlayed = false
@@ -616,7 +665,7 @@ app.post('/api/cast/guess', async (req, res) => {
       return
     }
 
-    const puzzle = await resolvePuzzle(puzzleId)
+    const puzzle = await resolvePuzzle(puzzleId, 'cast')
     if (!puzzle) {
       res.status(404).json({ error: 'Puzzle não encontrado' })
       return
@@ -676,22 +725,29 @@ function characterDayIndex(dateStr) {
 }
 
 async function ensureCharacterDaily(dateStr) {
-  const idx = characterDayIndex(dateStr)
-  if (idx === null) return null
+  if (characterDayIndex(dateStr) === null) return null
 
-  const { rows: pool } = await query(
-    `SELECT id FROM characters
-     WHERE image_path LIKE '/characters/%'
-     ORDER BY sort_order ASC NULLS LAST, name ASC`,
+  const { rows: existing } = await query(
+    `SELECT c.id::text AS puzzle_key, c.id, c.name, c.name_pt, c.aliases,
+            c.film_title, c.image_path, c.attribution
+     FROM character_daily d
+     JOIN characters c ON c.id = d.character_id
+     WHERE d.puzzle_date = $1::date`,
+    [dateStr],
   )
-  if (pool.length === 0) return null
+  if (existing[0]) return existing[0]
 
-  const characterId = pool[idx % pool.length].id
+  const characterId = await drawWithoutReplacement({
+    mode: 'character',
+    dateStr,
+    listEligible: listCharacterEligibleIds,
+  })
+  if (!characterId) return null
+
   await query(
     `INSERT INTO character_daily (puzzle_date, character_id)
      VALUES ($1::date, $2::uuid)
-     ON CONFLICT (puzzle_date) DO UPDATE
-       SET character_id = EXCLUDED.character_id`,
+     ON CONFLICT (puzzle_date) DO NOTHING`,
     [dateStr, characterId],
   )
 
@@ -1486,7 +1542,10 @@ app.post('/api/round/finish', authRequired, async (req, res) => {
       return
     }
 
-    const puzzle = await resolvePuzzle(puzzleId)
+    const puzzle = await resolvePuzzle(
+      puzzleId,
+      mode === 'cast' ? 'cast' : 'daily',
+    )
     if (!puzzle) {
       res.status(404).json({ error: 'Puzzle não encontrado' })
       return

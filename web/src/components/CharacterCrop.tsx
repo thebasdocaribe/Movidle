@@ -21,6 +21,13 @@ const STAGE_OVERRIDES: Record<
     1: { label: 'Nadadeira', position: '35% 55%', zoom: 3.2 },
     3: { label: 'Boca', position: '55% 35%', zoom: 2.8 },
   },
+  // Herbert West: só busto — stages apontam pra seringa / mãos / óculos
+  'herbert-west.jpg': {
+    0: { label: 'Jaleco', position: '50% 78%', zoom: 3.2 },
+    1: { label: 'Seringa', position: '78% 42%', zoom: 3.6 },
+    2: { label: 'Cabelo', position: '48% 12%', zoom: 3.4 },
+    3: { label: 'Óculos', position: '50% 28%', zoom: 2.8 },
+  },
 }
 
 type CharacterCropProps = {

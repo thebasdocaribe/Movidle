@@ -21,6 +21,19 @@ function row(name, namePt, film, aliases = []) {
   }
 }
 
+/** Sem foto ainda — fica no banco, fora do diário até virar row() com JPG. */
+function pending(name, namePt, film, aliases = []) {
+  const all = [...new Set([name, namePt, ...aliases].filter(Boolean))]
+  return {
+    name,
+    name_pt: namePt || name,
+    film_title: film,
+    aliases: all.filter((a) => a !== name),
+    image_path: `/pending/${slug(namePt || name)}.jpg`,
+    attribution: film,
+  }
+}
+
 /**
  * Ordem = sequência do diário (dia 1 = Odeo).
  * Só entra quem tem JPG em public/characters.
@@ -375,10 +388,518 @@ export const CHARACTER_CATALOG = [
   row('RoboCop', 'RoboCop', 'RoboCop', ['Alex Murphy']),
   row('Stripe', 'Stripe', 'Gremlins', ['Gremlin']),
   row('Gizmo', 'Gizmo', 'Gremlins', ['Mogwai']),
+  row('Chucky', 'Chucky', "Child's Play", ['Charles Lee Ray']),
+  row('David Kessler', 'David Kessler', 'An American Werewolf in London', [
+    'Kessler',
+    'Lobisomem Americano em Londres',
+  ]),
+  row('Snake Plissken', 'Snake Plissken', 'Escape from New York', [
+    'Snake',
+    'Fuga de Nova York',
+  ]),
+  row('Jason Voorhees', 'Jason Voorhees', 'Friday the 13th', [
+    'Jason',
+    'Jason Vorhess',
+  ]),
+  row('Pamela Voorhees', 'Pamela Voorhees', 'Friday the 13th', [
+    'Pamela',
+    'Mrs. Voorhees',
+  ]),
+  row('Herbert West', 'Herbert West', 'Re-Animator', [
+    'Dr. West',
+    'West',
+  ]),
+  row('Humungus', 'Humungus', 'Mad Max 2', [
+    'The Humungus',
+    'Lord Humungus',
+  ]),
+  row('John Rambo', 'Rambo', 'First Blood', ['John Rambo', 'Rambo']),
+  row('Tyler Durden', 'Tyler Durden', 'Fight Club', [
+    'Tyler',
+    'Clube da Luta',
+  ]),
+  row('Truman Burbank', 'Truman', 'The Truman Show', [
+    'Truman Burbank',
+    'O Show de Truman',
+  ]),
+  row('Forrest Gump', 'Forrest Gump', 'Forrest Gump', ['Forest Gump']),
+  row('Clarice Starling', 'Clarice Starling', 'The Silence of the Lambs', [
+    'Clarice',
+    'O Silêncio dos Inocentes',
+  ]),
+  row('Hannibal Lecter', 'Hannibal Lecter', 'The Silence of the Lambs', [
+    'Hannibal',
+    'Hanibal',
+    'Lecter',
+  ]),
+  row('Neo', 'Neo', 'The Matrix', ['Thomas Anderson', 'Matrix']),
+  row('Morpheus', 'Morpheus', 'The Matrix', []),
+  row('Trinity', 'Trinity', 'The Matrix', []),
+  row('Agent Smith', 'Agente Smith', 'The Matrix', [
+    'Smith',
+    'Agent Smith',
+  ]),
+  row('Jack Dawson', 'Jack Dawson', 'Titanic', ['Jack']),
+  row('Rose DeWitt Bukater', 'Rose', 'Titanic', [
+    'Rose Dawson',
+    'Rose DeWitt',
+  ]),
+  row('Sidney Prescott', 'Sidney Prescott', 'Scream', [
+    'Sidney',
+    'Pânico',
+  ]),
+  row('Ghostface', 'Ghostface', 'Scream', [
+    'Ghost Face',
+    'Pânico',
+  ]),
+  row('Billy Loomis', 'Billy Loomis', 'Scream', ['Billy']),
+  row('Kevin McCallister', 'Kevin McCallister', 'Home Alone', [
+    'Kevin',
+    'Esqueceram de Mim',
+  ]),
+  row('Woody', 'Woody', 'Toy Story', []),
+  row('Buzz Lightyear', 'Buzz Lightyear', 'Toy Story', ['Buzz']),
+  row('Rex', 'Rex', 'Toy Story', ['Red']),
+  row('Mr. Potato Head', 'Senhor Cabeça de Batata', 'Toy Story', [
+    'Potato Head',
+    'Cabeça de Batata',
+  ]),
+  row('Jessie', 'Jessie', "Toy Story 2", ['Jassie']),
+  row('Slinky Dog', 'Slinky', 'Toy Story', ['Slinck', 'Slinky Dog']),
+  row('Alan Grant', 'Grant', 'Jurassic Park', ['Dr. Grant']),
+  row('Mima Kirigoe', 'Mima', 'Perfect Blue', ['Mima']),
+  row('Jack Skellington', 'Jack Skellington', 'The Nightmare Before Christmas', [
+    'Estranho Mundo de Jack',
+    'Jack',
+  ]),
+]
+
+/**
+ * Nomes curados sem foto — seed no banco; diário só usa CHARACTER_CATALOG
+ * (image_path /characters/...). Quando a foto chegar, mover para o catálogo ativo.
+ */
+export const CHARACTER_PENDING = [
+  pending('Mulan', 'Mulan', 'Mulan', []),
+  pending('Stanley Ipkiss', 'Stanley Ipkiss', 'The Mask', [
+    'O Máscara',
+    'The Mask',
+    'Ipkiss',
+  ]),
+  pending('Mushu', 'Mushu', 'Mulan', []),
+  pending('Agent K', 'Kay', 'Men in Black', [
+    'K',
+    'Agent Kay',
+    'Homens de Preto',
+  ]),
+  pending('Agent J', 'Jay', 'Men in Black', [
+    'J',
+    'Agent Jay',
+    'Homens de Preto',
+  ]),
+  pending('Darth Maul', 'Darth Maul', 'Star Wars: Episode I', ['Maul']),
+  pending('Hercules', 'Hércules', 'Hercules', ['Hercules']),
+  pending('Matilda Wormwood', 'Matilda', 'Matilda', ['Matilda Wormwood']),
+  pending('Belle', 'Bela', 'Beauty and the Beast', [
+    'A Bela',
+    'A Bela e a Fera',
+  ]),
+  pending('Beast', 'Fera', 'Beauty and the Beast', [
+    'A Fera',
+    'A Bela e a Fera',
+  ]),
+  pending('Flik', 'Flik', "A Bug's Life", [
+    'Flink',
+    'Vida de Inseto',
+    'Vida de Insetos',
+  ]),
+  pending('Gomez Addams', 'Gomez Addams', 'The Addams Family', [
+    'Gomez',
+    'Família Addams',
+  ]),
+  pending('Morticia Addams', 'Morticia Addams', 'The Addams Family', [
+    'Morticia',
+    'Família Addams',
+  ]),
+  pending('Wednesday Addams', 'Wednesday', 'The Addams Family', [
+    'Wednesday Addams',
+    'Wandinha',
+    'Família Addams',
+  ]),
+  pending('The Penguin', 'Penguin', 'Batman Returns', [
+    'Pinguim',
+    'Oswald Cobblepot',
+  ]),
+  pending('Catwoman', 'Catwoman', 'Batman Returns', [
+    'Mulher-Gato',
+    'Selina Kyle',
+  ]),
+  pending('Blade', 'Blade', 'Blade', ['Eric Brooks']),
+  pending('Kermit the Frog', 'Kermit', 'The Muppet Movie', [
+    'Kermit',
+    'Sapo Kermit',
+  ]),
+  pending('Tarzan', 'Tarzan', 'Tarzan', []),
+  pending('Jane Porter', 'Jane', 'Tarzan', ['Jane Porter']),
+  pending('Kala', 'Kala', 'Tarzan', []),
+  pending('Candyman', 'Candyman', 'Candyman', ['Daniel Robitaille']),
+  pending('The Riddler', 'Charada', 'Batman Forever', [
+    'Riddler',
+    'Edward Nygma',
+  ]),
+  pending('Two-Face', 'Duas Caras', 'Batman Forever', [
+    'Harvey Dent',
+    'Two Face',
+  ]),
+  pending('Bugs Bunny', 'Pernalonga', 'Space Jam', ['Bugs']),
+  pending('Daffy Duck', 'Patolino', 'Space Jam', ['Daffy']),
+  pending('Ace Ventura', 'Ace Ventura', 'Ace Ventura: Pet Detective', [
+    'Ace',
+  ]),
+  pending('Pennywise', 'Pennywise', 'It', [
+    'It',
+    'Pennywise the Dancing Clown',
+  ]),
+  pending('Samara Morgan', 'Samara', 'The Ring', [
+    'Samara',
+    'O Chamado',
+  ]),
+  pending('Mr. Freeze', 'Dr. Frio', 'Batman & Robin', [
+    'Victor Fries',
+    'Mr Freeze',
+  ]),
+  pending('Stuart Little', 'Stuart Little', 'Stuart Little', ['Stuart']),
+  pending('Casper', 'Gasparzinho', 'Casper', ['Casper the Friendly Ghost']),
+  pending('Eric Cartman', 'Cartman', 'South Park: Bigger, Longer & Uncut', [
+    'Cartman',
+    'South Park',
+  ]),
+  pending('Stan Marsh', 'Stan', 'South Park: Bigger, Longer & Uncut', [
+    'Stan',
+    'South Park',
+  ]),
+  pending('Kenny McCormick', 'Kenny', 'South Park: Bigger, Longer & Uncut', [
+    'Kenny',
+    'South Park',
+  ]),
+  pending('Kyle Broflovski', 'Kyle', 'South Park: Bigger, Longer & Uncut', [
+    'Kyle',
+    'South Park',
+  ]),
+  pending('Howard Langston', 'Howard Langston', 'Jingle All the Way', [
+    'Um Herói de Brinquedo',
+  ]),
+  pending('Tiffany Valentine', 'Tiffany', 'Bride of Chucky', [
+    'Tiffany',
+    'A Noiva do Chucky',
+  ]),
+  pending('Lionel Cosgrove', 'Lionel', 'Braindead', [
+    'Lionel',
+    'Dead Alive',
+  ]),
+  pending('Z', 'Z', 'Antz', ['Formiguinhas', 'Formiginhaz']),
+  pending('Zorro', 'Zorro', 'The Mask of Zorro', ['Don Diego']),
+  pending('Mufasa', 'Mufasa', 'The Lion King', ['O Rei Leão']),
+  pending('Simba', 'Simba', 'The Lion King', ['O Rei Leão']),
+  pending('Timon', 'Timão', 'The Lion King', ['Timon', 'O Rei Leão']),
+  pending('Pumbaa', 'Pumba', 'The Lion King', ['Pumbaa', 'O Rei Leão']),
+  pending('Liu Kang', 'Liu Kang', 'Mortal Kombat', []),
+  pending('Raiden', 'Raiden', 'Mortal Kombat', ['Rayden']),
+  pending('Sub-Zero', 'Sub-Zero', 'Mortal Kombat', ['Sub Zero']),
+  pending('Scorpion', 'Scorpion', 'Mortal Kombat', [
+    'Scorpian',
+    'Hanzo Hasashi',
+  ]),
+  pending('Darkman', 'Darkman', 'Darkman', ['Peyton Westlake']),
+  pending('Sherman Klump', 'Sherman Klump', 'The Nutty Professor', [
+    'Professor Aloprado',
+    'Buddy Love',
+  ]),
+  pending('Wallace', 'Wallace', 'Wallace & Gromit', []),
+  pending('Gromit', 'Gromit', 'Wallace & Gromit', []),
+  pending('Leprechaun', 'Leprechaun', 'Leprechaun', []),
+  pending('Spawn', 'Spawn', 'Spawn', ['Al Simmons']),
+  pending('Judge Dredd', 'Juiz Dredd', 'Judge Dredd', [
+    'Dredd',
+    'Joseph Dredd',
+  ]),
+  pending('Leonardo', 'Leonardo', 'Teenage Mutant Ninja Turtles', [
+    'Leo',
+    'Tartarugas Ninja',
+  ]),
+  pending('Raphael', 'Raphael', 'Teenage Mutant Ninja Turtles', [
+    'Raph',
+    'Tartarugas Ninja',
+  ]),
+  pending('Donatello', 'Donatello', 'Teenage Mutant Ninja Turtles', [
+    'Donnie',
+    'Tartarugas Ninja',
+  ]),
+  pending('Michelangelo', 'Michelangelo', 'Teenage Mutant Ninja Turtles', [
+    'Mikey',
+    'Miquelangelo',
+    'Tartarugas Ninja',
+  ]),
+  pending('The Djinn', 'Djinn', 'Wishmaster', [
+    'Djin',
+    'Mestre dos Desejos',
+  ]),
+  pending('Aladdin', 'Aladin', 'Aladdin', ['Aladdin']),
+  pending('Genie', 'Gênio', 'Aladdin', [
+    'Djin Aladin',
+    'Genie',
+    'Gênio da Lâmpada',
+  ]),
+  pending('Chihiro', 'Chihiro', 'Spirited Away', [
+    'Sen',
+    'A Viagem de Chihiro',
+  ]),
+  pending('Haku', 'Haku', 'Spirited Away', [
+    'A Viagem de Chihiro',
+  ]),
+  pending('Frank', 'Frank', 'Donnie Darko', ['Frank the Rabbit']),
+  pending('Donnie Darko', 'Donnie Darko', 'Donnie Darko', ['Donnie']),
+  pending('WALL-E', 'WALL-E', 'WALL-E', ['Wall-E', 'Walle']),
+  pending('EVE', 'EVA', 'WALL-E', ['Eve', 'EVA']),
+  pending('Remy', 'Remy', 'Ratatouille', ['Remy Ratatouille']),
+  pending('Linguini', 'Linguini', 'Ratatouille', ['Alfredo Linguini']),
+  pending('Coraline Jones', 'Coraline', 'Coraline', ['Coraline']),
+  pending('Other Mother', 'Outra Mãe', 'Coraline', [
+    'Beldam',
+    'Outra Mae',
+  ]),
+  pending('Frodo Baggins', 'Frodo', 'The Lord of the Rings', [
+    'Frodo',
+    'Senhor dos Anéis',
+  ]),
+  pending('Samwise Gamgee', 'Sam', 'The Lord of the Rings', [
+    'Sam',
+    'Samwise',
+    'Senhor dos Anéis',
+  ]),
+  pending('Gandalf', 'Gandalf', 'The Lord of the Rings', [
+    'Gandalf the Grey',
+    'Senhor dos Anéis',
+  ]),
+  pending('Aragorn', 'Aragorn', 'The Lord of the Rings', [
+    'Strider',
+    'Senhor dos Anéis',
+  ]),
+  pending('Saruman', 'Saruman', 'The Lord of the Rings', [
+    'Saruman the White',
+    'Senhor dos Anéis',
+  ]),
+  pending('Legolas', 'Legolas', 'The Lord of the Rings', [
+    'Senhor dos Anéis',
+  ]),
+  pending('Gimli', 'Gimli', 'The Lord of the Rings', [
+    'Senhor dos Anéis',
+  ]),
+  pending('Sauron', 'Sauron', 'The Lord of the Rings', [
+    'Senhor dos Anéis',
+  ]),
+  pending('Harry Potter', 'Harry Potter', 'Harry Potter', ['Harry']),
+  pending('Ron Weasley', 'Ron Weasley', 'Harry Potter', [
+    'Ron',
+    'Ron Wesley',
+  ]),
+  pending('Hermione Granger', 'Hermione', 'Harry Potter', [
+    'Hermione Granger',
+  ]),
+  pending('Albus Dumbledore', 'Dumbledore', 'Harry Potter', [
+    'Dumbledor',
+    'Albus Dumbledore',
+  ]),
+  pending('Sirius Black', 'Sirius Black', 'Harry Potter', ['Sirius']),
+  pending('Peter Parker', 'Peter Parker', 'Spider-Man', [
+    'Spider-Man',
+    'Homem-Aranha',
+  ]),
+  pending('Mary Jane Watson', 'Mary Jane', 'Spider-Man', [
+    'MJ',
+    'Mary Jane',
+  ]),
+  pending('Harry Osborn', 'Harry Osborn', 'Spider-Man', [
+    'Harry Osbon',
+  ]),
+  pending('Doctor Octopus', 'Doc Otto', 'Spider-Man 2', [
+    'Doc Ock',
+    'Otto Octavius',
+  ]),
+  pending('Shrek', 'Shrek', 'Shrek', []),
+  pending('Puss in Boots', 'Gato de Botas', 'Shrek 2', [
+    'Gato',
+    'Puss',
+  ]),
+  pending('Donkey', 'Burro', 'Shrek', []),
+  pending('Fiona', 'Fiona', 'Shrek', ['Princesa Fiona']),
+  pending('Lightning McQueen', 'Relâmpago McQueen', 'Cars', [
+    'McQueen',
+    'Relampago Macquin',
+    'Carros',
+  ]),
+  pending('James P. Sullivan', 'Sullivan', 'Monsters, Inc.', [
+    'Sulley',
+    'Sulli',
+    'Sully',
+    'Monstros S.A.',
+  ]),
+  pending('Mike Wazowski', 'Mike Wazowski', 'Monsters, Inc.', [
+    'Mike',
+    'Mick Wasalski',
+    'Monstros S.A.',
+  ]),
+  pending('Rocket', 'Buscapé', 'City of God', [
+    'Buscapé',
+    'Cidade de Deus',
+  ]),
+  pending('Lil Zé', 'Zé Pequeno', 'City of God', [
+    'Ze Pequeno',
+    'Cidade de Deus',
+  ]),
+  pending('Benny', 'Bené', 'City of God', [
+    'Bene',
+    'Cidade de Deus',
+  ]),
+  pending('Patrick Bateman', 'Patrick Bateman', 'American Psycho', [
+    'Patrick Betman',
+    'Psicopata Americano',
+  ]),
+  pending('Jake Sully', 'Jake Sully', 'Avatar', ['Sully']),
+  pending('Bella Swan', 'Bella Swan', 'Twilight', [
+    'Bela Swan',
+    'Crepúsculo',
+  ]),
+  pending('Edward Cullen', 'Edward Cullen', 'Twilight', [
+    'Edward',
+    'Crepúsculo',
+  ]),
+  pending('Anton Chigurh', 'Anton Chigurh', 'No Country for Old Men', [
+    'Chigurh',
+  ]),
+  pending('Tony Stark', 'Tony Stark', 'Iron Man', [
+    'Iron Man',
+    'Homem de Ferro',
+  ]),
+  pending('Oh Dae-su', 'Oh Dae-su', 'Oldboy', [
+    'Oh Dae Su',
+    'Old Boy',
+  ]),
+  pending('Maximus', 'Maximus', 'Gladiator', [
+    'Maximus Decimus Meridius',
+    'Gladiador',
+  ]),
+  pending('Commodus', 'Commodus', 'Gladiator', ['Gladiador']),
+  pending('Bob Parr', 'Beto Pêra', 'The Incredibles', [
+    'Mr. Incredible',
+    'Sr. Incrível',
+    'Os Incríveis',
+  ]),
+  pending('Violet Parr', 'Violeta', 'The Incredibles', [
+    'Violet',
+    'Os Incríveis',
+  ]),
+  pending('Dash Parr', 'Flecha', 'The Incredibles', [
+    'Dash',
+    'Flasha',
+    'Os Incríveis',
+  ]),
+  pending('Helen Parr', 'Helena Pêra', 'The Incredibles', [
+    'Elastigirl',
+    'Mulher-Elástica',
+    'Os Incríveis',
+  ]),
+  pending('Jack-Jack Parr', 'Zezé', 'The Incredibles', [
+    'Jack-Jack',
+    'Zeze',
+    'Os Incríveis',
+  ]),
+  pending('Syndrome', 'Síndrome', 'The Incredibles', [
+    'Buddy Pine',
+    'Os Incríveis',
+  ]),
+  pending('Carl Fredricksen', 'Carl Fredricksen', 'Up', [
+    'Carl',
+    'Up - Altas Aventuras',
+  ]),
+  pending('Russell', 'Russell', 'Up', [
+    'Russel',
+    'Up - Altas Aventuras',
+  ]),
+  pending('Sara Goldfarb', 'Sara Goldfarb', 'Requiem for a Dream', [
+    'Réquiem para um Sonho',
+  ]),
+  pending('Seth', 'Seth', 'Superbad', ['Super Bad']),
+  pending('Evan', 'Evan', 'Superbad', []),
+  pending('Fogell', 'Fogell', 'Superbad', ['McLovin']),
+  pending('Amélie Poulain', 'Amélie Poulain', 'Amélie', [
+    'Amelie',
+    'Amelie Poulan',
+    'O Fabuloso Destino de Amélie Poulain',
+  ]),
+  pending('Victor Van Dort', 'Victor Van Dort', 'Corpse Bride', [
+    'Victor van Dorf',
+    'A Noiva Cadáver',
+  ]),
+  pending('The Bride', 'A Noiva', 'Kill Bill', [
+    'Beatrix Kiddo',
+    'Black Mamba',
+  ]),
+  pending('Jack Sparrow', 'Jack Sparrow', 'Pirates of the Caribbean', [
+    'Capitão Jack Sparrow',
+    'Piratas do Caribe',
+  ]),
+  pending('Will Turner', 'Will Turner', 'Pirates of the Caribbean', [
+    'William Turner',
+    'Piratas do Caribe',
+  ]),
+  pending('Davy Jones', 'Davy Jones', 'Pirates of the Caribbean', [
+    'Piratas do Caribe',
+  ]),
+  pending('Juno MacGuff', 'Juno', 'Juno', ['Juno MacGuff']),
 ]
 
 /** Dia 1 do modo Personagem = Odeo (BRT). */
 export const CHARACTER_EPOCH = '2026-10-30'
+
+async function upsertCharacter(client, c, sortOrder) {
+  const { rows } = await client.query(
+    `SELECT id FROM characters WHERE lower(name) = lower($1)`,
+    [c.name],
+  )
+  if (rows.length === 0) {
+    await client.query(
+      `INSERT INTO characters
+         (name, name_pt, aliases, film_title, image_path, attribution, sort_order)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        c.name,
+        c.name_pt,
+        c.aliases,
+        c.film_title,
+        c.image_path,
+        c.attribution,
+        sortOrder,
+      ],
+    )
+    return 'inserted'
+  }
+  await client.query(
+    `UPDATE characters
+     SET name_pt = $2, aliases = $3, film_title = $4,
+         image_path = $5, attribution = $6, sort_order = $7
+     WHERE id = $1`,
+    [
+      rows[0].id,
+      c.name_pt,
+      c.aliases,
+      c.film_title,
+      c.image_path,
+      c.attribution,
+      sortOrder,
+    ],
+  )
+  return 'updated'
+}
 
 export async function seedCharacterCatalog(client) {
   let inserted = 0
@@ -389,9 +910,11 @@ export async function seedCharacterCatalog(client) {
       ADD COLUMN IF NOT EXISTS sort_order int NOT NULL DEFAULT 0
   `)
 
-  const keepNames = CHARACTER_CATALOG.map((c) => c.name.toLowerCase())
+  const keepNames = [...CHARACTER_CATALOG, ...CHARACTER_PENDING].map((c) =>
+    c.name.toLowerCase(),
+  )
 
-  // Tira dailies e personagens sem foto / fora do catálogo ativo
+  // Tira dailies e personagens fora do catálogo ativo + pendente
   await client.query(
     `DELETE FROM character_daily d
      USING characters c
@@ -405,46 +928,19 @@ export async function seedCharacterCatalog(client) {
   )
 
   for (let i = 0; i < CHARACTER_CATALOG.length; i++) {
-    const c = CHARACTER_CATALOG[i]
-    const sortOrder = i + 1
-    const { rows } = await client.query(
-      `SELECT id FROM characters WHERE lower(name) = lower($1)`,
-      [c.name],
+    const result = await upsertCharacter(client, CHARACTER_CATALOG[i], i + 1)
+    if (result === 'inserted') inserted += 1
+    else updated += 1
+  }
+
+  for (let i = 0; i < CHARACTER_PENDING.length; i++) {
+    const result = await upsertCharacter(
+      client,
+      CHARACTER_PENDING[i],
+      10000 + i,
     )
-    if (rows.length === 0) {
-      await client.query(
-        `INSERT INTO characters
-           (name, name_pt, aliases, film_title, image_path, attribution, sort_order)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [
-          c.name,
-          c.name_pt,
-          c.aliases,
-          c.film_title,
-          c.image_path,
-          c.attribution,
-          sortOrder,
-        ],
-      )
-      inserted += 1
-    } else {
-      await client.query(
-        `UPDATE characters
-         SET name_pt = $2, aliases = $3, film_title = $4,
-             image_path = $5, attribution = $6, sort_order = $7
-         WHERE id = $1`,
-        [
-          rows[0].id,
-          c.name_pt,
-          c.aliases,
-          c.film_title,
-          c.image_path,
-          c.attribution,
-          sortOrder,
-        ],
-      )
-      updated += 1
-    }
+    if (result === 'inserted') inserted += 1
+    else updated += 1
   }
 
   // Uma vez: zera dailies/plays antigos (placeholders) e começa do epoch
@@ -466,5 +962,10 @@ export async function seedCharacterCatalog(client) {
     )
   }
 
-  return { inserted, updated, total: CHARACTER_CATALOG.length }
+  return {
+    inserted,
+    updated,
+    total: CHARACTER_CATALOG.length,
+    pending: CHARACTER_PENDING.length,
+  }
 }

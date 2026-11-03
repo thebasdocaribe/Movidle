@@ -15,6 +15,7 @@ const MIGRATION_FILES = [
   'cast_mode.sql',
   'character_mode.sql',
   'profile.sql',
+  'daily_rotation.sql',
 ]
 
 /** Clips em web/public/clips (vão pro dist no build). */
@@ -80,7 +81,7 @@ export async function migrate() {
     try {
       const charStats = await seedCharacterCatalog(client)
       console.log(
-        `[migrate] personagens: +${charStats.inserted} novos, ${charStats.updated} atualizados (${charStats.total} no catálogo)`,
+        `[migrate] personagens: +${charStats.inserted} novos, ${charStats.updated} atualizados (${charStats.total} com foto, ${charStats.pending || 0} pendentes)`,
       )
     } catch (err) {
       console.warn('[migrate] seed personagens:', err.message)
@@ -88,4 +89,20 @@ export async function migrate() {
   } finally {
     client.release()
   }
+}
+
+// `node src/migrate.js` no server/
+const isDirect =
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+if (isDirect) {
+  migrate()
+    .then(() => {
+      console.log('[migrate] concluído')
+      process.exit(0)
+    })
+    .catch((err) => {
+      console.error('[migrate] falhou:', err)
+      process.exit(1)
+    })
 }
