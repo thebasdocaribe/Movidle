@@ -6,11 +6,17 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 export const KEYWORDS_START = 4
+/** Legacy label (UI); a progressão real é KEYWORDS_REVEAL_BY_WRONG */
 export const KEYWORDS_PER_WRONG = 3
 export const KEYWORDS_MAX_WRONG = 6
-/** A partir deste nº de erros, mostra pôster pixelizado */
+/**
+ * Palavras visíveis por nº de erros (0..5).
+ * 4 → 7 → 10 → 13 → 15 (+2) → 15 + pôster na 6ª tentativa (5 erros).
+ */
+export const KEYWORDS_REVEAL_BY_WRONG = [4, 7, 10, 13, 15, 15]
+/** Com 5 erros (6ª tentativa) mostra pôster pixelizado */
 export const KEYWORDS_PIXEL_AT = 5
-export const KEYWORDS_MIN_CURATED = 10
+export const KEYWORDS_MIN_CURATED = 15
 
 /** Pontos por nº do chute acertado (1ª tentativa = 100…) */
 export const KEYWORDS_POINTS = [100, 50, 25, 15, 10, 5]
@@ -717,11 +723,37 @@ function translateLabel(name) {
   return raw
 }
 
-/**
- * Traduz keyword EN → PT (mapa → cache → MyMemory).
- * @returns {Promise<string>}
- */
-export async function translateToPt(text) {
+/** Tags que são NOME de outra franquia — só mantém se o título bater. */
+const RIVAL_FRANCHISE_TAGS = [
+  { tag: 'halloween', titleRe: /halloween/i },
+  { tag: 'nightmare on elm street', titleRe: /elm street|freddy/i },
+  { tag: 'a nightmare on elm street', titleRe: /elm street|freddy/i },
+  { tag: 'scream', titleRe: /\bscream\b|pânico/i },
+  { tag: 'texas chainsaw', titleRe: /chainsaw|motosserra/i },
+  { tag: 'child.?s play', titleRe: /child.?s play|chucky|brinquedo assassino/i },
+  { tag: 'saw', titleRe: /\bsaw\b|jogos mortais/i },
+  { tag: 'alien', titleRe: /\balien\b|xenomorph/i },
+  { tag: 'predator', titleRe: /\bpredator\b|predador/i },
+  { tag: 'terminator', titleRe: /terminator|exterminador/i },
+  { tag: 'rocky', titleRe: /\brocky\b/i },
+  { tag: 'star wars', titleRe: /star wars|guerra nas estrelas/i },
+  { tag: 'harry potter', titleRe: /harry potter|hogwarts/i },
+  { tag: 'friday the 13th', titleRe: /friday the 13|sexta.?feira 13/i },
+]
+
+function dropsRivalFranchiseTag(label, movie) {
+  const title = `${movie?.title || ''} ${movie?.title_pt || ''}`
+  const norm = normalizeKey(label)
+  for (const r of RIVAL_FRANCHISE_TAGS) {
+    if (norm === normalizeKey(r.tag) || norm.includes(normalizeKey(r.tag))) {
+      if (!r.titleRe.test(title)) return true
+    }
+  }
+  return false
+}
+
+/** Tradução síncrona (mapa + cache em disco). Sem rede — usada no request. */
+export function translateToPtSync(text) {
   const raw = String(text || '').trim()
   if (!raw) return raw
   const key = raw.toLowerCase()
@@ -733,9 +765,25 @@ export async function translateToPt(text) {
     ptMemCache.set(key, disk[key])
     return disk[key]
   }
+  return raw
+}
+
+/**
+ * Traduz keyword EN → PT (mapa → cache → MyMemory).
+ * Só use em scripts/backfill — NÃO no request HTTP.
+ * @returns {Promise<string>}
+ */
+export async function translateToPt(text) {
+  const sync = translateToPtSync(text)
+  const key = String(text || '')
+    .trim()
+    .toLowerCase()
+  if (!key) return sync
+  if (!isEnglishish(sync)) return sync
+  if (PT_MAP[key]) return PT_MAP[key]
   try {
     const url = new URL('https://api.mymemory.translated.net/get')
-    url.searchParams.set('q', raw)
+    url.searchParams.set('q', String(text).trim())
     url.searchParams.set('langpair', 'en|pt-BR')
     const res = await fetch(url, { signal: AbortSignal.timeout(2500) })
     if (res.ok) {
@@ -750,37 +798,45 @@ export async function translateToPt(text) {
         translated !== key &&
         !translated.includes('mymemory warning')
       ) {
-        const out = translated
-        ptMemCache.set(key, out)
-        disk[key] = out
+        const disk = loadPtDiskCache()
+        ptMemCache.set(key, translated)
+        disk[key] = translated
         ptDiskCache = disk
         savePtDiskCache()
-        return out
+        return translated
       }
     }
   } catch {
-    /* fallback EN */
+    /* fallback */
   }
-  ptMemCache.set(key, raw)
-  return raw
+  ptMemCache.set(key, sync)
+  return sync
 }
 
-/** Traduz lista completa para PT (ordem preservada). */
-export async function translateListToPt(words) {
-  const out = []
-  for (const w of words || []) {
-    out.push(await translateToPt(w))
-  }
-  // dedupe mantendo ordem
+function dedupeWords(words) {
   const seen = new Set()
   const deduped = []
-  for (const w of out) {
+  for (const w of words || []) {
     const n = normalizeKey(w)
     if (!n || seen.has(n)) continue
     seen.add(n)
     deduped.push(w)
   }
   return deduped
+}
+
+/** Tradução síncrona da lista (request path). */
+export function translateListToPtSync(words) {
+  return dedupeWords((words || []).map((w) => translateToPtSync(w)))
+}
+
+/** Traduz lista completa para PT (ordem preservada). Async = pode bater rede. */
+export async function translateListToPt(words) {
+  const out = []
+  for (const w of words || []) {
+    out.push(await translateToPt(w))
+  }
+  return dedupeWords(out)
 }
 
 /**
@@ -811,6 +867,9 @@ export function curateKeywords(raw, movie = null) {
     }
     const label = translateLabel(pt || en)
     if (!label) continue
+    if (dropsRivalFranchiseTag(label, movie) || dropsRivalFranchiseTag(en, movie)) {
+      continue
+    }
     const labelNorm = normalizeKey(label)
     if (seen.has(labelNorm)) continue
     seen.add(labelNorm)
@@ -879,10 +938,10 @@ function isEnglishish(word) {
 }
 
 /**
- * Garante lista em PT (traduz + grava curatedPt; caller persiste no DB).
- * @returns {Promise<{ movie: object, words: string[], changed: boolean }>}
+ * Garante lista em PT (só mapa/cache — sem rede no request).
+ * @returns {{ movie: object, words: string[], changed: boolean }}
  */
-export async function ensurePortugueseKeywords(movie) {
+export function ensurePortugueseKeywords(movie) {
   if (!movie) return { movie, words: [], changed: false }
   const tmdbId = tmdbIdFromMovie(movie)
   const overrides = loadKeywordOverrides()
@@ -894,7 +953,6 @@ export async function ensurePortugueseKeywords(movie) {
     return { movie, words: resolvedKeywords(movie), changed: false }
   }
 
-  // base EN (curated/raw) — NÃO usar curatedPt aqui pra detectar inglês residual
   const rawBase =
     (Array.isArray(movie?.cast_json?._keywords?.curated) &&
       movie.cast_json._keywords.curated.map(String).filter(Boolean)) ||
@@ -907,7 +965,8 @@ export async function ensurePortugueseKeywords(movie) {
     : []
 
   const ptLooksGood =
-    existingPt.length >= Math.min(KEYWORDS_START, rawBase.length || KEYWORDS_START) &&
+    existingPt.length >=
+      Math.min(KEYWORDS_START, rawBase.length || KEYWORDS_START) &&
     existingPt.every((w) => !isEnglishish(w))
 
   if (ptLooksGood) {
@@ -917,7 +976,27 @@ export async function ensurePortugueseKeywords(movie) {
   const source = rawBase.length ? rawBase : resolvedKeywords(movie)
   if (!source.length) return { movie, words: [], changed: false }
 
-  const curatedPt = await translateListToPt(source)
+  // Sync: mapa + cache. Descarta residual inglês sem tradução.
+  const curatedPt = translateListToPtSync(source).filter((w) => !isEnglishish(w))
+  if (curatedPt.length < KEYWORDS_START) {
+    // se filtrou demais, mantém sync completo (melhor EN do que lista curta)
+    const loose = translateListToPtSync(source)
+    const castJsonLoose = {
+      ...(typeof movie.cast_json === 'object' && movie.cast_json
+        ? movie.cast_json
+        : {}),
+      _keywords: {
+        ...(movie.cast_json?._keywords || {}),
+        curated: movie.cast_json?._keywords?.curated || source,
+        curatedPt: loose,
+      },
+    }
+    return {
+      movie: { ...movie, cast_json: castJsonLoose },
+      words: loose,
+      changed: true,
+    }
+  }
   const castJson = {
     ...(typeof movie.cast_json === 'object' && movie.cast_json
       ? movie.cast_json
@@ -935,9 +1014,33 @@ export async function ensurePortugueseKeywords(movie) {
   }
 }
 
+/** Continuação / parte N / numeral romano no título. */
+export function looksLikeSequel(movie) {
+  const t = `${movie?.title || ''} ${movie?.title_pt || ''}`
+  if (
+    /\b(part|parte|chapter|capítulo|capitulo)\s*\d+/i.test(t) ||
+    /\b(ii|iii|iv|v|vi|vii|viii|ix|x)\b/i.test(t) ||
+    /[:\-–]\s*.*\b([2-9]|1\d)\b/.test(t) ||
+    /\s[2-9]\s*$/.test(t.trim()) ||
+    /\b(sequel|continuação|continuacao)\b/i.test(t)
+  ) {
+    return true
+  }
+  return false
+}
+
 export function revealedCountForWrong(wrongGuesses) {
   const w = Math.max(0, Number(wrongGuesses) || 0)
-  return KEYWORDS_START + w * KEYWORDS_PER_WRONG
+  const table = KEYWORDS_REVEAL_BY_WRONG
+  if (w < table.length) return table[w]
+  return table[table.length - 1]
+}
+
+/** Quantas palavras novas liberam ao ir de `fromWrong` → `fromWrong+1`. */
+export function revealDeltaForWrong(fromWrong) {
+  const a = revealedCountForWrong(fromWrong)
+  const b = revealedCountForWrong(fromWrong + 1)
+  return Math.max(0, b - a)
 }
 
 export function sliceRevealed(words, wrongGuesses) {

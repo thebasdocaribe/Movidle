@@ -15,6 +15,7 @@ import {
 } from '../api'
 import type { AuthUser, ProgressMap } from '../auth'
 import { modeProgress } from '../auth'
+import { PixelatedPoster } from '../components/PixelatedPoster'
 
 type KeywordsScreenProps = {
   user: AuthUser | null
@@ -175,11 +176,19 @@ export function KeywordsScreen({
         setRevealPoster(res.posterUrl || null)
         await persistFinish('lose', res.wrongGuesses, res.wrongGuesses)
       } else {
-        setHint(
-          res.skipped
-            ? `Pulou · +${puzzle.perWrong} palavras`
-            : `Errou · +${puzzle.perWrong} palavras`,
-        )
+        {
+          const added = res.addedWords ?? 0
+          const extra = res.showPixelPoster ? ' · pôster pixelizado' : ''
+          setHint(
+            added > 0
+              ? `${res.skipped ? 'Pulou' : 'Errou'} · +${added} palavras${extra}`
+              : res.showPixelPoster
+                ? `${res.skipped ? 'Pulou' : 'Errou'} · pôster pixelizado`
+                : res.skipped
+                  ? 'Pulou'
+                  : 'Errou',
+          )
+        }
       }
     } catch (err) {
       setHint((err as Error).message)
@@ -217,10 +226,6 @@ export function KeywordsScreen({
         <div className="panel-frame px-3 py-2 text-center">
           <p className="font-mono text-sm text-cinema-gold tabular-nums">
             Tentativas: {wrong}/{maxWrong}
-          </p>
-          <p className="mt-0.5 text-[11px] text-cinema-muted">
-            {puzzle?.startWords ?? 4} palavras no início · +
-            {puzzle?.perWrong ?? 3} por erro ou pulo
           </p>
         </div>
 
@@ -291,10 +296,14 @@ export function KeywordsScreen({
                       Pôster pixelizado
                     </p>
                     <div className="keyword-pixel-wrap">
-                      <img
+                      <PixelatedPoster
                         src={pixelPoster}
-                        alt=""
-                        className="keyword-pixel-img"
+                        sampleW={12}
+                        sampleH={18}
+                        displayW={140}
+                        displayH={210}
+                        className="keyword-pixel-canvas"
+                        alt="Pôster pixelizado"
                       />
                     </div>
                   </div>

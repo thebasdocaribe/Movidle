@@ -43,11 +43,14 @@ import {
   KEYWORDS_MIN_CURATED,
   KEYWORDS_PER_WRONG,
   KEYWORDS_PIXEL_AT,
+  KEYWORDS_REVEAL_BY_WRONG,
   KEYWORDS_START,
   curateKeywords,
   ensurePortugueseKeywords,
   keywordsPoints,
+  looksLikeSequel,
   movieHasEnoughKeywords,
+  revealDeltaForWrong,
   resolvedKeywords,
   showPixelPoster,
   sliceRevealed,
@@ -551,9 +554,10 @@ async function ensureKeywordsData(movie) {
       }
     }
   }
-  const { movie: withPt, changed } = await ensurePortugueseKeywords(current)
+  const { movie: withPt, changed } = ensurePortugueseKeywords(current)
   if (changed) {
-    await query(`UPDATE movies SET cast_json = $2::jsonb WHERE id = $1`, [
+    // fire-and-forget: não bloqueia a resposta do daily
+    query(`UPDATE movies SET cast_json = $2::jsonb WHERE id = $1`, [
       withPt.movie_id || withPt.id,
       JSON.stringify(withPt.cast_json),
     ]).catch(() => {})
@@ -580,30 +584,43 @@ async function ensureKeywordsDaily(dateStr) {
   let puzzle = await getKeywordsPuzzleByDate(dateStr)
   if (puzzle) return ensureKeywordsData(puzzle)
 
-  const movieId = await drawWithoutReplacement({
+  async function listKeywordsEligible({ allowSequels }) {
+    const { rows } = await query(
+      `SELECT id::text AS id, cast_json, title, title_pt, source_url, attribution
+       FROM movies
+       WHERE cast_json IS NOT NULL
+         AND cast_json != '{}'::jsonb
+         AND year IS NOT NULL
+         AND poster_path IS NOT NULL`,
+    )
+    return rows
+      .filter((r) => {
+        if (!allowSequels && looksLikeSequel(r)) return false
+        if (movieHasEnoughKeywords(r)) return true
+        const curated = r.cast_json?._keywords?.curated
+        const pt = r.cast_json?._keywords?.curatedPt
+        return (
+          (Array.isArray(curated) && curated.length >= KEYWORDS_MIN_CURATED) ||
+          (Array.isArray(pt) && pt.length >= KEYWORDS_MIN_CURATED)
+        )
+      })
+      .map((r) => r.id)
+  }
+
+  // Prefer originals; se o pool esgotar, libera continuações
+  let movieId = await drawWithoutReplacement({
     mode: 'keywords',
     dateStr,
-    listEligible: async () => {
-      const { rows } = await query(
-        `SELECT id::text AS id, cast_json, title, title_pt, source_url, attribution
-         FROM movies
-         WHERE cast_json IS NOT NULL
-           AND cast_json != '{}'::jsonb
-           AND year IS NOT NULL
-           AND poster_path IS NOT NULL`,
-      )
-      return rows
-        .filter((r) => {
-          if (movieHasEnoughKeywords(r)) return true
-          // override / raw already in jsonb
-          const curated = r.cast_json?._keywords?.curated
-          return Array.isArray(curated) && curated.length >= KEYWORDS_MIN_CURATED
-        })
-        .map((r) => r.id)
-    },
+    listEligible: () => listKeywordsEligible({ allowSequels: false }),
   })
   if (!movieId) {
-    // fallback: qualquer filme com TMDB id (on-demand fill)
+    movieId = await drawWithoutReplacement({
+      mode: 'keywords',
+      dateStr,
+      listEligible: () => listKeywordsEligible({ allowSequels: true }),
+    })
+  }
+  if (!movieId) {
     const movieId2 = await drawWithoutReplacement({
       mode: 'keywords',
       dateStr,
@@ -650,13 +667,14 @@ function publicKeywordsPuzzle(puzzle, extra = {}) {
     ...rest,
     startWords: KEYWORDS_START,
     perWrong: KEYWORDS_PER_WRONG,
+    revealByWrong: KEYWORDS_REVEAL_BY_WRONG,
     maxWrong: KEYWORDS_MAX_WRONG,
     pixelAt: KEYWORDS_PIXEL_AT,
     words: revealed,
     revealedCount: revealed.length,
     totalHintSlots: Math.min(
       words.length,
-      KEYWORDS_START + KEYWORDS_MAX_WRONG * KEYWORDS_PER_WRONG,
+      KEYWORDS_REVEAL_BY_WRONG[KEYWORDS_REVEAL_BY_WRONG.length - 1],
     ),
     showPixelPoster: showPixelPoster(wrong),
     pixelPosterUrl: showPixelPoster(wrong) ? puzzle.poster_path || null : null,
@@ -1533,6 +1551,7 @@ async function handleKeywordsAdvance({
   const words = resolvedKeywords(enriched)
   const revealed = sliceRevealed(words, nextWrong)
   const pixel = showPixelPoster(nextWrong)
+  const added = correct ? 0 : revealDeltaForWrong(wrongGuesses)
   return {
     status: 200,
     body: {
@@ -1542,6 +1561,7 @@ async function handleKeywordsAdvance({
       wrongGuesses: nextWrong,
       words: revealed,
       revealedCount: revealed.length,
+      addedWords: added,
       showPixelPoster: pixel,
       pixelPosterUrl: pixel ? enriched.poster_path || null : null,
       ended: correct || lost,

@@ -167,7 +167,7 @@ export function HubScreen({
                 title="PALAVRA-CHAVE"
                 tag="Diário"
                 difficulty="médio"
-                subtitle="Palavras revelam o filme · +3 por erro"
+                subtitle="4 palavras → +3 por erro · pôster na 6ª"
                 accent="yellow"
                 onClick={() => onPlayKeywords()}
                 onCalendar={() => setCalendarFor('keywords')}

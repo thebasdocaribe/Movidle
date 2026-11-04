@@ -339,6 +339,7 @@ export type KeywordsPayload = {
   attribution: string | null
   startWords: number
   perWrong: number
+  revealByWrong?: number[]
   maxWrong: number
   pixelAt: number
   words: string[]
@@ -364,6 +365,7 @@ type KeywordsGuessResult = {
   wrongGuesses: number
   words: string[]
   revealedCount: number
+  addedWords?: number
   showPixelPoster: boolean
   pixelPosterUrl: string | null
   ended: boolean

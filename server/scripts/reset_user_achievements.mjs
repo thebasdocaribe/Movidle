@@ -48,7 +48,7 @@ if (!rows[0]) {
 const id = rows[0].id
 console.log('Resetando', rows[0].username, id)
 
-await pool.query(`DELETE FROM user_cast_endless WHERE user_id = $1`, [id])
+await pool.query(`DELETE FROM user_cast_endless WHERE user_id = $1`, [id]).catch(() => {})
 await pool.query(
   `UPDATE user_progress SET
      total_score = 0,
@@ -58,12 +58,20 @@ await pool.query(
    WHERE user_id = $1`,
   [id],
 )
-await pool.query(`DELETE FROM user_daily_plays WHERE user_id = $1`, [id])
-await pool.query(`DELETE FROM user_cast_daily_plays WHERE user_id = $1`, [id])
+await pool.query(`DELETE FROM user_daily_plays WHERE user_id = $1`, [id]).catch(() => {})
+await pool.query(`DELETE FROM user_cast_daily_plays WHERE user_id = $1`, [id]).catch(() => {})
 await pool.query(
   `DELETE FROM user_character_daily_plays WHERE user_id = $1`,
   [id],
 ).catch(() => {})
+await pool.query(
+  `DELETE FROM user_whoami_daily_plays WHERE user_id = $1`,
+  [id],
+).catch(() => {})
+await pool.query(
+  `DELETE FROM user_keywords_daily_plays WHERE user_id = $1`,
+  [id],
+).catch(() => {})
 
-console.log('OK — progresso e endless zerados')
+console.log('OK — progresso e plays diários zerados (conquistas recalculam do zero)')
 await pool.end()

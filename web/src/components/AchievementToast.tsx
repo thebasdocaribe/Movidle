@@ -8,7 +8,7 @@ type AchievementToastHostProps = {
   onConsumed: () => void
 }
 
-/** Popup canto inferior (estilo Steam) — som fica pra depois. */
+/** Popup canto inferior (estilo Steam) + SFX de unlock. */
 export function AchievementToastHost({
   queue,
   onConsumed,
@@ -26,6 +26,15 @@ export function AchievementToastHost({
   useEffect(() => {
     if (!current) return
     setVisible(false)
+    try {
+      const audio = new Audio('/sfx/achievement.mp3')
+      audio.volume = 0.7
+      void audio.play().catch(() => {
+        /* autoplay bloqueado / sem interação — ignora */
+      })
+    } catch {
+      /* ignore */
+    }
     const enter = window.setTimeout(() => setVisible(true), 30)
     const hide = window.setTimeout(() => setVisible(false), 4200)
     const done = window.setTimeout(() => setCurrent(null), 4800)

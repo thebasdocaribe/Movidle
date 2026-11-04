@@ -665,11 +665,10 @@ input:disabled {
   box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.5);
 }
 
-.keyword-pixel-img {
-  width: 20px;
-  height: 30px;
-  object-fit: cover;
+.keyword-pixel-canvas {
+  display: block;
+  width: 140px;
+  height: 210px;
   image-rendering: pixelated;
-  transform: scale(7);
-  transform-origin: top left;
+  image-rendering: crisp-edges;
 }
