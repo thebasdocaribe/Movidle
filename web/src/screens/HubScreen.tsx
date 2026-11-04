@@ -49,6 +49,9 @@ type HubScreenProps = {
   onPlayClassic: () => void
   onPlayCastEndless: () => void
   onPlayCharacter: (date?: string) => void
+  onPlayWhoami: (date?: string) => void
+  onPlayWhoamiEndless: () => void
+  onPlayKeywords: (date?: string) => void
   onPlayDuel: () => void
   onOpenAuth: () => void
   onOpenProfile: (username: string) => void
@@ -64,6 +67,9 @@ export function HubScreen({
   onPlayClassic,
   onPlayCastEndless,
   onPlayCharacter,
+  onPlayWhoami,
+  onPlayWhoamiEndless,
+  onPlayKeywords,
   onPlayDuel,
   onOpenAuth,
   onOpenProfile,
@@ -72,7 +78,7 @@ export function HubScreen({
   const [entries, setEntries] = useState<RankEntry[]>([])
   const [rankLoading, setRankLoading] = useState(false)
   const [calendarFor, setCalendarFor] = useState<
-    'daily' | 'cast' | 'character' | null
+    'daily' | 'cast' | 'character' | 'whoami' | 'keywords' | null
   >(null)
   const today = todayBRT()
   const dailyResetIn = useDailyResetCountdown()
@@ -133,6 +139,7 @@ export function HubScreen({
               <ModeButton
                 title="CLÁSSICO"
                 tag="Diário"
+                difficulty="fácil"
                 subtitle="Adivinhe o filme pelo clipe"
                 accent="green"
                 onClick={() => onPlayDaily()}
@@ -141,6 +148,7 @@ export function HubScreen({
               <ModeButton
                 title="POSTER"
                 tag="Diário"
+                difficulty="fácil"
                 subtitle="Adivinhe o poster pelo elenco"
                 accent="yellow"
                 onClick={() => onPlayCast()}
@@ -149,10 +157,29 @@ export function HubScreen({
               <ModeButton
                 title="PERSONAGEM"
                 tag="Diário"
+                difficulty="médio"
                 subtitle="Adivinhe o personagem pelo recorte"
                 accent="purple"
                 onClick={() => onPlayCharacter()}
                 onCalendar={() => setCalendarFor('character')}
+              />
+              <ModeButton
+                title="PALAVRA-CHAVE"
+                tag="Diário"
+                difficulty="médio"
+                subtitle="Palavras revelam o filme · +3 por erro"
+                accent="yellow"
+                onClick={() => onPlayKeywords()}
+                onCalendar={() => setCalendarFor('keywords')}
+              />
+              <ModeButton
+                title="QUEM SOU EU"
+                tag="Diário"
+                difficulty="difícil"
+                subtitle="Orçamento único de dicas · gênero, época, origem…"
+                accent="blue"
+                onClick={() => onPlayWhoami()}
+                onCalendar={() => setCalendarFor('whoami')}
               />
             </div>
           </section>
@@ -179,6 +206,7 @@ export function HubScreen({
                 <ModeButton
                   title="MARATONA"
                   tag="Livre"
+                  difficulty="fácil"
                   subtitle="Clipes sem parar"
                   accent="blue"
                   onClick={onPlayClassic}
@@ -186,9 +214,18 @@ export function HubScreen({
                 <ModeButton
                   title="POSTER"
                   tag="Livre"
+                  difficulty="fácil"
                   subtitle="Posters sem parar"
                   accent="yellow"
                   onClick={onPlayCastEndless}
+                />
+                <ModeButton
+                  title="QUEM SOU EU"
+                  tag="Livre"
+                  difficulty="difícil"
+                  subtitle="Orçamento único de dicas · sem parar"
+                  accent="blue"
+                  onClick={onPlayWhoamiEndless}
                 />
               </div>
             </section>
@@ -292,7 +329,11 @@ export function HubScreen({
               ? 'Clássico'
               : calendarFor === 'cast'
                 ? 'Poster'
-                : 'Personagem'
+                : calendarFor === 'whoami'
+                  ? 'Quem sou eu'
+                  : calendarFor === 'keywords'
+                    ? 'Palavra-chave'
+                    : 'Personagem'
           }
           today={today}
           minDate={
@@ -307,6 +348,8 @@ export function HubScreen({
           onPick={(date) => {
             if (calendarFor === 'daily') onPlayDaily(date)
             else if (calendarFor === 'cast') onPlayCast(date)
+            else if (calendarFor === 'whoami') onPlayWhoami(date)
+            else if (calendarFor === 'keywords') onPlayKeywords(date)
             else onPlayCharacter(date)
           }}
         />
@@ -318,6 +361,7 @@ export function HubScreen({
 function ModeButton({
   title,
   tag,
+  difficulty,
   subtitle,
   accent = 'green',
   onClick,
@@ -325,6 +369,7 @@ function ModeButton({
 }: {
   title: string
   tag: string
+  difficulty?: 'fácil' | 'médio' | 'difícil'
   subtitle?: string
   accent?: 'green' | 'yellow' | 'blue' | 'purple'
   onClick?: () => void
@@ -339,6 +384,13 @@ function ModeButton({
           ? 'border-l-[#a855f7]'
           : 'border-l-emerald-500'
 
+  const difficultyClass =
+    difficulty === 'fácil'
+      ? 'text-emerald-400'
+      : difficulty === 'difícil'
+        ? 'text-cinema-red'
+        : 'text-cinema-gold'
+
   return (
     <div className="flex items-stretch gap-1.5">
       <button
@@ -350,8 +402,15 @@ function ModeButton({
         <span className="font-display block text-xl leading-none tracking-wide sm:text-2xl">
           {title}
         </span>
+        {difficulty ? (
+          <span
+            className={`mt-1 block text-[10px] font-bold tracking-widest uppercase ${difficultyClass}`}
+          >
+            {difficulty}
+          </span>
+        ) : null}
         {subtitle ? (
-          <span className="mt-1 block text-[11px] font-normal text-white/55">
+          <span className="mt-0.5 block text-[11px] font-normal text-white/55">
             {subtitle}
           </span>
         ) : null}

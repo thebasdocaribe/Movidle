@@ -100,7 +100,7 @@ export async function createUser({ username, email, password }) {
   const user = rows[0]
   await query(
     `INSERT INTO user_progress (user_id, mode) VALUES
-     ($1, 'daily'), ($1, 'classic'), ($1, 'cast')
+     ($1, 'daily'), ($1, 'classic'), ($1, 'cast'), ($1, 'whoami'), ($1, 'keywords')
      ON CONFLICT DO NOTHING`,
     [user.id],
   )
@@ -199,6 +199,8 @@ export async function getProgress(userId) {
     classic: { ...empty },
     cast: { ...empty },
     character: { ...empty },
+    whoami: { ...empty },
+    keywords: { ...empty },
   }
   for (const row of rows) {
     if (out[row.mode]) {

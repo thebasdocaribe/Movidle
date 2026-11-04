@@ -36,6 +36,6 @@ CREATE TABLE IF NOT EXISTS user_character_daily_plays (
 ALTER TABLE user_progress DROP CONSTRAINT IF EXISTS user_progress_mode_check;
 ALTER TABLE user_progress
   ADD CONSTRAINT user_progress_mode_check
-  CHECK (mode IN ('daily', 'classic', 'cast', 'character'));
+  CHECK (mode IN ('daily', 'classic', 'cast', 'character', 'whoami', 'keywords'));
 
 -- Catálogo completo semeado em server/src/characterCatalog.js no migrate.

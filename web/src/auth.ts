@@ -23,6 +23,8 @@ export type ProgressMap = {
   classic: ModeProgress
   cast: ModeProgress
   character: ModeProgress
+  whoami: ModeProgress
+  keywords: ModeProgress
 }
 
 export function getToken(): string | null {
@@ -45,16 +47,20 @@ export function emptyProgress(): ProgressMap {
     classic: { totalScore: 0, firstTryStreak: 0, wins: 0 },
     cast: { totalScore: 0, firstTryStreak: 0, wins: 0 },
     character: { totalScore: 0, firstTryStreak: 0, wins: 0 },
+    whoami: { totalScore: 0, firstTryStreak: 0, wins: 0 },
+    keywords: { totalScore: 0, firstTryStreak: 0, wins: 0 },
   }
 }
 
 export function modeProgress(
   progress: ProgressMap | null,
-  mode: GameMode | 'character',
+  mode: GameMode | 'character' | 'whoami' | 'keywords',
 ): ModeProgress {
   const p = progress || emptyProgress()
   if (mode === 'cast') return p.cast
   if (mode === 'classic') return p.classic
   if (mode === 'character') return p.character
+  if (mode === 'whoami') return p.whoami
+  if (mode === 'keywords') return p.keywords
   return p.daily
 }

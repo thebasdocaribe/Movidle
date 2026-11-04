@@ -32,7 +32,27 @@ import {
 import { CHARACTER_EPOCH } from './characterCatalog.js'
 import { drawWithoutReplacement } from './dailyRotation.js'
 import { query } from './db.js'
-import { enrichHintsWithTmdb, tmdbConfigured } from './tmdb.js'
+import {
+  enrichHintsWithTmdb,
+  fetchMovieDetails,
+  fetchMovieKeywords,
+  tmdbConfigured,
+} from './tmdb.js'
+import {
+  KEYWORDS_MAX_WRONG,
+  KEYWORDS_MIN_CURATED,
+  KEYWORDS_PER_WRONG,
+  KEYWORDS_PIXEL_AT,
+  KEYWORDS_START,
+  curateKeywords,
+  ensurePortugueseKeywords,
+  keywordsPoints,
+  movieHasEnoughKeywords,
+  resolvedKeywords,
+  showPixelPoster,
+  sliceRevealed,
+  tmdbIdFromMovie as keywordsTmdbId,
+} from './keywords.js'
 import {
   applyDuelGuess,
   createDuel,
@@ -55,6 +75,16 @@ import {
   primaryTitle,
 } from './normalize.js'
 import { CAST_POINTS, scoreRound } from './scoring.js'
+import {
+  evaluateAsk,
+  publicAskBank,
+  traitsFromMovie,
+  whoamiPoints,
+  WHOAMI_AD_BONUS_ASKS,
+  WHOAMI_MAX_ADS,
+  WHOAMI_MAX_ASKS,
+  WHOAMI_MAX_WRONG,
+} from './whoami.js'
 
 const CHARACTER_MAX_TAKE = 6
 const CHARACTER_POINTS = CAST_POINTS
@@ -317,7 +347,8 @@ async function getMovieById(movieId) {
             year,
             director,
             cast_json,
-            poster_wide_path
+            poster_wide_path,
+            source_url
      FROM movies
      WHERE id = $1::uuid`,
     [movieId],
@@ -477,9 +508,243 @@ async function publicCastPuzzle(puzzle, extra = {}) {
 async function resolvePuzzle(puzzleId, mode = 'daily') {
   if (isDateId(puzzleId)) {
     if (mode === 'cast') return getCastPuzzleByDate(puzzleId)
+    if (mode === 'whoami') return getWhoamiPuzzleByDate(puzzleId)
+    if (mode === 'keywords') return getKeywordsPuzzleByDate(puzzleId)
     return getPuzzleByDate(puzzleId)
   }
   return getMovieById(puzzleId)
+}
+
+function tmdbIdFromMovie(movie) {
+  const id = movie?.cast_json?._tmdb?.id
+  if (id) return Number(id)
+  const url = movie?.source_url || ''
+  const hit = /themoviedb\.org\/movie\/(\d+)/i.exec(url)
+  if (hit) return Number(hit[1])
+  const att = movie?.attribution || ''
+  const hit2 = /TMDB\s*#(\d+)/i.exec(att)
+  if (hit2) return Number(hit2[1])
+  return null
+}
+
+/** Garante _keywords.curated (+ curatedPt) no filme. */
+async function ensureKeywordsData(movie) {
+  if (!movie) return movie
+  let current = movie
+  if (!movieHasEnoughKeywords(current)) {
+    const tmdbId = keywordsTmdbId(current) || tmdbIdFromMovie(current)
+    if (tmdbId && tmdbConfigured()) {
+      const raw = await fetchMovieKeywords(tmdbId)
+      if (raw?.length) {
+        const curated = curateKeywords(raw, current)
+        const castJson = {
+          ...(typeof current.cast_json === 'object' && current.cast_json
+            ? current.cast_json
+            : {}),
+          _keywords: { raw, curated },
+        }
+        current = { ...current, cast_json: castJson }
+        await query(`UPDATE movies SET cast_json = $2::jsonb WHERE id = $1`, [
+          current.movie_id || current.id,
+          JSON.stringify(castJson),
+        ]).catch(() => {})
+      }
+    }
+  }
+  const { movie: withPt, changed } = await ensurePortugueseKeywords(current)
+  if (changed) {
+    await query(`UPDATE movies SET cast_json = $2::jsonb WHERE id = $1`, [
+      withPt.movie_id || withPt.id,
+      JSON.stringify(withPt.cast_json),
+    ]).catch(() => {})
+  }
+  return withPt
+}
+
+async function getKeywordsPuzzleByDate(dateStr) {
+  const { rows } = await query(
+    `SELECT d.puzzle_date::text AS puzzle_key,
+            m.id AS movie_id,
+            m.title, m.title_pt, m.aliases, m.poster_path, m.poster_wide_path,
+            m.clip_path, m.attribution, m.year, m.director, m.cast_json,
+            m.source_url
+     FROM keywords_daily d
+     JOIN movies m ON m.id = d.movie_id
+     WHERE d.puzzle_date = $1::date`,
+    [dateStr],
+  )
+  return rows[0] || null
+}
+
+async function ensureKeywordsDaily(dateStr) {
+  let puzzle = await getKeywordsPuzzleByDate(dateStr)
+  if (puzzle) return ensureKeywordsData(puzzle)
+
+  const movieId = await drawWithoutReplacement({
+    mode: 'keywords',
+    dateStr,
+    listEligible: async () => {
+      const { rows } = await query(
+        `SELECT id::text AS id, cast_json, title, title_pt, source_url, attribution
+         FROM movies
+         WHERE cast_json IS NOT NULL
+           AND cast_json != '{}'::jsonb
+           AND year IS NOT NULL
+           AND poster_path IS NOT NULL`,
+      )
+      return rows
+        .filter((r) => {
+          if (movieHasEnoughKeywords(r)) return true
+          // override / raw already in jsonb
+          const curated = r.cast_json?._keywords?.curated
+          return Array.isArray(curated) && curated.length >= KEYWORDS_MIN_CURATED
+        })
+        .map((r) => r.id)
+    },
+  })
+  if (!movieId) {
+    // fallback: qualquer filme com TMDB id (on-demand fill)
+    const movieId2 = await drawWithoutReplacement({
+      mode: 'keywords',
+      dateStr,
+      listEligible: async () => {
+        const { rows } = await query(
+          `SELECT id::text AS id FROM movies
+           WHERE cast_json -> '_tmdb' ->> 'id' IS NOT NULL
+             AND poster_path IS NOT NULL
+             AND year IS NOT NULL`,
+        )
+        return rows.map((r) => r.id)
+      },
+    })
+    if (!movieId2) return null
+    await query(
+      `INSERT INTO keywords_daily (puzzle_date, movie_id)
+       VALUES ($1::date, $2::uuid)
+       ON CONFLICT (puzzle_date) DO NOTHING`,
+      [dateStr, movieId2],
+    )
+    puzzle = await getKeywordsPuzzleByDate(dateStr)
+    return ensureKeywordsData(puzzle)
+  }
+  await query(
+    `INSERT INTO keywords_daily (puzzle_date, movie_id)
+     VALUES ($1::date, $2::uuid)
+     ON CONFLICT (puzzle_date) DO NOTHING`,
+    [dateStr, movieId],
+  )
+  puzzle = await getKeywordsPuzzleByDate(dateStr)
+  return ensureKeywordsData(puzzle)
+}
+
+function publicKeywordsPuzzle(puzzle, extra = {}) {
+  const wrong = Number(extra.wrongGuesses) || 0
+  // prefer curatedPt já garantido por ensureKeywordsData
+  const words = resolvedKeywords(puzzle)
+  const revealed = sliceRevealed(words, wrong)
+  const { wrongGuesses: _w, ...rest } = extra
+  return {
+    puzzleId: puzzle.puzzle_key || String(puzzle.movie_id || puzzle.id),
+    mode: 'keywords',
+    attribution: puzzle.attribution || null,
+    ...rest,
+    startWords: KEYWORDS_START,
+    perWrong: KEYWORDS_PER_WRONG,
+    maxWrong: KEYWORDS_MAX_WRONG,
+    pixelAt: KEYWORDS_PIXEL_AT,
+    words: revealed,
+    revealedCount: revealed.length,
+    totalHintSlots: Math.min(
+      words.length,
+      KEYWORDS_START + KEYWORDS_MAX_WRONG * KEYWORDS_PER_WRONG,
+    ),
+    showPixelPoster: showPixelPoster(wrong),
+    pixelPosterUrl: showPixelPoster(wrong) ? puzzle.poster_path || null : null,
+  }
+}
+
+/** Garante _traits.genres no filme (TMDB on-demand + cache no DB). */
+async function ensureWhoamiTraits(movie) {
+  if (!movie) return movie
+  const traits = traitsFromMovie(movie)
+  if (traits.genres.length > 0) return movie
+  const tmdbId = tmdbIdFromMovie(movie)
+  if (!tmdbId || !tmdbConfigured()) return movie
+  const details = await fetchMovieDetails(tmdbId)
+  if (!details) return movie
+  const genres = (details.genres || []).map((g) => g.id).filter(Boolean)
+  const region =
+    movie.cast_json?.region ||
+    details.production_countries?.[0]?.iso_3166_1 ||
+    '—'
+  const castJson = {
+    ...(typeof movie.cast_json === 'object' && movie.cast_json
+      ? movie.cast_json
+      : {}),
+    _traits: {
+      genres,
+      region: movie.cast_json?.region || region,
+      runtime: details.runtime || null,
+    },
+  }
+  await query(`UPDATE movies SET cast_json = $2::jsonb WHERE id = $1`, [
+    movie.movie_id || movie.id,
+    JSON.stringify(castJson),
+  ]).catch(() => {})
+  return { ...movie, cast_json: castJson }
+}
+
+async function getWhoamiPuzzleByDate(dateStr) {
+  const { rows } = await query(
+    `SELECT d.puzzle_date::text AS puzzle_key,
+            m.id AS movie_id,
+            m.title, m.title_pt, m.aliases, m.poster_path, m.poster_wide_path,
+            m.clip_path, m.attribution, m.year, m.director, m.cast_json,
+            m.source_url
+     FROM whoami_daily d
+     JOIN movies m ON m.id = d.movie_id
+     WHERE d.puzzle_date = $1::date`,
+    [dateStr],
+  )
+  return rows[0] || null
+}
+
+async function ensureWhoamiDaily(dateStr) {
+  let puzzle = await getWhoamiPuzzleByDate(dateStr)
+  if (puzzle) return ensureWhoamiTraits(puzzle)
+
+  const movieId = await drawWithoutReplacement({
+    mode: 'whoami',
+    dateStr,
+    listEligible: async () => {
+      const { rows } = await query(
+        `SELECT id::text AS id FROM movies
+         WHERE cast_json IS NOT NULL
+           AND cast_json != '{}'::jsonb
+           AND year IS NOT NULL`,
+      )
+      return rows.map((r) => r.id)
+    },
+  })
+  if (!movieId) return null
+  await query(
+    `INSERT INTO whoami_daily (puzzle_date, movie_id)
+     VALUES ($1::date, $2::uuid)
+     ON CONFLICT (puzzle_date) DO NOTHING`,
+    [dateStr, movieId],
+  )
+  puzzle = await getWhoamiPuzzleByDate(dateStr)
+  return ensureWhoamiTraits(puzzle)
+}
+
+function publicWhoamiPuzzle(puzzle, extra = {}) {
+  return {
+    puzzleId: puzzle.puzzle_key || String(puzzle.movie_id || puzzle.id),
+    mode: 'whoami',
+    askBank: publicAskBank(),
+    attribution: puzzle.attribution || null,
+    ...extra,
+  }
 }
 
 function publicPuzzle(puzzle, extra = {}) {
@@ -948,6 +1213,481 @@ app.post('/api/cast/guess', async (req, res) => {
             posterUrl: puzzle.poster_path,
           }
         : {}),
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+/** ——— Quem sou eu ——— */
+app.get('/api/whoami/bank', (_req, res) => {
+  res.json(publicAskBank())
+})
+
+app.get('/api/whoami/daily', async (req, res) => {
+  try {
+    const date = String(req.query.date || todayBRT())
+    const puzzle = await ensureWhoamiDaily(date)
+    if (!puzzle) {
+      res.status(404).json({ error: 'Sem filme pro Quem sou eu' })
+      return
+    }
+    let alreadyPlayed = false
+    let priorResult = null
+    if (req.user?.id) {
+      const { rows } = await query(
+        `SELECT won, asks, points FROM user_whoami_daily_plays
+         WHERE user_id = $1 AND puzzle_date = $2::date`,
+        [req.user.id, date],
+      )
+      if (rows[0]) {
+        alreadyPlayed = true
+        priorResult = {
+          won: rows[0].won,
+          asks: rows[0].asks,
+          points: rows[0].points,
+          title: puzzle.title,
+          titlePt: primaryTitle(puzzle),
+          year: puzzle.year,
+          posterUrl: puzzle.poster_path,
+        }
+      }
+    }
+    res.json(
+      publicWhoamiPuzzle(puzzle, {
+        date,
+        alreadyPlayed,
+        priorResult,
+      }),
+    )
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.get('/api/whoami/next', async (req, res) => {
+  try {
+    const exclude = String(req.query.exclude || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+    const params = []
+    let where = `cast_json IS NOT NULL
+      AND cast_json != '{}'::jsonb
+      AND year IS NOT NULL`
+    if (exclude.length) {
+      params.push(exclude)
+      where += ` AND NOT (id::text = ANY($${params.length}::text[]))`
+    }
+    let { rows } = await query(
+      `SELECT id::text AS puzzle_key, id AS movie_id,
+              title, title_pt, aliases, poster_path, attribution, year,
+              director, cast_json, source_url
+       FROM movies WHERE ${where}
+       ORDER BY random() LIMIT 1`,
+      params,
+    )
+    if (!rows[0] && exclude.length) {
+      ;({ rows } = await query(
+        `SELECT id::text AS puzzle_key, id AS movie_id,
+                title, title_pt, aliases, poster_path, attribution, year,
+                director, cast_json, source_url
+         FROM movies
+         WHERE cast_json IS NOT NULL AND year IS NOT NULL
+         ORDER BY random() LIMIT 1`,
+      ))
+    }
+    if (!rows[0]) {
+      res.status(404).json({ error: 'Sem filmes' })
+      return
+    }
+    const puzzle = await ensureWhoamiTraits(rows[0])
+    res.json(publicWhoamiPuzzle(puzzle, { endless: true }))
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.post('/api/whoami/ask', async (req, res) => {
+  try {
+    const puzzleId = String(req.body?.puzzleId || '')
+    const kind = String(req.body?.kind || '')
+    const value = String(req.body?.value || '')
+    if (
+      !puzzleId ||
+      !['genre', 'decade', 'era', 'region', 'runtime', 'flag'].includes(kind) ||
+      !value
+    ) {
+      res.status(400).json({ error: 'puzzleId, kind e value obrigatórios' })
+      return
+    }
+    const mode = isDateId(puzzleId) ? 'whoami' : 'whoami'
+    const puzzle = await resolvePuzzle(puzzleId, mode)
+    if (!puzzle) {
+      res.status(404).json({ error: 'Puzzle não encontrado' })
+      return
+    }
+    const enriched = await ensureWhoamiTraits(puzzle)
+    const result = evaluateAsk(enriched, kind, value)
+    res.json(result)
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.post('/api/whoami/guess', async (req, res) => {
+  try {
+    const puzzleId = String(req.body?.puzzleId || '')
+    const guess = String(req.body?.guess || '')
+    const asksUsed = Number(req.body?.asksUsed) || 0
+    const wrongGuesses = Number(req.body?.wrongGuesses) || 0
+    if (!puzzleId || !guess.trim()) {
+      res.status(400).json({ error: 'puzzleId e guess obrigatórios' })
+      return
+    }
+    const puzzle = await resolvePuzzle(
+      puzzleId,
+      isDateId(puzzleId) ? 'whoami' : 'daily',
+    )
+    if (!puzzle) {
+      res.status(404).json({ error: 'Puzzle não encontrado' })
+      return
+    }
+    const correct = matchesTitle(guess, puzzle)
+    const reveal = correct || wrongGuesses + (correct ? 0 : 1) >= WHOAMI_MAX_WRONG
+    const points = correct
+      ? whoamiPoints({
+          won: true,
+          asksUsed,
+          wrongGuesses,
+        })
+      : 0
+    res.json({
+      correct,
+      points,
+      ...(reveal || correct
+        ? {
+            title: puzzle.title,
+            titlePt: primaryTitle(puzzle),
+            year: puzzle.year,
+            posterUrl: puzzle.poster_path,
+          }
+        : {}),
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.post('/api/whoami/finish', authRequired, async (req, res) => {
+  try {
+    const puzzleId = String(req.body?.puzzleId || '')
+    const outcome = req.body?.outcome === 'win' ? 'win' : 'lose'
+    const asksCap = WHOAMI_MAX_ASKS + WHOAMI_AD_BONUS_ASKS * WHOAMI_MAX_ADS
+    const asksUsed = Math.min(
+      asksCap,
+      Math.max(0, Number(req.body?.asksUsed) || 0),
+    )
+    const wrongGuesses = Math.min(
+      WHOAMI_MAX_WRONG,
+      Math.max(0, Number(req.body?.wrongGuesses) || 0),
+    )
+    const endless = Boolean(req.body?.endless)
+    if (!puzzleId) {
+      res.status(400).json({ error: 'puzzleId obrigatório' })
+      return
+    }
+    const puzzle = await resolvePuzzle(
+      puzzleId,
+      isDateId(puzzleId) ? 'whoami' : 'daily',
+    )
+    if (!puzzle) {
+      res.status(404).json({ error: 'Puzzle não encontrado' })
+      return
+    }
+    const today = todayBRT()
+    const playDate = !endless && isDateId(puzzleId) ? puzzleId : null
+    const isArchive = Boolean(playDate && playDate < today)
+    const points =
+      outcome === 'win' && !isArchive
+        ? whoamiPoints({ won: true, asksUsed, wrongGuesses })
+        : 0
+
+    if (!isArchive) {
+      const { rows: progRows } = await query(
+        `SELECT total_score, first_try_streak, wins
+         FROM user_progress WHERE user_id = $1 AND mode = 'whoami'`,
+        [req.user.id],
+      )
+      let totalScore = progRows[0]?.total_score ?? 0
+      let wins = progRows[0]?.wins ?? 0
+      let streak = progRows[0]?.first_try_streak ?? 0
+      totalScore += points
+      if (outcome === 'win') {
+        wins += 1
+        streak += 1
+      } else {
+        streak = 0
+      }
+      await query(
+        `INSERT INTO user_progress (user_id, mode, total_score, first_try_streak, wins, updated_at)
+         VALUES ($1, 'whoami', $2, $3, $4, now())
+         ON CONFLICT (user_id, mode) DO UPDATE SET
+           total_score = EXCLUDED.total_score,
+           first_try_streak = EXCLUDED.first_try_streak,
+           wins = EXCLUDED.wins,
+           updated_at = now()`,
+        [req.user.id, totalScore, streak, wins],
+      )
+    }
+
+    if (playDate && !isArchive) {
+      await query(
+        `INSERT INTO user_whoami_daily_plays (user_id, puzzle_date, won, asks, points)
+         VALUES ($1, $2::date, $3, $4, $5)
+         ON CONFLICT (user_id, puzzle_date) DO NOTHING`,
+        [req.user.id, playDate, outcome === 'win', asksUsed, points],
+      )
+    }
+
+    const progress = await getProgress(req.user.id)
+    res.json({
+      points,
+      progress,
+      title: puzzle.title,
+      titlePt: primaryTitle(puzzle),
+      year: puzzle.year,
+      posterUrl: puzzle.poster_path,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+/** ——— Palavra-chave ——— */
+app.get('/api/keywords/daily', async (req, res) => {
+  try {
+    const date = String(req.query.date || todayBRT())
+    const puzzle = await ensureKeywordsDaily(date)
+    if (!puzzle) {
+      res.status(404).json({ error: 'Sem filme pra Palavra-chave' })
+      return
+    }
+    const words = resolvedKeywords(puzzle)
+    if (words.length < KEYWORDS_START) {
+      res.status(404).json({ error: 'Filme sem palavras suficientes' })
+      return
+    }
+    let alreadyPlayed = false
+    let priorResult = null
+    if (req.user?.id) {
+      const { rows } = await query(
+        `SELECT won, guesses, points FROM user_keywords_daily_plays
+         WHERE user_id = $1 AND puzzle_date = $2::date`,
+        [req.user.id, date],
+      )
+      if (rows[0]) {
+        alreadyPlayed = true
+        priorResult = {
+          won: rows[0].won,
+          guesses: rows[0].guesses,
+          points: rows[0].points,
+          title: puzzle.title,
+          titlePt: primaryTitle(puzzle),
+          year: puzzle.year,
+          posterUrl: puzzle.poster_path,
+        }
+      }
+    }
+    res.json(
+      publicKeywordsPuzzle(puzzle, {
+        date,
+        alreadyPlayed,
+        priorResult,
+        wrongGuesses: 0,
+      }),
+    )
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+async function handleKeywordsAdvance({
+  puzzleId,
+  guess = '',
+  skip = false,
+  wrongGuesses = 0,
+}) {
+  const puzzle = await resolvePuzzle(
+    puzzleId,
+    isDateId(puzzleId) ? 'keywords' : 'daily',
+  )
+  if (!puzzle) return { status: 404, body: { error: 'Puzzle não encontrado' } }
+  const enriched = await ensureKeywordsData(puzzle)
+  const isSkip = Boolean(skip) || !String(guess || '').trim()
+  const correct = isSkip ? false : matchesTitle(guess, enriched)
+  const nextWrong = correct ? wrongGuesses : wrongGuesses + 1
+  const lost = !correct && nextWrong >= KEYWORDS_MAX_WRONG
+  const attempt = wrongGuesses + 1
+  const points = correct ? keywordsPoints({ won: true, attempt }) : 0
+  const words = resolvedKeywords(enriched)
+  const revealed = sliceRevealed(words, nextWrong)
+  const pixel = showPixelPoster(nextWrong)
+  return {
+    status: 200,
+    body: {
+      correct,
+      skipped: isSkip && !correct,
+      points,
+      wrongGuesses: nextWrong,
+      words: revealed,
+      revealedCount: revealed.length,
+      showPixelPoster: pixel,
+      pixelPosterUrl: pixel ? enriched.poster_path || null : null,
+      ended: correct || lost,
+      ...(correct || lost
+        ? {
+            title: enriched.title,
+            titlePt: primaryTitle(enriched),
+            year: enriched.year,
+            posterUrl: enriched.poster_path,
+          }
+        : {}),
+    },
+  }
+}
+
+app.post('/api/keywords/skip', async (req, res) => {
+  try {
+    const puzzleId = String(req.body?.puzzleId || '')
+    const wrongGuesses = Math.min(
+      KEYWORDS_MAX_WRONG,
+      Math.max(0, Number(req.body?.wrongGuesses) || 0),
+    )
+    if (!puzzleId) {
+      res.status(400).json({ error: 'puzzleId obrigatório' })
+      return
+    }
+    const result = await handleKeywordsAdvance({
+      puzzleId,
+      skip: true,
+      wrongGuesses,
+    })
+    res.status(result.status).json(result.body)
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.post('/api/keywords/guess', async (req, res) => {
+  try {
+    const puzzleId = String(req.body?.puzzleId || '')
+    const guess = String(req.body?.guess || '')
+    const skip =
+      req.body?.skip === true ||
+      req.body?.skip === 'true' ||
+      req.body?.skip === 1 ||
+      !guess.trim()
+    const wrongGuesses = Math.min(
+      KEYWORDS_MAX_WRONG,
+      Math.max(0, Number(req.body?.wrongGuesses) || 0),
+    )
+    if (!puzzleId) {
+      res.status(400).json({ error: 'puzzleId obrigatório' })
+      return
+    }
+    // chute vazio = pular (não exige guess)
+    const result = await handleKeywordsAdvance({
+      puzzleId,
+      guess,
+      skip,
+      wrongGuesses,
+    })
+    res.status(result.status).json(result.body)
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.post('/api/keywords/finish', authRequired, async (req, res) => {
+  try {
+    const puzzleId = String(req.body?.puzzleId || '')
+    const outcome = req.body?.outcome === 'win' ? 'win' : 'lose'
+    const wrongGuesses = Math.min(
+      KEYWORDS_MAX_WRONG,
+      Math.max(0, Number(req.body?.wrongGuesses) || 0),
+    )
+    const guesses = Math.min(
+      KEYWORDS_MAX_WRONG,
+      Math.max(1, Number(req.body?.guesses) || wrongGuesses + (outcome === 'win' ? 1 : 0)),
+    )
+    if (!puzzleId) {
+      res.status(400).json({ error: 'puzzleId obrigatório' })
+      return
+    }
+    const puzzle = await resolvePuzzle(
+      puzzleId,
+      isDateId(puzzleId) ? 'keywords' : 'daily',
+    )
+    if (!puzzle) {
+      res.status(404).json({ error: 'Puzzle não encontrado' })
+      return
+    }
+    const today = todayBRT()
+    const playDate = isDateId(puzzleId) ? puzzleId : null
+    const isArchive = Boolean(playDate && playDate < today)
+    const attempt = outcome === 'win' ? guesses : wrongGuesses
+    const points =
+      outcome === 'win' && !isArchive
+        ? keywordsPoints({ won: true, attempt })
+        : 0
+
+    if (!isArchive) {
+      const { rows: progRows } = await query(
+        `SELECT total_score, first_try_streak, wins
+         FROM user_progress WHERE user_id = $1 AND mode = 'keywords'`,
+        [req.user.id],
+      )
+      let totalScore = progRows[0]?.total_score ?? 0
+      let wins = progRows[0]?.wins ?? 0
+      let streak = progRows[0]?.first_try_streak ?? 0
+      totalScore += points
+      if (outcome === 'win') {
+        wins += 1
+        if (guesses === 1) streak += 1
+        else streak = streak
+      } else {
+        streak = 0
+      }
+      await query(
+        `INSERT INTO user_progress (user_id, mode, total_score, first_try_streak, wins, updated_at)
+         VALUES ($1, 'keywords', $2, $3, $4, now())
+         ON CONFLICT (user_id, mode) DO UPDATE SET
+           total_score = EXCLUDED.total_score,
+           first_try_streak = EXCLUDED.first_try_streak,
+           wins = EXCLUDED.wins,
+           updated_at = now()`,
+        [req.user.id, totalScore, streak, wins],
+      )
+    }
+
+    if (playDate && !isArchive) {
+      await query(
+        `INSERT INTO user_keywords_daily_plays (user_id, puzzle_date, won, guesses, points)
+         VALUES ($1, $2::date, $3, $4, $5)
+         ON CONFLICT (user_id, puzzle_date) DO NOTHING`,
+        [req.user.id, playDate, outcome === 'win', guesses, points],
+      )
+    }
+
+    const progress = await getProgress(req.user.id)
+    res.json({
+      points,
+      progress,
+      title: puzzle.title,
+      titlePt: primaryTitle(puzzle),
+      year: puzzle.year,
+      posterUrl: puzzle.poster_path,
     })
   } catch (err) {
     res.status(500).json({ error: String(err.message) })
@@ -2077,12 +2817,16 @@ app.get('/api/autocomplete', async (req, res) => {
     })
 
     res.json({
-      suggestions: scored.slice(0, 10).map(({ title, titlePt, year, label }) => ({
-        title,
-        titlePt,
-        year,
-        label,
-      })),
+      suggestions: scored.slice(0, 10).map(
+        ({ title, titlePt, year, label, movieId, posterUrl }) => ({
+          title,
+          titlePt,
+          year,
+          label,
+          movieId,
+          posterUrl,
+        }),
+      ),
     })
   } catch (err) {
     res.status(500).json({ error: String(err.message) })

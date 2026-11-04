@@ -16,6 +16,85 @@ export function tmdbConfigured() {
   return Boolean(apiKey())
 }
 
+/** Detalhes do filme (gêneros etc.) — cache simples em memória. */
+const movieCache = new Map()
+const keywordsCache = new Map()
+
+export async function fetchMovieDetails(tmdbId) {
+  const key = apiKey()
+  const id = Number(tmdbId)
+  if (!key || !Number.isFinite(id)) return null
+  if (movieCache.has(id)) return movieCache.get(id)
+  try {
+    const url = new URL(`https://api.themoviedb.org/3/movie/${id}`)
+    url.searchParams.set('api_key', key)
+    url.searchParams.set('language', 'pt-BR')
+    const res = await fetch(url, { signal: AbortSignal.timeout(2500) })
+    if (!res.ok) {
+      movieCache.set(id, null)
+      return null
+    }
+    const data = await res.json()
+    movieCache.set(id, data)
+    return data
+  } catch {
+    movieCache.set(id, null)
+    return null
+  }
+}
+
+/**
+ * Keywords TMDB (EN + tentativa PT).
+ * @returns {Promise<{ id: number, name: string, namePt?: string }[] | null>}
+ */
+export async function fetchMovieKeywords(tmdbId) {
+  const key = apiKey()
+  const id = Number(tmdbId)
+  if (!key || !Number.isFinite(id)) return null
+  if (keywordsCache.has(id)) return keywordsCache.get(id)
+  try {
+    const urlEn = new URL(`https://api.themoviedb.org/3/movie/${id}/keywords`)
+    urlEn.searchParams.set('api_key', key)
+    const resEn = await fetch(urlEn, { signal: AbortSignal.timeout(2500) })
+    if (!resEn.ok) {
+      keywordsCache.set(id, null)
+      return null
+    }
+    const dataEn = await resEn.json()
+    const listEn = Array.isArray(dataEn.keywords) ? dataEn.keywords : []
+
+    let listPt = []
+    try {
+      const urlPt = new URL(`https://api.themoviedb.org/3/movie/${id}/keywords`)
+      urlPt.searchParams.set('api_key', key)
+      urlPt.searchParams.set('language', 'pt-BR')
+      const resPt = await fetch(urlPt, { signal: AbortSignal.timeout(2500) })
+      if (resPt.ok) {
+        const dataPt = await resPt.json()
+        listPt = Array.isArray(dataPt.keywords) ? dataPt.keywords : []
+      }
+    } catch {
+      /* ignore */
+    }
+
+    const ptById = new Map(
+      listPt.filter((k) => k?.id).map((k) => [k.id, String(k.name || '')]),
+    )
+    const merged = listEn
+      .filter((k) => k?.id && k?.name)
+      .map((k) => ({
+        id: k.id,
+        name: String(k.name),
+        ...(ptById.get(k.id) ? { namePt: ptById.get(k.id) } : {}),
+      }))
+    keywordsCache.set(id, merged)
+    return merged
+  } catch {
+    keywordsCache.set(id, null)
+    return null
+  }
+}
+
 /** @returns {Promise<string|null>} absolute profile image URL */
 export async function fetchPersonPhotoUrl(name) {
   const key = apiKey()

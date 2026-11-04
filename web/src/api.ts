@@ -4,7 +4,13 @@ import {
   type ProgressMap,
 } from './auth'
 
-export type GameMode = 'daily' | 'classic' | 'cast' | 'character'
+export type GameMode =
+  | 'daily'
+  | 'classic'
+  | 'cast'
+  | 'character'
+  | 'whoami'
+  | 'keywords'
 
 export type PriorPlayResult = {
   won: boolean
@@ -214,6 +220,201 @@ export function fetchCastNext(excludeIds: string[] = []) {
       : ''
   return fetch(`/api/cast/next${q}`, { headers: { ...authHeaders() } }).then(
     (r) => parseJson<CastDailyPayload>(r),
+  )
+}
+
+export type WhoamiAskOption = {
+  kind: 'genre' | 'decade' | 'era' | 'region' | 'runtime' | 'flag'
+  value: string
+  label: string
+}
+
+export type WhoamiAskChip = WhoamiAskOption & {
+  verdict: 'green' | 'yellow' | 'red'
+}
+
+export type WhoamiPayload = {
+  puzzleId: string
+  mode: 'whoami'
+  date?: string
+  endless?: boolean
+  attribution: string | null
+  askBank: {
+    maxAsks: number
+    maxWrong: number
+    adBonusAsks: number
+    maxAds: number
+    sharedBudget: boolean
+    genres: WhoamiAskOption[]
+    decades: WhoamiAskOption[]
+    eras: WhoamiAskOption[]
+    regions: WhoamiAskOption[]
+    runtimes: WhoamiAskOption[]
+    flags: WhoamiAskOption[]
+  }
+  alreadyPlayed?: boolean
+  priorResult?: PriorPlayResult & { asks?: number } | null
+}
+
+export function fetchWhoamiDaily(date?: string) {
+  const q = date ? `?date=${encodeURIComponent(date)}` : ''
+  return fetch(`/api/whoami/daily${q}`, { headers: { ...authHeaders() } }).then(
+    (r) => parseJson<WhoamiPayload>(r),
+  )
+}
+
+export function fetchWhoamiNext(excludeIds: string[] = []) {
+  const q =
+    excludeIds.length > 0
+      ? `?exclude=${encodeURIComponent(excludeIds.join(','))}`
+      : ''
+  return fetch(`/api/whoami/next${q}`, { headers: { ...authHeaders() } }).then(
+    (r) => parseJson<WhoamiPayload>(r),
+  )
+}
+
+export function postWhoamiAsk(body: {
+  puzzleId: string
+  kind: WhoamiAskOption['kind']
+  value: string
+}) {
+  return fetch('/api/whoami/ask', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body),
+  }).then((r) =>
+    parseJson<{ verdict: 'green' | 'yellow' | 'red'; label: string }>(r),
+  )
+}
+
+export function postWhoamiGuess(body: {
+  puzzleId: string
+  guess: string
+  asksUsed: number
+  wrongGuesses: number
+}) {
+  return fetch('/api/whoami/guess', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body),
+  }).then((r) =>
+    parseJson<{
+      correct: boolean
+      points: number
+      title?: string
+      titlePt?: string
+      year?: number
+      posterUrl?: string
+    }>(r),
+  )
+}
+
+export function finishWhoami(body: {
+  puzzleId: string
+  outcome: 'win' | 'lose'
+  asksUsed: number
+  wrongGuesses: number
+  endless?: boolean
+}) {
+  return fetch('/api/whoami/finish', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body),
+  }).then((r) =>
+    parseJson<{
+      points: number
+      progress: ProgressMap
+      title: string
+      titlePt?: string
+      year?: number
+      posterUrl?: string
+    }>(r),
+  )
+}
+
+export type KeywordsPayload = {
+  puzzleId: string
+  mode: 'keywords'
+  date?: string
+  attribution: string | null
+  startWords: number
+  perWrong: number
+  maxWrong: number
+  pixelAt: number
+  words: string[]
+  revealedCount: number
+  totalHintSlots: number
+  showPixelPoster: boolean
+  pixelPosterUrl: string | null
+  alreadyPlayed?: boolean
+  priorResult?: PriorPlayResult & { guesses?: number } | null
+}
+
+export function fetchKeywordsDaily(date?: string) {
+  const q = date ? `?date=${encodeURIComponent(date)}` : ''
+  return fetch(`/api/keywords/daily${q}`, {
+    headers: { ...authHeaders() },
+  }).then((r) => parseJson<KeywordsPayload>(r))
+}
+
+type KeywordsGuessResult = {
+  correct: boolean
+  skipped?: boolean
+  points: number
+  wrongGuesses: number
+  words: string[]
+  revealedCount: number
+  showPixelPoster: boolean
+  pixelPosterUrl: string | null
+  ended: boolean
+  title?: string
+  titlePt?: string
+  year?: number
+  posterUrl?: string
+}
+
+export function postKeywordsGuess(body: {
+  puzzleId: string
+  guess?: string
+  skip?: boolean
+  wrongGuesses: number
+}) {
+  const skip = Boolean(body.skip) || !String(body.guess || '').trim()
+  const path = skip ? '/api/keywords/skip' : '/api/keywords/guess'
+  return fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(
+      skip
+        ? { puzzleId: body.puzzleId, wrongGuesses: body.wrongGuesses }
+        : {
+            puzzleId: body.puzzleId,
+            guess: body.guess,
+            wrongGuesses: body.wrongGuesses,
+          },
+    ),
+  }).then((r) => parseJson<KeywordsGuessResult>(r))
+}
+
+export function finishKeywords(body: {
+  puzzleId: string
+  outcome: 'win' | 'lose'
+  wrongGuesses: number
+  guesses: number
+}) {
+  return fetch('/api/keywords/finish', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body),
+  }).then((r) =>
+    parseJson<{
+      points: number
+      progress: ProgressMap
+      title: string
+      titlePt?: string
+      year?: number
+      posterUrl?: string
+    }>(r),
   )
 }
 

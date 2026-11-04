@@ -16,6 +16,8 @@ const MIGRATION_FILES = [
   'cast_mode.sql',
   'cast_endless.sql',
   'character_mode.sql',
+  'whoami_mode.sql',
+  'keywords_mode.sql',
   'profile.sql',
   'daily_rotation.sql',
 ]

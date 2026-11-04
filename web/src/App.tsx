@@ -17,6 +17,8 @@ import { HubScreen } from './screens/HubScreen'
 import { ProfileScreen } from './screens/ProfileScreen'
 import { OscarsScreen } from './screens/OscarsScreen'
 import { ProfilesBrowseScreen } from './screens/ProfilesBrowseScreen'
+import { WhoAmIScreen } from './screens/WhoAmIScreen'
+import { KeywordsScreen } from './screens/KeywordsScreen'
 import { AchievementToastHost } from './components/AchievementToast'
 import { todayBRT, yesterdayOf } from './components/DayCalendarModal'
 import type { Achievement } from './api'
@@ -27,6 +29,9 @@ type Screen =
   | 'cast'
   | 'cast-endless'
   | 'character'
+  | 'whoami'
+  | 'whoami-endless'
+  | 'keywords'
   | 'duel'
   | 'profile'
   | 'profiles'
@@ -173,7 +178,12 @@ export default function App() {
   }
 
   function openMode(
-    next: GameMode | 'cast-endless' | 'character',
+    next:
+      | GameMode
+      | 'cast-endless'
+      | 'character'
+      | 'whoami-endless'
+      | 'keywords',
     date?: string,
   ) {
     // Guest pode jogar; só duelo exige conta
@@ -189,6 +199,19 @@ export default function App() {
     }
     if (next === 'character') {
       setScreen('character')
+      return
+    }
+    if (next === 'whoami') {
+      setScreen('whoami')
+      return
+    }
+    if (next === 'whoami-endless') {
+      setPlayDate(null)
+      setScreen('whoami-endless')
+      return
+    }
+    if (next === 'keywords') {
+      setScreen('keywords')
       return
     }
     setMode(next)
@@ -260,6 +283,9 @@ export default function App() {
             onPlayClassic={() => openMode('classic')}
             onPlayCastEndless={() => openMode('cast-endless')}
             onPlayCharacter={(date) => openMode('character', date)}
+            onPlayWhoami={(date) => openMode('whoami', date)}
+            onPlayWhoamiEndless={() => openMode('whoami-endless')}
+            onPlayKeywords={(date) => openMode('keywords', date)}
             onPlayDuel={openDuel}
             onOpenAuth={() => setShowAuth(true)}
             onOpenProfile={(uname) => openProfile(uname)}
@@ -290,6 +316,24 @@ export default function App() {
         ) : screen === 'character' ? (
           <CharacterScreen
             variant="daily"
+            user={user}
+            progress={progress}
+            onProgress={(p) => setProgress({ ...emptyProgress(), ...p })}
+            puzzleDate={playDate}
+            onBack={goHome}
+          />
+        ) : screen === 'whoami' || screen === 'whoami-endless' ? (
+          <WhoAmIScreen
+            variant={screen === 'whoami-endless' ? 'endless' : 'daily'}
+            user={user}
+            progress={progress}
+            onProgress={(p) => setProgress({ ...emptyProgress(), ...p })}
+            puzzleDate={screen === 'whoami' ? playDate : null}
+            onBack={goHome}
+            onPlayEndless={() => openMode('whoami-endless')}
+          />
+        ) : screen === 'keywords' ? (
+          <KeywordsScreen
             user={user}
             progress={progress}
             onProgress={(p) => setProgress({ ...emptyProgress(), ...p })}
