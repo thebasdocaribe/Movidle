@@ -1,5 +1,6 @@
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import type { AuthUser } from '../auth'
+import { curiosityOfWeek } from '../data/curiosities'
 import { AboutModal } from './AboutModal'
 import { BugReportModal } from './BugReportModal'
 import { SideMenu } from './SideMenu'
@@ -41,19 +42,30 @@ export function AppShell({
   const [menuOpen, setMenuOpen] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
   const [bugOpen, setBugOpen] = useState(false)
+  const curiosity = useMemo(() => curiosityOfWeek(), [])
 
   return (
     <div className="hub-stage flex min-h-svh flex-col">
-      <header className="relative z-40 grid shrink-0 grid-cols-[1fr_auto_1fr] items-center bg-transparent px-3 py-3 sm:px-4">
+      <header className="relative z-40 grid shrink-0 grid-cols-[1fr_auto_1fr] items-start bg-transparent px-3 py-3 sm:px-4">
         <div />
-        <button
-          type="button"
-          onClick={onHome}
-          className="font-display text-3xl tracking-[0.08em] text-cinema-gold drop-shadow-[0_3px_0_#7a0c20] sm:text-4xl"
-        >
-          CINEBLITZ
-        </button>
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex max-w-[16rem] flex-col items-center text-center sm:max-w-[22rem]">
+          <button
+            type="button"
+            onClick={onHome}
+            className="font-display text-3xl tracking-[0.08em] text-cinema-gold drop-shadow-[0_3px_0_#7a0c20] sm:text-4xl"
+          >
+            CINEBLITZ
+          </button>
+          {showFooter && curiosity ? (
+            <p className="mt-1.5 max-w-[18rem] text-[12px] leading-snug text-white/90 sm:max-w-[24rem] sm:text-[13px]">
+              <span className="font-bold tracking-wide text-cinema-gold uppercase">
+                Curiosidade ·{' '}
+              </span>
+              {curiosity}
+            </p>
+          ) : null}
+        </div>
+        <div className="flex items-center justify-end gap-2 pt-1">
           {loggedIn ? (
             <button
               type="button"
