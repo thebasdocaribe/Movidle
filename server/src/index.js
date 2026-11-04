@@ -597,17 +597,90 @@ const CAST_ENDLESS_GATES = {
   elite: 10,
 }
 
+/**
+ * pool grande + order random = diversidade (antes top-50 por voto = sempre HP/Marvel).
+ * easy: populares conhecíveis, não só os 20 mais votados do TMDB.
+ */
 const CAST_ENDLESS_TIER_POOL = {
-  easy: { label: 'easy', minVotes: 8000, pool: 50, order: 'votes_desc' },
-  mid: { label: 'mid', minVotes: 2500, pool: 80, order: 'votes_desc' },
+  easy: { label: 'easy', minVotes: 2500, pool: 400, order: 'random' },
+  mid: { label: 'mid', minVotes: 600, maxVotes: 12000, pool: 350, order: 'random' },
   hard: {
     label: 'hard',
-    minVotes: 200,
-    maxVotes: 5000,
-    pool: 100,
+    minVotes: 80,
+    maxVotes: 4000,
+    pool: 300,
     order: 'random',
   },
-  elite: { label: 'elite', maxVotes: 1800, pool: 120, order: 'votes_asc' },
+  elite: { label: 'elite', maxVotes: 1200, pool: 250, order: 'random' },
+}
+
+/** Agrupa sequências da mesma franquia pra não vir 3 Harry Potter seguidos. */
+function franchiseKey(title, titlePt = '') {
+  const t = `${title || ''} ${titlePt || ''}`
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+  const rules = [
+    [/harry\s*potter/, 'harry-potter'],
+    [/senhor\s*dos\s*aneis|lord\s*of\s*the\s*rings|\bhobbit\b/, 'lotr'],
+    [/star\s*wars|guerra\s*nas\s*estrelas/, 'star-wars'],
+    [/velozes\s*e\s*furiosos|fast(\s|&)*furious|furious\s*\d/, 'fast-furious'],
+    [/spider-?\s*man|homem-?\s*aranha/, 'spiderman'],
+    [/batman|cavaleiro\s*das\s*trevas/, 'batman'],
+    [/vingadores|\bavengers\b/, 'avengers'],
+    [/homem\s*de\s*ferro|\biron\s*man\b/, 'iron-man'],
+    [/capitao\s*america|captain\s*america/, 'cap-america'],
+    [/guardioes\s*da\s*galaxia|guardians?\s*of\s*the\s*galaxy/, 'gotg'],
+    [/john\s*wick/, 'john-wick'],
+    [/missao\s*impossivel|mission:\s*impossible/, 'mi'],
+    [/jurassic/, 'jurassic'],
+    [/piratas?\s*do\s*caribe|pirates?\s*of\s*the\s*caribbean/, 'potc'],
+    [/\bmatrix\b/, 'matrix'],
+    [/\balien\b/, 'alien'],
+    [/exterminador|terminator/, 'terminator'],
+    [/\brocky\b|\bcreed\b/, 'rocky'],
+    [/jogos\s*mortais|\bsaw\b/, 'saw'],
+    [/\bhalloween\b/, 'halloween'],
+    [/sexta.?feira\s*13|friday\s*the\s*13/, 'friday-13'],
+    [/hora\s*do\s*pesadelo|nightmare\s*on\s*elm/, 'elm-street'],
+    [/toy\s*story/, 'toy-story'],
+    [/\bshrek\b/, 'shrek'],
+    [/era\s*do\s*gelo|ice\s*age/, 'ice-age'],
+    [/\bdeadpool\b/, 'deadpool'],
+    [/\bx-?\s*men\b/, 'xmen'],
+    [/transformers/, 'transformers'],
+    [/jogos\s*vorazes|hunger\s*games/, 'hunger-games'],
+    [/crepusculo|\btwilight\b/, 'twilight'],
+    [/invocacao\s*do\s*mal|\bconjuring\b/, 'conjuring'],
+    [/resident\s*evil/, 'resident-evil'],
+    [/guerra\s*mundial\s*z|world\s*war\s*z/, 'wwz'],
+    [/indiane?\s*jones|indiana\s*jones/, 'indiana-jones'],
+    [/mib\b|men\s*in\s*black|homem\s*de\s*preto/, 'mib'],
+    [/carros\b|\bcars\b/, 'cars'],
+    [/frozen|frozen\s*2|frozen\s*ii/, 'frozen'],
+    [/como\s*treinar\s*o\s*seu\s*dragao|how\s*to\s*train\s*your\s*dragon/, 'httyd'],
+    [/madagascar/, 'madagascar'],
+    [/kung\s*fu\s*panda/, 'kung-fu-panda'],
+    [/despicao|despicable|meu\s*malvado/, 'minions'],
+    [/blade\s*runner/, 'blade-runner'],
+    [/mad\s*max/, 'mad-max'],
+    [/godzilla|kong\b/, 'monsterverse'],
+    [/scream|panico\b/, 'scream'],
+    [/todo\s*mundo\s*em\s*panico|scary\s*movie/, 'scary-movie'],
+    [/final\s*destination|premonicao/, 'final-destination'],
+    [/paranormal\s*activity|atividade\s*paranormal/, 'paranormal-activity'],
+    [/massacre\s*da\s*serra|texas\s*chain/, 'tcm'],
+    [/\bexorcista\b|\bexorcist\b/, 'exorcist'],
+    [/super\s*mario|mario\s*bros/, 'mario'],
+    [/pokemon|pokémon/, 'pokemon'],
+    [/dragon\s*ball|dragonball/, 'dragon-ball'],
+    [/\bnaruto\b/, 'naruto'],
+    [/one\s*piece/, 'one-piece'],
+  ]
+  for (const [re, key] of rules) {
+    if (re.test(t)) return key
+  }
+  return null
 }
 
 function emptyCastEndlessProgress() {
@@ -668,6 +741,20 @@ async function recordCastEndlessWin(userId) {
   return getCastEndlessProgress(userId)
 }
 
+async function franchisesFromMovieIds(ids) {
+  if (!ids?.length) return new Set()
+  const { rows } = await query(
+    `SELECT title, title_pt FROM movies WHERE id::text = ANY($1::text[])`,
+    [ids],
+  )
+  const set = new Set()
+  for (const r of rows) {
+    const key = franchiseKey(r.title, r.title_pt)
+    if (key) set.add(key)
+  }
+  return set
+}
+
 async function pickCastEndlessMovie(exclude, tierLabel = 'easy') {
   const tier =
     CAST_ENDLESS_TIER_POOL[tierLabel] || CAST_ENDLESS_TIER_POOL.easy
@@ -680,7 +767,11 @@ async function pickCastEndlessMovie(exclude, tierLabel = 'easy') {
       CASE WHEN cast_json ? '_tmdb' THEN 0 ELSE 10000 END
     )`
 
-  async function run(opts) {
+  // Últimos jogados → bloqueia a franquia inteira (não só o id)
+  const recentIds = exclude.slice(-5)
+  const blockedFranchises = await franchisesFromMovieIds(recentIds)
+
+  async function fetchCandidates(opts) {
     const { minVotes, maxVotes, order, poolSize, useExclude } = opts
     const params = []
     const filters = [baseWhere]
@@ -701,27 +792,37 @@ async function pickCastEndlessMovie(exclude, tierLabel = 'easy') {
     const orderSql =
       order === 'votes_asc'
         ? 'vc ASC NULLS LAST, random()'
-        : order === 'random'
-          ? 'random()'
-          : 'vc DESC NULLS LAST, random()'
+        : order === 'votes_desc'
+          ? 'vc DESC NULLS LAST, random()'
+          : 'random()'
 
     const { rows } = await query(
-      `SELECT * FROM (
-         SELECT id::text AS puzzle_key,
-                id AS movie_id,
-                title, title_pt, aliases, poster_path, poster_wide_path,
-                clip_path, attribution, year, director, cast_json,
-                ${voteExpr} AS vc
-         FROM movies
-         WHERE ${filters.join(' AND ')}
-         ORDER BY ${orderSql}
-         LIMIT ${Math.max(1, poolSize)}
-       ) pool
-       ORDER BY random()
-       LIMIT 1`,
+      `SELECT id::text AS puzzle_key,
+              id AS movie_id,
+              title, title_pt, aliases, poster_path, poster_wide_path,
+              clip_path, attribution, year, director, cast_json,
+              ${voteExpr} AS vc
+       FROM movies
+       WHERE ${filters.join(' AND ')}
+       ORDER BY ${orderSql}
+       LIMIT ${Math.max(1, poolSize)}`,
       params,
     )
-    return rows[0] || null
+    return rows
+  }
+
+  function filterFranchise(rows) {
+    if (!blockedFranchises.size) return rows
+    const filtered = rows.filter((r) => {
+      const key = franchiseKey(r.title, r.title_pt)
+      return !key || !blockedFranchises.has(key)
+    })
+    return filtered.length ? filtered : rows
+  }
+
+  function pickOne(rows) {
+    if (!rows.length) return null
+    return rows[Math.floor(Math.random() * rows.length)]
   }
 
   const tries = [
@@ -732,18 +833,19 @@ async function pickCastEndlessMovie(exclude, tierLabel = 'easy') {
       poolSize: tier.pool,
       useExclude: true,
     },
+    // Fallback: afrouxa votos, mantém exclude + franquia
     {
-      minVotes: 1000,
-      maxVotes: null,
-      order: 'votes_desc',
-      poolSize: 80,
+      minVotes: tierLabel === 'elite' ? null : 400,
+      maxVotes: tierLabel === 'easy' ? null : tier.maxVotes ?? null,
+      order: 'random',
+      poolSize: 250,
       useExclude: true,
     },
     {
       minVotes: null,
       maxVotes: null,
       order: 'random',
-      poolSize: 1,
+      poolSize: 80,
       useExclude: true,
     },
     {
@@ -756,7 +858,8 @@ async function pickCastEndlessMovie(exclude, tierLabel = 'easy') {
   ]
 
   for (const t of tries) {
-    const row = await run(t)
+    const rows = filterFranchise(await fetchCandidates(t))
+    const row = pickOne(rows)
     if (row) return { row, tier: tier.label }
   }
   return { row: null, tier: tier.label }

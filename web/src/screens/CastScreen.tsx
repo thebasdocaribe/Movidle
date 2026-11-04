@@ -32,6 +32,28 @@ type CastScreenProps = {
 }
 
 const MAX_TAKE = 7
+const ENDLESS_STREAK_GOAL = 50
+const ENDLESS_RUN_KEY = 'cineblitz.castEndless.run'
+
+type EndlessRun = { streak: number; ng: number }
+
+function loadEndlessRun(): EndlessRun {
+  try {
+    const raw = sessionStorage.getItem(ENDLESS_RUN_KEY)
+    if (!raw) return { streak: 0, ng: 0 }
+    const parsed = JSON.parse(raw) as EndlessRun
+    return {
+      streak: Math.max(0, Number(parsed.streak) || 0),
+      ng: Math.max(0, Number(parsed.ng) || 0),
+    }
+  } catch {
+    return { streak: 0, ng: 0 }
+  }
+}
+
+function saveEndlessRun(run: EndlessRun) {
+  sessionStorage.setItem(ENDLESS_RUN_KEY, JSON.stringify(run))
+}
 
 function avatarUrl(name: string) {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=128&background=1a0a12&color=ffc44d&bold=true`
@@ -215,8 +237,33 @@ export function CastScreen({
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [hint, setHint] = useState<string | null>(null)
   const [playedIds, setPlayedIds] = useState<string[]>([])
+  const [endlessStreak, setEndlessStreak] = useState(0)
+  const [endlessNg, setEndlessNg] = useState(0)
+  const [specialistOpen, setSpecialistOpen] = useState(false)
   const guessRef = useRef<HTMLInputElement>(null)
   const suggestTimer = useRef<number | null>(null)
+
+  function applyEndlessWin() {
+    if (!endless) return
+    const next = endlessStreak + 1
+    if (next >= ENDLESS_STREAK_GOAL) {
+      const ngNext = endlessNg + 1
+      setEndlessStreak(0)
+      setEndlessNg(ngNext)
+      saveEndlessRun({ streak: 0, ng: ngNext })
+      setSpecialistOpen(true)
+      // som do especialista: plugar depois
+      return
+    }
+    setEndlessStreak(next)
+    saveEndlessRun({ streak: next, ng: endlessNg })
+  }
+
+  function applyEndlessLose() {
+    if (!endless) return
+    setEndlessStreak(0)
+    saveEndlessRun({ streak: 0, ng: endlessNg })
+  }
 
   const todayKey = useMemo(
     () =>
@@ -282,6 +329,15 @@ export function CastScreen({
     setPoints(0)
     setHint(null)
     setPlayedIds([])
+    setSpecialistOpen(false)
+    if (endless) {
+      const run = loadEndlessRun()
+      setEndlessStreak(run.streak)
+      setEndlessNg(run.ng)
+    } else {
+      setEndlessStreak(0)
+      setEndlessNg(0)
+    }
     void loadPuzzle([])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [variant, activeDate])
@@ -349,6 +405,7 @@ export function CastScreen({
         setWon(false)
         setEnded(true)
         setPoints(0)
+        applyEndlessLose()
         setRevealTitle(finished?.titlePt || finished?.title || '?')
         setRevealYear(finished?.year)
         setHint(null)
@@ -393,6 +450,7 @@ export function CastScreen({
         setWon(true)
         setEnded(true)
         setPoints(finished?.points ?? result.points)
+        applyEndlessWin()
         setRevealTitle(
           finished?.titlePt ||
             finished?.title ||
@@ -413,6 +471,7 @@ export function CastScreen({
         setWon(false)
         setEnded(true)
         setPoints(0)
+        applyEndlessLose()
         setRevealTitle(
           finished?.titlePt ||
             finished?.title ||
@@ -470,6 +529,16 @@ export function CastScreen({
               ? `Arquivo ${activeDate} · 0 pts`
               : 'Diário'}{' '}
           · dica {Math.min(attempt + 1, MAX_TAKE)}/{MAX_TAKE}
+          {endless ? (
+            <>
+              {' '}
+              ·{' '}
+              <span className="font-mono text-cinema-gold tabular-nums">
+                {endlessNg > 0 ? `NG+${endlessNg} · ` : ''}
+                {endlessStreak}/{ENDLESS_STREAK_GOAL}
+              </span>
+            </>
+          ) : null}
         </p>
 
         {loading ? (
@@ -513,6 +582,12 @@ export function CastScreen({
                             {revealTitle}
                             {revealYear ? ` (${revealYear})` : ''}
                           </p>
+                          {endless ? (
+                            <p className="mt-2 font-mono text-sm text-cinema-gold tabular-nums">
+                              {endlessNg > 0 ? `NG+${endlessNg} · ` : ''}
+                              sequência {endlessStreak}/{ENDLESS_STREAK_GOAL}
+                            </p>
+                          ) : null}
                         </>
                       ) : (
                         <>
@@ -523,6 +598,12 @@ export function CastScreen({
                             0 pts · era {revealTitle}
                             {revealYear ? ` (${revealYear})` : ''}
                           </p>
+                          {endless ? (
+                            <p className="mt-2 font-mono text-sm text-cinema-muted tabular-nums">
+                              sequência zerada · {endlessNg > 0 ? `NG+${endlessNg} · ` : ''}
+                              0/{ENDLESS_STREAK_GOAL}
+                            </p>
+                          ) : null}
                         </>
                       )}
                       {endless ? (
@@ -710,6 +791,40 @@ export function CastScreen({
           </>
         ) : null}
       </div>
+
+      {specialistOpen ? (
+        <div
+          className="specialist-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="specialist-title"
+        >
+          <div className="specialist-card">
+            <p className="text-[10px] font-bold tracking-[0.2em] text-cinema-gold uppercase">
+              Novo ciclo
+            </p>
+            <h2
+              id="specialist-title"
+              className="font-display text-4xl leading-none text-white sm:text-5xl"
+            >
+              MODO ESPECIALISTA
+            </h2>
+            <p className="mt-2 text-sm text-cinema-muted">
+              Você atingiu {ENDLESS_STREAK_GOAL} acertos seguidos.
+            </p>
+            <p className="mt-1 font-mono text-lg text-cinema-gold tabular-nums">
+              NG+{endlessNg} · 0/{ENDLESS_STREAK_GOAL}
+            </p>
+            <button
+              type="button"
+              className="mode-btn mode-btn-primary mode-btn-inline mt-5 px-6 py-2.5 font-display text-xl"
+              onClick={() => setSpecialistOpen(false)}
+            >
+              CONTINUAR
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
