@@ -486,7 +486,11 @@ export function DailyScreen({
         return
       }
 
-      setScoreHint(`Errou: “${typed}” · take ${attempt + 1}/6`)
+      setScoreHint(
+        result.franchise
+          ? `Mesma franquia · “${typed}” · take ${attempt + 1}/6`
+          : `Errou: “${typed}” · take ${attempt + 1}/6`,
+      )
 
       if (attempt >= LAST_TAKE) {
         if (user) {

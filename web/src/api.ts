@@ -51,6 +51,8 @@ export type GuessResult = {
   posterUrl?: string
   /** Quantas pessoas (incl. você) chutaram esse título no daily */
   alsoGuessedCount?: number
+  /** Errou o filme, acertou a franquia */
+  franchise?: boolean
 }
 
 export type GiveUpResult = {

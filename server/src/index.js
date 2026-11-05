@@ -966,6 +966,14 @@ function franchiseKey(title, titlePt = '') {
   return null
 }
 
+/** Chute errou o filme, mas é da mesma franquia (Halloween 1 → Ressurreição). */
+function sameFranchise(guess, movie) {
+  const answer = franchiseKey(movie?.title, movie?.title_pt)
+  if (!answer) return false
+  const g = franchiseKey(guess, '')
+  return Boolean(g && g === answer)
+}
+
 function emptyCastEndlessProgress() {
   return { easyWins: 0, midWins: 0, hardWins: 0, eliteWins: 0, totalWins: 0 }
 }
@@ -1204,6 +1212,7 @@ app.post('/api/cast/guess', async (req, res) => {
     }
 
     const correct = matchesTitle(guess, puzzle)
+    const franchise = !correct && sameFranchise(guess, puzzle)
     const points = correct ? CAST_POINTS[attempt - 1] : 0
     const reveal = correct || attempt === CAST_MAX_TAKE
 
@@ -1220,6 +1229,7 @@ app.post('/api/cast/guess', async (req, res) => {
 
     res.json({
       correct,
+      franchise,
       points: correct ? points : 0,
       hintsUnlocked: attempt,
       ...(alsoGuessedCount != null ? { alsoGuessedCount } : {}),
@@ -2833,11 +2843,16 @@ app.get('/api/autocomplete', async (req, res) => {
 
     scored.sort((a, b) => {
       if (a.rank !== b.rank) return a.rank - b.rank
+      const ya = a.year ?? 9999
+      const yb = b.year ?? 9999
+      if (a.rank === 0 && ya !== yb) return ya - yb
       return a.sortKey.localeCompare(b.sortKey)
     })
 
+    // Prefixo ("halloween") lista a franquia inteira — 10 cortava Ressurreição.
+    const cap = scored[0]?.rank === 0 ? 24 : 10
     res.json({
-      suggestions: scored.slice(0, 10).map(
+      suggestions: scored.slice(0, cap).map(
         ({ title, titlePt, year, label, movieId, posterUrl }) => ({
           title,
           titlePt,
@@ -2871,6 +2886,7 @@ app.post('/api/guess', async (req, res) => {
     }
 
     const correct = matchesTitle(guess, puzzle)
+    const franchise = !correct && sameFranchise(guess, puzzle)
     const points = correct ? POINTS_BY_TAKE[attempt - 1] : 0
     const reveal = correct || attempt === 6
 
@@ -2888,6 +2904,7 @@ app.post('/api/guess', async (req, res) => {
 
     res.json({
       correct,
+      franchise,
       points: correct ? points : 0,
       ...(alsoGuessedCount != null ? { alsoGuessedCount } : {}),
       ...(reveal

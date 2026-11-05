@@ -232,7 +232,9 @@ export function CastScreen({
   const [revealTitle, setRevealTitle] = useState<string | null>(null)
   const [revealYear, setRevealYear] = useState<number | undefined>()
   const [points, setPoints] = useState(0)
-  const [wrongGuesses, setWrongGuesses] = useState<string[]>([])
+  const [wrongGuesses, setWrongGuesses] = useState<
+    { text: string; franchise: boolean }[]
+  >([])
   const [suggestions, setSuggestions] = useState<AutocompleteItem[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [hint, setHint] = useState<string | null>(null)
@@ -463,7 +465,10 @@ export function CastScreen({
         return
       }
 
-      setWrongGuesses((prev) => [...prev, typed])
+      setWrongGuesses((prev) => [
+        ...prev,
+        { text: typed, franchise: Boolean(result.franchise) },
+      ])
       setGuess('')
 
       if (attempt + 1 >= MAX_TAKE) {
@@ -484,7 +489,11 @@ export function CastScreen({
       }
 
       setAttempt((a) => a + 1)
-      setHint(`Errou: “${typed}” · próxima dica`)
+      setHint(
+        result.franchise
+          ? `Mesma franquia · “${typed}” · próxima dica`
+          : `Errou: “${typed}” · próxima dica`,
+      )
     } catch (err) {
       setHint((err as Error).message)
     } finally {
@@ -712,12 +721,19 @@ export function CastScreen({
 
             {wrongGuesses.length > 0 ? (
               <ul className="flex flex-wrap justify-center gap-1">
-                {wrongGuesses.map((g) => (
+                {wrongGuesses.map((g, i) => (
                   <li
-                    key={g}
-                    className="border border-cinema-red/60 bg-cinema-red/20 px-2 py-0.5 text-[11px] text-white"
+                    key={`${g.text}-${i}`}
+                    className={
+                      g.franchise
+                        ? 'border border-cinema-gold bg-cinema-gold/25 px-2 py-0.5 text-[11px] text-cinema-gold'
+                        : 'border border-cinema-red/60 bg-cinema-red/20 px-2 py-0.5 text-[11px] text-white'
+                    }
+                    title={g.franchise ? 'Mesma franquia' : 'Errou'}
                   >
-                    {g}
+                    {g.franchise ? '◆ ' : ''}
+                    {g.text}
+                    {g.franchise ? ' · franquia' : ''}
                   </li>
                 ))}
               </ul>
