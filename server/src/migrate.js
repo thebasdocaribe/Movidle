@@ -39,6 +39,9 @@ const CLIP_BY_TITLE = [
   ['キュア', '/clips/cure.mp4'],
   ['The Ritual', '/clips/the-ritual.mp4'],
   ['Water Park Shark', '/clips/water-park-shark.mp4'],
+  ['Fall', '/clips/fall.mp4', 2022],
+  ['The Thing', '/clips/the-thing.mp4', 1982],
+  ['Influencer', '/clips/influencer.mp4', 2023],
 ]
 
 export async function migrate() {
