@@ -81,7 +81,7 @@ export function DailyScreen({
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
-  const [playedIds, setPlayedIds] = useState<string[]>([])
+  const playedRef = useRef<string[]>([])
   const [suggestions, setSuggestions] = useState<AutocompleteItem[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [sessionScore, setSessionScore] = useState(0)
@@ -143,19 +143,22 @@ export function DailyScreen({
     floatTimer.current = window.setTimeout(() => setFloatPoints(null), 1100)
   }
 
-  async function loadPuzzle(exclude: string[] = playedIds) {
+  async function loadPuzzle() {
     setLoading(true)
     setLoadError(null)
     try {
       const data =
         mode === 'classic'
-          ? await fetchClassicNext(exclude)
+          ? await fetchClassicNext(playedRef.current)
           : await fetchDaily(activeDate || undefined)
       setDaily(data)
       if (mode === 'classic' && data.movieId) {
-        setPlayedIds((prev) =>
-          prev.includes(data.movieId!) ? prev : [...prev, data.movieId!],
-        )
+        const next = data.cycleRestarted
+          ? [data.movieId]
+          : playedRef.current.includes(data.movieId)
+            ? playedRef.current
+            : [...playedRef.current, data.movieId]
+        playedRef.current = next
       }
       // Já jogou o diário de hoje → reabre no resultado
       const pr = data.priorResult
@@ -186,7 +189,7 @@ export function DailyScreen({
     setAttempt(0)
     setGuess('')
     setSuggestions([])
-    setPlayedIds([])
+    playedRef.current = []
     setDaily(null)
     setEndState(null)
     setFloatPoints(null)
@@ -195,7 +198,7 @@ export function DailyScreen({
     setSessionScore(prog.totalScore)
     setSessionHits(prog.wins)
     setFirstTryStreak(prog.firstTryStreak)
-    void loadPuzzle([])
+    void loadPuzzle()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, user?.id, activeDate])
 
@@ -422,7 +425,7 @@ export function DailyScreen({
     setSuggestions([])
     setGuessHistory([])
     setPhase('idle')
-    const data = await loadPuzzle([...playedIds])
+    const data = await loadPuzzle()
     if (data) goReady(0)
   }
 

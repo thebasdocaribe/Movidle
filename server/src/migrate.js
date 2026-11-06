@@ -24,7 +24,7 @@ const MIGRATION_FILES = [
 
 /** Clips em web/public/clips (vão pro dist no build). */
 const CLIP_BY_TITLE = [
-  ['Night of the Living Dead', '/clips/night-of-the-living-dead.mp4'],
+  ['Night of the Living Dead', '/clips/night-of-the-living-dead.mp4', 1968],
   ['Carnival of Souls', '/clips/carnival-of-souls.mp4'],
   ['Charade', '/clips/charade.mp4'],
   ['Detour', '/clips/detour.mp4'],
@@ -34,6 +34,11 @@ const CLIP_BY_TITLE = [
   ['Angel and the Badman', '/clips/angel-and-the-badman.mp4'],
   ['Beat the Devil', '/clips/beat-the-devil.mp4'],
   ['Nothing Sacred', '/clips/nothing-sacred.mp4'],
+  ['Winnie-the-Pooh: Blood and Honey 2', '/clips/winnie-the-pooh-blood-and-honey-2.mp4'],
+  ['Buddy', '/clips/buddy.mp4'],
+  ['キュア', '/clips/cure.mp4'],
+  ['The Ritual', '/clips/the-ritual.mp4'],
+  ['Water Park Shark', '/clips/water-park-shark.mp4'],
 ]
 
 export async function migrate() {
@@ -77,13 +82,21 @@ export async function migrate() {
       console.warn('[migrate] seed filmes:', err.message)
     }
 
-    for (const [title, clipPath] of CLIP_BY_TITLE) {
+    for (const [title, clipPath, year] of CLIP_BY_TITLE) {
       await client.query(
         `UPDATE movies SET clip_path = $1
-         WHERE title = $2 AND (clip_path IS NULL OR clip_path = '')`,
-        [clipPath, title],
+         WHERE lower(title) = lower($2)
+           AND ($3::int IS NULL OR year = $3::int)
+           AND (clip_path IS NULL OR clip_path = '')`,
+        [clipPath, title, year ?? null],
       )
     }
+    await client.query(
+      `UPDATE movies SET clip_path = NULL
+       WHERE title = 'Night of the Living Dead'
+         AND year = 1990
+         AND clip_path = '/clips/night-of-the-living-dead.mp4'`,
+    )
     await client.query(
       `UPDATE movies SET clip_path = '/clips/reefer-madness.mp4'
        WHERE title ILIKE 'Reefer Madness%'

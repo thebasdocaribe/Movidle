@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -2744,52 +2745,56 @@ app.post('/api/round/finish', authRequired, async (req, res) => {
   }
 })
 
-/** Clássico / infinito: prioriza filmes com clip; ciclo reinicia quando acaba o pool */
+/** Maratona: um filme por clipe, sem repetir até acabar o pool. */
 app.get('/api/classic/next', async (req, res) => {
   try {
-    const exclude = String(req.query.exclude || '')
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
+    const exclude = new Set(
+      String(req.query.exclude || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter((id) => /^[0-9a-f-]{36}$/i.test(id)),
+    )
 
-    async function pick(withClipOnly, useExclude) {
-      const params = []
-      const where = []
-      if (withClipOnly) where.push(`clip_path IS NOT NULL`)
-      if (useExclude && exclude.length > 0) {
-        params.push(exclude)
-        where.push(`NOT (id::text = ANY($${params.length}::text[]))`)
-      }
-      const sql = `
-        SELECT id::text AS puzzle_key,
-               id AS movie_id,
-               title,
-               title_pt,
-               aliases,
-               poster_path,
-               clip_path,
-               attribution,
-               year
-        FROM movies
-        ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-        ORDER BY random()
-        LIMIT 1`
-      const { rows } = await query(sql, params)
-      return rows[0] || null
-    }
+    const { rows: pool } = await query(
+      `SELECT id::text AS puzzle_key,
+              id::text AS movie_id,
+              title,
+              title_pt,
+              aliases,
+              poster_path,
+              clip_path,
+              attribution,
+              year
+       FROM (
+         SELECT DISTINCT ON (clip_path)
+                id, title, title_pt, aliases, poster_path, clip_path,
+                attribution, year
+         FROM movies
+         WHERE clip_path IS NOT NULL AND clip_path <> ''
+         ORDER BY clip_path, year ASC NULLS LAST
+       ) one_per_clip`,
+    )
 
-    // Só clipes — Maratona não cai em pôster
-    const puzzle = (await pick(true, true)) || (await pick(true, false))
-
-    if (!puzzle) {
+    if (!pool.length) {
       res.status(404).json({ error: 'Sem filmes com clipe no catálogo' })
       return
     }
 
+    const excludedClips = new Set(
+      pool.filter((m) => exclude.has(m.movie_id)).map((m) => m.clip_path),
+    )
+    let available = pool.filter(
+      (m) => !exclude.has(m.movie_id) && !excludedClips.has(m.clip_path),
+    )
+    const cycleRestarted = available.length === 0 && exclude.size > 0
+    if (available.length === 0) available = pool
+
+    const puzzle = available[crypto.randomInt(available.length)]
     res.json(
       publicPuzzle(puzzle, {
         mode: 'classic',
         movieId: puzzle.movie_id,
+        cycleRestarted,
       }),
     )
   } catch (err) {

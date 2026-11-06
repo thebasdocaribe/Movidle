@@ -36,6 +36,7 @@ export type DailyPayload = {
   posterUrl?: string | null
   attribution: string | null
   alreadyPlayed?: boolean
+  cycleRestarted?: boolean
   /** Se já jogou: reabre no estado final */
   priorResult?: PriorPlayResult | null
   /** Quantas pessoas já acertaram o daily de hoje */
