@@ -42,6 +42,13 @@ const CLIP_BY_TITLE = [
   ['Fall', '/clips/fall.mp4', 2022],
   ['The Thing', '/clips/the-thing.mp4', 1982],
   ['Influencer', '/clips/influencer.mp4', 2023],
+  ['Get Out', '/clips/get-out.mp4', 2017],
+  ['Marty Supreme', '/clips/marty-supreme.mp4', 2025],
+  ['The Drama', '/clips/the-drama.mp4', 2026],
+  ['The Final Girls', '/clips/the-final-girls.mp4', 2015],
+  ['Stay Alive', '/clips/stay-alive.mp4', 2006],
+  ['Scary Movie', '/clips/scary-movie-6.mp4', 2026],
+  ['Ice Cream Man', '/clips/ice-cream-man.mp4', 2026],
 ]
 
 export async function migrate() {
