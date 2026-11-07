@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 export type DailyNavMode =
   | 'daily'
   | 'cast'
@@ -16,7 +18,7 @@ type DailyModeNavProps = {
 const MODES: {
   id: DailyNavMode
   label: string
-  Icon: () => JSX.Element
+  Icon: () => ReactNode
 }[] = [
   {
     id: 'daily',
