@@ -595,6 +595,9 @@ export function fetchMe() {
       progress: ProgressMap
       dailyPlayedToday: boolean
       castPlayedToday?: boolean
+      characterPlayedToday?: boolean
+      keywordsPlayedToday?: boolean
+      whoamiPlayedToday?: boolean
     }>(r),
   )
 }

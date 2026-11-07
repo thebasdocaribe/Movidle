@@ -10,6 +10,11 @@ import {
   type WhoamiAskChip,
   type WhoamiPayload,
 } from '../api'
+import {
+  DailyModeNav,
+  type DailyNavMode,
+  type DailyPlayedMap,
+} from '../components/DailyModeNav'
 import type { AuthUser, ProgressMap } from '../auth'
 import { modeProgress } from '../auth'
 
@@ -21,6 +26,12 @@ type WhoAmIScreenProps = {
   puzzleDate?: string | null
   onBack: () => void
   onPlayEndless?: () => void
+  modeNav?: {
+    active: DailyNavMode
+    played: DailyPlayedMap
+    onSelect: (mode: DailyNavMode) => void
+  } | null
+  onDailyModePlayed?: () => void
 }
 
 type Chip = WhoamiAskChip & { key: string }
@@ -39,6 +50,8 @@ export function WhoAmIScreen({
   puzzleDate = null,
   onBack,
   onPlayEndless,
+  modeNav = null,
+  onDailyModePlayed,
 }: WhoAmIScreenProps) {
   const endless = variant === 'endless'
   const [puzzle, setPuzzle] = useState<WhoamiPayload | null>(null)
@@ -116,6 +129,7 @@ export function WhoAmIScreen({
       }
       if (!endless && data.priorResult) {
         setEnded(true)
+        onDailyModePlayed?.()
         setWon(Boolean(data.priorResult.won))
         setPoints(data.priorResult.points ?? 0)
         setRevealTitle(data.priorResult.titlePt || data.priorResult.title || '?')
@@ -205,6 +219,7 @@ export function WhoAmIScreen({
       if (res.correct) {
         setWon(true)
         setEnded(true)
+        if (!endless) onDailyModePlayed?.()
         setPoints(res.points)
         setRevealTitle(res.titlePt || res.title || typed)
         setRevealYear(res.year)
@@ -229,6 +244,7 @@ export function WhoAmIScreen({
       if (nextWrong >= maxWrong || res.title || res.titlePt) {
         setWon(false)
         setEnded(true)
+        if (!endless) onDailyModePlayed?.()
         setPoints(0)
         setRevealTitle(res.titlePt || res.title || '?')
         setRevealYear(res.year)
@@ -271,6 +287,14 @@ export function WhoAmIScreen({
             +{prog.totalScore}
           </p>
         </div>
+
+        {modeNav ? (
+          <DailyModeNav
+            active={modeNav.active}
+            played={modeNav.played}
+            onSelect={modeNav.onSelect}
+          />
+        ) : null}
 
         <p className="text-center text-xs text-cinema-muted">
           {endless ? 'Ilimitado' : 'Diário'} ·{' '}

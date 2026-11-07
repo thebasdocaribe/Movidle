@@ -13,6 +13,11 @@ import {
   type AutocompleteItem,
   type KeywordsPayload,
 } from '../api'
+import {
+  DailyModeNav,
+  type DailyNavMode,
+  type DailyPlayedMap,
+} from '../components/DailyModeNav'
 import type { AuthUser, ProgressMap } from '../auth'
 import { modeProgress } from '../auth'
 import { PixelatedPoster } from '../components/PixelatedPoster'
@@ -23,6 +28,12 @@ type KeywordsScreenProps = {
   onProgress: (p: ProgressMap) => void
   puzzleDate?: string | null
   onBack: () => void
+  modeNav?: {
+    active: DailyNavMode
+    played: DailyPlayedMap
+    onSelect: (mode: DailyNavMode) => void
+  } | null
+  onDailyModePlayed?: () => void
 }
 
 export function KeywordsScreen({
@@ -31,6 +42,8 @@ export function KeywordsScreen({
   onProgress,
   puzzleDate = null,
   onBack,
+  modeNav = null,
+  onDailyModePlayed,
 }: KeywordsScreenProps) {
   const [puzzle, setPuzzle] = useState<KeywordsPayload | null>(null)
   const [loading, setLoading] = useState(true)
@@ -77,6 +90,7 @@ export function KeywordsScreen({
       setShowSuggestions(false)
       if (data.priorResult) {
         setEnded(true)
+        onDailyModePlayed?.()
         setWon(Boolean(data.priorResult.won))
         setPoints(data.priorResult.points ?? 0)
         setRevealTitle(data.priorResult.titlePt || data.priorResult.title || '?')
@@ -162,6 +176,7 @@ export function KeywordsScreen({
       setGuess('')
       if (res.correct) {
         setEnded(true)
+        onDailyModePlayed?.()
         setWon(true)
         setPoints(res.points)
         setRevealTitle(res.titlePt || res.title || '?')
@@ -170,6 +185,7 @@ export function KeywordsScreen({
         await persistFinish('win', res.wrongGuesses, res.wrongGuesses + 1)
       } else if (res.ended) {
         setEnded(true)
+        onDailyModePlayed?.()
         setWon(false)
         setRevealTitle(res.titlePt || res.title || '?')
         setRevealYear(res.year)
@@ -219,6 +235,14 @@ export function KeywordsScreen({
           </h1>
           <p className="text-[10px] text-cinema-muted">+{prog.totalScore}</p>
         </div>
+
+        {modeNav ? (
+          <DailyModeNav
+            active={modeNav.active}
+            played={modeNav.played}
+            onSelect={modeNav.onSelect}
+          />
+        ) : null}
 
         <p className="text-center text-xs text-cinema-muted">
           Diário · <span className="text-cinema-gold">médio</span>

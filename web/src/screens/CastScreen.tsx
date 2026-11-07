@@ -10,6 +10,11 @@ import {
   type CastDailyPayload,
   type CastHint,
 } from '../api'
+import {
+  DailyModeNav,
+  type DailyNavMode,
+  type DailyPlayedMap,
+} from '../components/DailyModeNav'
 import { PixelPoster, castMosaicColumns } from '../components/PixelPoster'
 import type { AuthUser, ProgressMap } from '../auth'
 import { modeProgress } from '../auth'
@@ -29,6 +34,11 @@ type CastScreenProps = {
   /** Atalhos na tela de fim (diário) */
   onPlayYesterday?: () => void
   onPlayEndless?: () => void
+  modeNav?: {
+    active: DailyNavMode
+    played: DailyPlayedMap
+    onSelect: (mode: DailyNavMode) => void
+  } | null
 }
 
 const MAX_TAKE = 7
@@ -217,6 +227,7 @@ export function CastScreen({
   onCastPlayed,
   puzzleDate = null,
   onBack,
+  modeNav = null,
   onPlayYesterday,
   onPlayEndless,
 }: CastScreenProps) {
@@ -303,6 +314,7 @@ export function CastScreen({
       }
       const pr = data.priorResult
       if (!endless && pr && !isArchive) {
+        onCastPlayed()
         setWon(Boolean(pr.won))
         setEnded(true)
         setPoints(pr.points ?? 0)
@@ -310,6 +322,12 @@ export function CastScreen({
         setRevealYear(pr.year)
         setAttempt(MAX_TAKE - 1)
         setHint('Você já jogou · resultado do dia')
+      } else if (
+        !endless &&
+        !isArchive &&
+        (data.alreadyPlayed || castPlayedToday)
+      ) {
+        onCastPlayed()
       }
       return data
     } catch (err) {
@@ -406,6 +424,7 @@ export function CastScreen({
         const finished = user ? await persist('lose', MAX_TAKE) : null
         setWon(false)
         setEnded(true)
+        if (!endless && !isArchive && !user) onCastPlayed()
         setPoints(0)
         applyEndlessLose()
         setRevealTitle(finished?.titlePt || finished?.title || '?')
@@ -451,6 +470,7 @@ export function CastScreen({
         const finished = user ? await persist('win', attempt + 1) : null
         setWon(true)
         setEnded(true)
+        if (!endless && !isArchive && !user) onCastPlayed()
         setPoints(finished?.points ?? result.points)
         applyEndlessWin()
         setRevealTitle(
@@ -475,6 +495,7 @@ export function CastScreen({
         const finished = user ? await persist('lose', MAX_TAKE) : null
         setWon(false)
         setEnded(true)
+        if (!endless && !isArchive && !user) onCastPlayed()
         setPoints(0)
         applyEndlessLose()
         setRevealTitle(
@@ -530,6 +551,14 @@ export function CastScreen({
               .replace(/\.00$/, '')}
           </p>
         </div>
+
+        {modeNav ? (
+          <DailyModeNav
+            active={modeNav.active}
+            played={modeNav.played}
+            onSelect={modeNav.onSelect}
+          />
+        ) : null}
 
         <p className="text-center text-xs text-cinema-muted">
           {endless

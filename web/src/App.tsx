@@ -20,8 +20,17 @@ import { ProfilesBrowseScreen } from './screens/ProfilesBrowseScreen'
 import { WhoAmIScreen } from './screens/WhoAmIScreen'
 import { KeywordsScreen } from './screens/KeywordsScreen'
 import { AchievementToastHost } from './components/AchievementToast'
+import type { DailyNavMode, DailyPlayedMap } from './components/DailyModeNav'
 import { todayBRT, yesterdayOf } from './components/DayCalendarModal'
 import type { Achievement } from './api'
+
+const EMPTY_DAILY_PLAYED: DailyPlayedMap = {
+  daily: false,
+  cast: false,
+  character: false,
+  keywords: false,
+  whoami: false,
+}
 
 type Screen =
   | 'hub'
@@ -44,6 +53,7 @@ export default function App() {
   const [progress, setProgress] = useState<ProgressMap>(emptyProgress())
   const [dailyPlayedToday, setDailyPlayedToday] = useState(false)
   const [castPlayedToday, setCastPlayedToday] = useState(false)
+  const [dailyPlayed, setDailyPlayed] = useState<DailyPlayedMap>(EMPTY_DAILY_PLAYED)
   const [showAuth, setShowAuth] = useState(false)
   const [resetToken, setResetToken] = useState<string | null>(null)
   const [duelCode, setDuelCode] = useState<string | null>(null)
@@ -118,6 +128,13 @@ export default function App() {
         setProgress({ ...emptyProgress(), ...res.progress })
         setDailyPlayedToday(res.dailyPlayedToday)
         setCastPlayedToday(Boolean(res.castPlayedToday))
+        setDailyPlayed({
+          daily: Boolean(res.dailyPlayedToday),
+          cast: Boolean(res.castPlayedToday),
+          character: Boolean(res.characterPlayedToday),
+          keywords: Boolean(res.keywordsPlayedToday),
+          whoami: Boolean(res.whoamiPlayedToday),
+        })
         if (duel) setScreen('duel')
       } catch (err) {
         const msg = (err as Error).message || ''
@@ -177,6 +194,19 @@ export default function App() {
     setScreen('oscars')
   }
 
+  function markDailyPlayed(modeKey: DailyNavMode) {
+    setDailyPlayed((prev) =>
+      prev[modeKey] ? prev : { ...prev, [modeKey]: true },
+    )
+    if (modeKey === 'daily') setDailyPlayedToday(true)
+    if (modeKey === 'cast') setCastPlayedToday(true)
+  }
+
+  useEffect(() => {
+    if (dailyPlayedToday) markDailyPlayed('daily')
+    if (castPlayedToday) markDailyPlayed('cast')
+  }, [dailyPlayedToday, castPlayedToday])
+
   function openMode(
     next:
       | GameMode
@@ -233,6 +263,7 @@ export default function App() {
     setProgress(emptyProgress())
     setDailyPlayedToday(false)
     setCastPlayedToday(false)
+    setDailyPlayed(EMPTY_DAILY_PLAYED)
     setScreen('hub')
     setDuelCode(null)
     setProfileUsername(null)
@@ -321,6 +352,12 @@ export default function App() {
             onProgress={(p) => setProgress({ ...emptyProgress(), ...p })}
             puzzleDate={playDate}
             onBack={goHome}
+            modeNav={{
+              active: 'character',
+              played: dailyPlayed,
+              onSelect: (m) => openMode(m),
+            }}
+            onDailyModePlayed={() => markDailyPlayed('character')}
           />
         ) : screen === 'whoami' || screen === 'whoami-endless' ? (
           <WhoAmIScreen
@@ -331,6 +368,16 @@ export default function App() {
             puzzleDate={screen === 'whoami' ? playDate : null}
             onBack={goHome}
             onPlayEndless={() => openMode('whoami-endless')}
+            modeNav={
+              screen === 'whoami'
+                ? {
+                    active: 'whoami',
+                    played: dailyPlayed,
+                    onSelect: (m) => openMode(m),
+                  }
+                : null
+            }
+            onDailyModePlayed={() => markDailyPlayed('whoami')}
           />
         ) : screen === 'keywords' ? (
           <KeywordsScreen
@@ -339,6 +386,12 @@ export default function App() {
             onProgress={(p) => setProgress({ ...emptyProgress(), ...p })}
             puzzleDate={playDate}
             onBack={goHome}
+            modeNav={{
+              active: 'keywords',
+              played: dailyPlayed,
+              onSelect: (m) => openMode(m),
+            }}
+            onDailyModePlayed={() => markDailyPlayed('keywords')}
           />
         ) : screen === 'cast' || screen === 'cast-endless' ? (
           <CastScreen
@@ -348,13 +401,22 @@ export default function App() {
             onProgress={(p) => setProgress({ ...emptyProgress(), ...p })}
             onAchievements={pushAchievements}
             castPlayedToday={castPlayedToday}
-            onCastPlayed={() => setCastPlayedToday(true)}
+            onCastPlayed={() => markDailyPlayed('cast')}
             puzzleDate={screen === 'cast' ? playDate : null}
             onBack={goHome}
             onPlayYesterday={() =>
               openMode('cast', yesterdayOf(todayBRT()))
             }
             onPlayEndless={() => openMode('cast-endless')}
+            modeNav={
+              screen === 'cast'
+                ? {
+                    active: 'cast',
+                    played: dailyPlayed,
+                    onSelect: (m) => openMode(m),
+                  }
+                : null
+            }
           />
         ) : (
           <DailyScreen
@@ -363,7 +425,7 @@ export default function App() {
             progress={progress}
             onProgress={(p) => setProgress({ ...emptyProgress(), ...p })}
             onAchievements={pushAchievements}
-            onDailyPlayed={() => setDailyPlayedToday(true)}
+            onDailyPlayed={() => markDailyPlayed('daily')}
             dailyPlayedToday={dailyPlayedToday}
             puzzleDate={mode === 'daily' ? playDate : null}
             onBack={goHome}
@@ -371,6 +433,15 @@ export default function App() {
               openMode('daily', yesterdayOf(todayBRT()))
             }
             onPlayEndless={() => openMode('classic')}
+            modeNav={
+              mode === 'daily'
+                ? {
+                    active: 'daily',
+                    played: dailyPlayed,
+                    onSelect: (m) => openMode(m),
+                  }
+                : null
+            }
           />
         )}
       </AppShell>

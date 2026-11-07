@@ -12,6 +12,11 @@ import {
 } from '../api'
 import type { AuthUser, ProgressMap } from '../auth'
 import { modeProgress } from '../auth'
+import {
+  DailyModeNav,
+  type DailyNavMode,
+  type DailyPlayedMap,
+} from '../components/DailyModeNav'
 import { multiplierForStreak } from '../scoring'
 
 type Phase = 'idle' | 'ready' | 'countdown' | 'playing' | 'guess' | 'ended'
@@ -39,6 +44,11 @@ type DailyScreenProps = {
   onBack: () => void
   onPlayYesterday?: () => void
   onPlayEndless?: () => void
+  modeNav?: {
+    active: DailyNavMode
+    played: DailyPlayedMap
+    onSelect: (mode: DailyNavMode) => void
+  } | null
 }
 
 const COUNTDOWN_FROM = 3
@@ -69,6 +79,7 @@ export function DailyScreen({
   onBack,
   onPlayYesterday,
   onPlayEndless,
+  modeNav = null,
 }: DailyScreenProps) {
   const [phase, setPhase] = useState<Phase>('idle')
   const [countdown, setCountdown] = useState(COUNTDOWN_FROM)
@@ -163,6 +174,7 @@ export function DailyScreen({
       // Já jogou o diário de hoje → reabre no resultado
       const pr = data.priorResult
       if (mode === 'daily' && pr && !isArchive) {
+        markClassicDailyDone()
         setEndState({
           kind: pr.won ? 'win' : 'lose',
           points: pr.points ?? 0,
@@ -174,6 +186,12 @@ export function DailyScreen({
         })
         setAttempt(Math.max(0, (pr.take || 1) - 1))
         setPhase('ended')
+      } else if (
+        mode === 'daily' &&
+        !isArchive &&
+        (data.alreadyPlayed || dailyPlayedToday)
+      ) {
+        markClassicDailyDone()
       }
       return data
     } catch (err) {
@@ -345,6 +363,10 @@ export function DailyScreen({
     goReady(takeIndex)
   }
 
+  function markClassicDailyDone() {
+    if (mode === 'daily' && !isArchive) onDailyPlayed()
+  }
+
   async function persistRound(outcome: 'win' | 'lose', take: number) {
     if (!daily || !user) throw new Error('Faça login')
     const finished = await finishRound({
@@ -361,7 +383,7 @@ export function DailyScreen({
     setSessionScore(prog.totalScore)
     setSessionHits(prog.wins)
     setFirstTryStreak(prog.firstTryStreak)
-    if (mode === 'daily' && !isArchive) onDailyPlayed()
+    markClassicDailyDone()
     return finished
   }
 
@@ -405,6 +427,7 @@ export function DailyScreen({
           posterUrl: daily.posterUrl || null,
           multiplier: 1,
         })
+        markClassicDailyDone()
       }
       setScoreHint(null)
       setPhase('ended')
@@ -483,6 +506,7 @@ export function DailyScreen({
             posterUrl: result.posterUrl || daily.posterUrl || null,
             multiplier: 1,
           })
+          markClassicDailyDone()
           setScoreHint('Guest · entre pra salvar pontos no rank')
         }
         setPhase('ended')
@@ -521,6 +545,7 @@ export function DailyScreen({
             posterUrl: result.posterUrl || daily.posterUrl || null,
             multiplier: 1,
           })
+          markClassicDailyDone()
         }
         setPhase('ended')
         return
@@ -591,6 +616,14 @@ export function DailyScreen({
             </div>
             <div className="w-[72px]" />
           </div>
+
+          {modeNav ? (
+            <DailyModeNav
+              active={modeNav.active}
+              played={modeNav.played}
+              onSelect={modeNav.onSelect}
+            />
+          ) : null}
 
           {mode === 'classic' ? (
             <div className="mb-3 flex items-center justify-between gap-3 border-2 border-cinema-gold/80 bg-black/50 px-3 py-2 lg:hidden">

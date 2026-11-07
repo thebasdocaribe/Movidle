@@ -317,6 +317,33 @@ export async function hasPlayedCastDaily(userId, dateStr) {
   return rows.length > 0
 }
 
+export async function hasPlayedCharacterDaily(userId, dateStr) {
+  const { rows } = await query(
+    `SELECT 1 FROM user_character_daily_plays
+     WHERE user_id = $1 AND puzzle_date = $2::date`,
+    [userId, dateStr],
+  )
+  return rows.length > 0
+}
+
+export async function hasPlayedKeywordsDaily(userId, dateStr) {
+  const { rows } = await query(
+    `SELECT 1 FROM user_keywords_daily_plays
+     WHERE user_id = $1 AND puzzle_date = $2::date`,
+    [userId, dateStr],
+  )
+  return rows.length > 0
+}
+
+export async function hasPlayedWhoamiDaily(userId, dateStr) {
+  const { rows } = await query(
+    `SELECT 1 FROM user_whoami_daily_plays
+     WHERE user_id = $1 AND puzzle_date = $2::date`,
+    [userId, dateStr],
+  )
+  return rows.length > 0
+}
+
 /** Resultado salvo do diário (pra reabrir a tela no estado final). */
 export async function getDailyPlayResult(userId, dateStr) {
   const { rows } = await query(

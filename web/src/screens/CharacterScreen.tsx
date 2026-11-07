@@ -7,6 +7,11 @@ import {
   type AutocompleteItem,
   type CharacterPayload,
 } from '../api'
+import {
+  DailyModeNav,
+  type DailyNavMode,
+  type DailyPlayedMap,
+} from '../components/DailyModeNav'
 import type { AuthUser, ProgressMap } from '../auth'
 import { modeProgress } from '../auth'
 import {
@@ -22,6 +27,12 @@ type CharacterScreenProps = {
   onProgress: (p: ProgressMap) => void
   puzzleDate?: string | null
   onBack: () => void
+  modeNav?: {
+    active: DailyNavMode
+    played: DailyPlayedMap
+    onSelect: (mode: DailyNavMode) => void
+  } | null
+  onDailyModePlayed?: () => void
 }
 
 export function CharacterScreen({
@@ -31,6 +42,8 @@ export function CharacterScreen({
   onProgress,
   puzzleDate = null,
   onBack,
+  modeNav = null,
+  onDailyModePlayed,
 }: CharacterScreenProps) {
   const endless = variant === 'endless'
   const [puzzle, setPuzzle] = useState<CharacterPayload | null>(null)
@@ -79,6 +92,7 @@ export function CharacterScreen({
       if (!endless && pr && !isArchive) {
         setWon(Boolean(pr.won))
         setEnded(true)
+        onDailyModePlayed?.()
         setPoints(pr.points ?? 0)
         setRevealName(pr.namePt || pr.name || '?')
         setRevealFilm(pr.filmTitle || null)
@@ -167,6 +181,7 @@ export function CharacterScreen({
       if (result.correct) {
         setWon(true)
         setEnded(true)
+        if (!endless && !isArchive) onDailyModePlayed?.()
         setPoints(result.points)
         setRevealName(result.namePt || result.name || typed)
         setRevealFilm(result.filmTitle || null)
@@ -180,6 +195,7 @@ export function CharacterScreen({
       if (attempt + 1 >= CHARACTER_MAX_TAKE) {
         setWon(false)
         setEnded(true)
+        if (!endless && !isArchive) onDailyModePlayed?.()
         setPoints(0)
         setRevealName(result.namePt || result.name || '?')
         setRevealFilm(result.filmTitle || null)
@@ -208,6 +224,7 @@ export function CharacterScreen({
       if (result.progress) onProgress(result.progress)
       setWon(false)
       setEnded(true)
+      if (!endless && !isArchive) onDailyModePlayed?.()
       setPoints(0)
       setRevealName(result.namePt || result.name || '?')
       setRevealFilm(result.filmTitle || null)
@@ -240,6 +257,14 @@ export function CharacterScreen({
             +{prog.totalScore}
           </p>
         </div>
+
+        {modeNav ? (
+          <DailyModeNav
+            active={modeNav.active}
+            played={modeNav.played}
+            onSelect={modeNav.onSelect}
+          />
+        ) : null}
 
         <p className="text-center text-xs text-cinema-muted">
           {endless ? 'Ilimitado' : 'Diário'} · recorte{' '}

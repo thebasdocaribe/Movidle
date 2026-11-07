@@ -24,7 +24,10 @@ import {
   getCharacterDailyPlayResult,
   getDailyPlayResult,
   hasPlayedCastDaily,
+  hasPlayedCharacterDaily,
   hasPlayedDaily,
+  hasPlayedKeywordsDaily,
+  hasPlayedWhoamiDaily,
   isValidEmail,
   normalizeEmail,
   signToken,
@@ -2432,11 +2435,17 @@ app.get('/api/me', authRequired, async (req, res) => {
     const date = todayBRT()
     const alreadyPlayed = await hasPlayedDaily(user.id, date)
     const castPlayedToday = await hasPlayedCastDaily(user.id, date)
+    const characterPlayedToday = await hasPlayedCharacterDaily(user.id, date)
+    const keywordsPlayedToday = await hasPlayedKeywordsDaily(user.id, date)
+    const whoamiPlayedToday = await hasPlayedWhoamiDaily(user.id, date)
     res.json({
       user: publicUser(user),
       progress,
       dailyPlayedToday: alreadyPlayed,
       castPlayedToday,
+      characterPlayedToday,
+      keywordsPlayedToday,
+      whoamiPlayedToday,
     })
   } catch (err) {
     res.status(500).json({ error: String(err.message) })
