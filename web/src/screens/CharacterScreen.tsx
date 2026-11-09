@@ -20,6 +20,9 @@ import {
   CHARACTER_STAGES,
   CharacterCrop,
 } from '../components/CharacterCrop'
+import { DailyCalendarButton } from '../components/DailyCalendarButton'
+
+const CHARACTER_EPOCH = '2026-10-30'
 
 type CharacterScreenProps = {
   variant: 'daily' | 'endless'
@@ -29,6 +32,7 @@ type CharacterScreenProps = {
   onAchievements?: (list: Achievement[]) => void
   puzzleDate?: string | null
   onBack: () => void
+  onPickArchiveDate?: (date: string) => void
   modeNav?: {
     active: DailyNavMode
     played: DailyPlayedMap
@@ -45,6 +49,7 @@ export function CharacterScreen({
   onAchievements,
   puzzleDate = null,
   onBack,
+  onPickArchiveDate,
   modeNav = null,
   onDailyModePlayed,
 }: CharacterScreenProps) {
@@ -275,10 +280,26 @@ export function CharacterScreen({
           />
         ) : null}
 
-        <p className="text-center text-xs text-cinema-muted">
-          {endless ? 'Ilimitado' : 'Diário'} · recorte{' '}
-          {Math.min(attempt + 1, CHARACTER_MAX_TAKE)}/{CHARACTER_MAX_TAKE}
-        </p>
+        <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-cinema-muted">
+          <span>
+            {endless
+              ? 'Ilimitado'
+              : isArchive
+                ? `Arquivo ${activeDate}`
+                : 'Diário'}{' '}
+            · recorte {Math.min(attempt + 1, CHARACTER_MAX_TAKE)}/
+            {CHARACTER_MAX_TAKE}
+          </span>
+          {!endless && onPickArchiveDate && activeDate ? (
+            <DailyCalendarButton
+              title="Personagem"
+              activeDate={activeDate}
+              minDate={CHARACTER_EPOCH}
+              hint="Personagem: a partir de 30/10/2026. Arquivo = 0 pts."
+              onPickDate={onPickArchiveDate}
+            />
+          ) : null}
+        </div>
 
         {loading ? (
           <p className="text-center text-cinema-muted">Carregando…</p>

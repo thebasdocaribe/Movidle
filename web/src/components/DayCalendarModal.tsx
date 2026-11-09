@@ -3,6 +3,8 @@ import { useMemo, useState } from 'react'
 type DayCalendarModalProps = {
   title: string
   today: string
+  /** Dia atualmente em jogo — destaca e abre o mês certo. */
+  selectedDate?: string
   /** Inclusive — dias antes disso ficam bloqueados (ex.: lançamento do Personagem). */
   minDate?: string
   hint?: string
@@ -46,13 +48,14 @@ export function yesterdayOf(today: string): string {
 export function DayCalendarModal({
   title,
   today,
+  selectedDate,
   minDate,
   hint,
   playedDates,
   onPick,
   onClose,
 }: DayCalendarModalProps) {
-  const initial = parseKey(today)
+  const initial = parseKey(selectedDate || today)
   const [year, setYear] = useState(initial.y)
   const [month, setMonth] = useState(initial.m)
 
@@ -156,9 +159,11 @@ export function DayCalendarModal({
                 className={`relative aspect-square text-sm font-semibold disabled:opacity-25 ${
                   cell.key === today
                     ? 'border-2 border-cinema-red bg-cinema-red/30 text-white'
-                    : playedDates?.has(cell.key)
-                      ? 'border border-cinema-gold/70 bg-cinema-gold/15 text-cinema-gold'
-                      : 'border border-cinema-line/60 text-white hover:border-cinema-gold'
+                    : selectedDate && cell.key === selectedDate
+                      ? 'border-2 border-cinema-gold bg-cinema-gold/25 text-cinema-gold'
+                      : playedDates?.has(cell.key)
+                        ? 'border border-cinema-gold/70 bg-cinema-gold/15 text-cinema-gold'
+                        : 'border border-cinema-line/60 text-white hover:border-cinema-gold'
                 }`}
               >
                 {cell.day}

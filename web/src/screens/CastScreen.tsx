@@ -18,6 +18,7 @@ import {
 import { PixelPoster, castMosaicColumns } from '../components/PixelPoster'
 import type { AuthUser, ProgressMap } from '../auth'
 import { modeProgress } from '../auth'
+import { DailyCalendarButton } from '../components/DailyCalendarButton'
 import { multiplierForStreak } from '../scoring'
 
 type CastScreenProps = {
@@ -34,6 +35,7 @@ type CastScreenProps = {
   /** Atalhos na tela de fim (diário) */
   onPlayYesterday?: () => void
   onPlayEndless?: () => void
+  onPickArchiveDate?: (date: string) => void
   modeNav?: {
     active: DailyNavMode
     played: DailyPlayedMap
@@ -230,6 +232,7 @@ export function CastScreen({
   modeNav = null,
   onPlayYesterday,
   onPlayEndless,
+  onPickArchiveDate,
 }: CastScreenProps) {
   const endless = variant === 'endless'
   const [daily, setDaily] = useState<CastDailyPayload | null>(null)
@@ -560,24 +563,33 @@ export function CastScreen({
           />
         ) : null}
 
-        <p className="text-center text-xs text-cinema-muted">
-          {endless
-            ? 'Ilimitado'
-            : isArchive
-              ? `Arquivo ${activeDate} · 0 pts`
-              : 'Diário'}{' '}
-          · dica {Math.min(attempt + 1, MAX_TAKE)}/{MAX_TAKE}
-          {endless ? (
-            <>
-              {' '}
-              ·{' '}
-              <span className="font-mono text-cinema-gold tabular-nums">
-                {endlessNg > 0 ? `NG+${endlessNg} · ` : ''}
-                {endlessStreak}/{ENDLESS_STREAK_GOAL}
-              </span>
-            </>
+        <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-cinema-muted">
+          <span>
+            {endless
+              ? 'Ilimitado'
+              : isArchive
+                ? `Arquivo ${activeDate} · 0 pts`
+                : 'Diário'}{' '}
+            · dica {Math.min(attempt + 1, MAX_TAKE)}/{MAX_TAKE}
+            {endless ? (
+              <>
+                {' '}
+                ·{' '}
+                <span className="font-mono text-cinema-gold tabular-nums">
+                  {endlessNg > 0 ? `NG+${endlessNg} · ` : ''}
+                  {endlessStreak}/{ENDLESS_STREAK_GOAL}
+                </span>
+              </>
+            ) : null}
+          </span>
+          {!endless && onPickArchiveDate && activeDate ? (
+            <DailyCalendarButton
+              title="Poster"
+              activeDate={activeDate}
+              onPickDate={onPickArchiveDate}
+            />
           ) : null}
-        </p>
+        </div>
 
         {loading ? (
           <p className="text-center text-cinema-muted">Carregando…</p>

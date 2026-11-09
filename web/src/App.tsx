@@ -364,6 +364,7 @@ export default function App() {
             onAchievements={pushAchievements}
             puzzleDate={playDate}
             onBack={goHome}
+            onPickArchiveDate={(date) => openMode('character', date)}
             modeNav={{
               active: 'character',
               played: dailyPlayed,
@@ -381,6 +382,7 @@ export default function App() {
             puzzleDate={screen === 'whoami' ? playDate : null}
             onBack={goHome}
             onPlayEndless={() => openMode('whoami-endless')}
+            onPickArchiveDate={(date) => openMode('whoami', date)}
             modeNav={
               screen === 'whoami'
                 ? {
@@ -400,6 +402,7 @@ export default function App() {
             onAchievements={pushAchievements}
             puzzleDate={playDate}
             onBack={goHome}
+            onPickArchiveDate={(date) => openMode('keywords', date)}
             modeNav={{
               active: 'keywords',
               played: dailyPlayed,
@@ -422,6 +425,7 @@ export default function App() {
               openMode('cast', yesterdayOf(todayBRT()))
             }
             onPlayEndless={() => openMode('cast-endless')}
+            onPickArchiveDate={(date) => openMode('cast', date)}
             modeNav={
               screen === 'cast'
                 ? {
@@ -447,6 +451,7 @@ export default function App() {
               openMode('daily', yesterdayOf(todayBRT()))
             }
             onPlayEndless={() => openMode('classic')}
+            onPickArchiveDate={(date) => openMode('daily', date)}
             modeNav={
               mode === 'daily'
                 ? {

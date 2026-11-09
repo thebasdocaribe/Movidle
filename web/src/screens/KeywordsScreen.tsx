@@ -21,6 +21,8 @@ import {
 } from '../components/DailyModeNav'
 import type { AuthUser, ProgressMap } from '../auth'
 import { modeProgress } from '../auth'
+import { DailyCalendarButton } from '../components/DailyCalendarButton'
+import { todayBRT } from '../components/DayCalendarModal'
 import { PixelatedPoster } from '../components/PixelatedPoster'
 
 type KeywordsScreenProps = {
@@ -30,6 +32,7 @@ type KeywordsScreenProps = {
   onAchievements?: (list: Achievement[]) => void
   puzzleDate?: string | null
   onBack: () => void
+  onPickArchiveDate?: (date: string) => void
   modeNav?: {
     active: DailyNavMode
     played: DailyPlayedMap
@@ -45,9 +48,13 @@ export function KeywordsScreen({
   onAchievements,
   puzzleDate = null,
   onBack,
+  onPickArchiveDate,
   modeNav = null,
   onDailyModePlayed,
 }: KeywordsScreenProps) {
+  const todayKey = todayBRT()
+  const activeDate = puzzleDate || todayKey
+  const isArchive = activeDate < todayKey
   const [puzzle, setPuzzle] = useState<KeywordsPayload | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -250,9 +257,19 @@ export function KeywordsScreen({
           />
         ) : null}
 
-        <p className="text-center text-xs text-cinema-muted">
-          Diário · <span className="text-cinema-gold">médio</span>
-        </p>
+        <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-cinema-muted">
+          <span>
+            {isArchive ? `Arquivo ${activeDate}` : 'Diário'} ·{' '}
+            <span className="text-cinema-gold">médio</span>
+          </span>
+          {onPickArchiveDate ? (
+            <DailyCalendarButton
+              title="Palavra-chave"
+              activeDate={activeDate}
+              onPickDate={onPickArchiveDate}
+            />
+          ) : null}
+        </div>
         <div className="panel-frame px-3 py-2 text-center">
           <p className="font-mono text-sm text-cinema-gold tabular-nums">
             Tentativas: {wrong}/{maxWrong}

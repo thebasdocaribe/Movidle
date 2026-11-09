@@ -20,6 +20,8 @@ import {
 } from '../components/DailyModeNav'
 import type { AuthUser, ProgressMap } from '../auth'
 import { modeProgress } from '../auth'
+import { DailyCalendarButton } from '../components/DailyCalendarButton'
+import { todayBRT } from '../components/DayCalendarModal'
 
 type WhoAmIScreenProps = {
   variant: 'daily' | 'endless'
@@ -30,6 +32,7 @@ type WhoAmIScreenProps = {
   puzzleDate?: string | null
   onBack: () => void
   onPlayEndless?: () => void
+  onPickArchiveDate?: (date: string) => void
   modeNav?: {
     active: DailyNavMode
     played: DailyPlayedMap
@@ -60,10 +63,14 @@ export function WhoAmIScreen({
   puzzleDate = null,
   onBack,
   onPlayEndless,
+  onPickArchiveDate,
   modeNav = null,
   onDailyModePlayed,
 }: WhoAmIScreenProps) {
   const endless = variant === 'endless'
+  const todayKey = todayBRT()
+  const activeDate = endless ? null : puzzleDate || todayKey
+  const isArchive = Boolean(activeDate && activeDate < todayKey)
   const [puzzle, setPuzzle] = useState<WhoamiPayload | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -317,10 +324,23 @@ export function WhoAmIScreen({
           />
         ) : null}
 
-        <p className="text-center text-xs text-cinema-muted">
-          {endless ? 'Ilimitado' : 'Diário'} ·{' '}
-          <span className="text-cinema-gold">investigação</span>
-        </p>
+        <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-cinema-muted">
+          <span>
+            {endless
+              ? 'Ilimitado'
+              : isArchive
+                ? `Arquivo ${activeDate}`
+                : 'Diário'}{' '}
+            · <span className="text-cinema-gold">investigação</span>
+          </span>
+          {!endless && onPickArchiveDate && activeDate ? (
+            <DailyCalendarButton
+              title="Quem sou eu"
+              activeDate={activeDate}
+              onPickDate={onPickArchiveDate}
+            />
+          ) : null}
+        </div>
 
         <div className="panel-frame grid grid-cols-3 gap-2 px-3 py-2 text-center">
           <div>

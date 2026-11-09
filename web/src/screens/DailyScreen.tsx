@@ -17,6 +17,7 @@ import {
   type DailyNavMode,
   type DailyPlayedMap,
 } from '../components/DailyModeNav'
+import { DailyCalendarButton } from '../components/DailyCalendarButton'
 import { clipFreezeAt, watchClipBoundary } from '../lib/clipPlayback'
 import { multiplierForStreak } from '../scoring'
 
@@ -45,6 +46,7 @@ type DailyScreenProps = {
   onBack: () => void
   onPlayYesterday?: () => void
   onPlayEndless?: () => void
+  onPickArchiveDate?: (date: string) => void
   modeNav?: {
     active: DailyNavMode
     played: DailyPlayedMap
@@ -80,6 +82,7 @@ export function DailyScreen({
   onBack,
   onPlayYesterday,
   onPlayEndless,
+  onPickArchiveDate,
   modeNav = null,
 }: DailyScreenProps) {
   const [phase, setPhase] = useState<Phase>('idle')
@@ -608,11 +611,20 @@ export function DailyScreen({
               <p className="font-display text-3xl leading-none text-white">
                 {title}
               </p>
-              <p className="text-[11px] font-bold tracking-widest text-cinema-cyan uppercase">
-                {mode === 'daily'
-                  ? `${dateLabel} · BRT${isArchive ? ' · 0 PTS' : ''}`
-                  : 'SESSÃO CORRIDA'}
-              </p>
+              <div className="mt-0.5 flex flex-wrap items-center justify-center gap-2">
+                <p className="text-[11px] font-bold tracking-widest text-cinema-cyan uppercase">
+                  {mode === 'daily'
+                    ? `${dateLabel} · BRT${isArchive ? ' · 0 PTS' : ''}`
+                    : 'SESSÃO CORRIDA'}
+                </p>
+                {mode === 'daily' && onPickArchiveDate && activeDate ? (
+                  <DailyCalendarButton
+                    title="Clássico"
+                    activeDate={activeDate}
+                    onPickDate={onPickArchiveDate}
+                  />
+                ) : null}
+              </div>
             </div>
             <div className="w-[72px]" />
           </div>
