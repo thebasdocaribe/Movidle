@@ -490,6 +490,86 @@ export function patchAdminWhoamiTraits(id: string, traits: Partial<WhoamiTraits>
   }).then((r) => parseJson<{ movie: AdminWhoamiMovieDetail }>(r))
 }
 
+export type WhoamiRule = {
+  type: string
+  value?: string | number
+  field?: string
+  path?: string
+  min?: number
+  max?: number
+  aliases?: string[]
+}
+
+export type AdminWhoamiQuestion = {
+  id: string
+  categoryId: string
+  text: string
+  rule: WhoamiRule
+  sortOrder: number
+  active: boolean
+}
+
+export function fetchAdminWhoamiQuestions() {
+  return fetch('/api/admin/whoami/questions', {
+    headers: { ...authHeaders() },
+  }).then(
+    (r) =>
+      parseJson<{
+        categories: { id: string; label: string; sort_order: number }[]
+        questions: AdminWhoamiQuestion[]
+        ruleTypes: { id: string; label: string; needs: string }[]
+        boolFields: { id: string; label: string }[]
+        boolPaths: { id: string; label: string }[]
+        eqPaths: { id: string; label: string }[]
+        studios: { id: string; label: string }[]
+        tags: { id: string; label: string }[]
+      }>(r),
+  )
+}
+
+export function saveAdminWhoamiQuestion(body: {
+  id?: string
+  categoryId: string
+  text: string
+  rule: WhoamiRule
+  sortOrder?: number
+  active?: boolean
+}) {
+  const hasId = Boolean(body.id)
+  const url = hasId
+    ? `/api/admin/whoami/questions/${encodeURIComponent(body.id!)}`
+    : '/api/admin/whoami/questions'
+  return fetch(url, {
+    method: hasId ? 'PATCH' : 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body),
+  }).then((r) => parseJson<{ question: AdminWhoamiQuestion }>(r))
+}
+
+export function deleteAdminWhoamiQuestion(id: string) {
+  return fetch(`/api/admin/whoami/questions/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: { ...authHeaders() },
+  }).then((r) => parseJson<{ ok: boolean }>(r))
+}
+
+export function saveAdminWhoamiCategory(body: {
+  id?: string
+  label: string
+  sortOrder?: number
+}) {
+  return fetch('/api/admin/whoami/categories', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body),
+  }).then(
+    (r) =>
+      parseJson<{ category: { id: string; label: string; sort_order: number } }>(
+        r,
+      ),
+  )
+}
+
 export type KeywordsPayload = {
   puzzleId: string
   mode: 'keywords'

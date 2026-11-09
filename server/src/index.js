@@ -108,15 +108,23 @@ import {
 } from './normalize.js'
 import { CAST_POINTS, scoreRound } from './scoring.js'
 import {
+  BOOL_FIELDS,
+  BOOL_PATHS,
+  deleteAdminQuestion,
+  EQ_PATHS,
   evaluateQuestion,
+  listAdminQuestions,
   mergeTraitsPatch,
   previewAllAnswers,
   publicAskBank,
   publicTraitsForAdmin,
+  RULE_TYPES,
   STUDIO_OPTIONS,
   TAG_OPTIONS,
   traitsCompleteness,
   traitsFromMovie,
+  upsertAdminCategory,
+  upsertAdminQuestion,
   whoamiPoints,
   WHOAMI_CATEGORIES,
 } from './whoami.js'
@@ -991,11 +999,11 @@ async function ensureWhoamiDaily(dateStr) {
   return ensureWhoamiTraits(puzzle)
 }
 
-function publicWhoamiPuzzle(puzzle, extra = {}) {
+async function publicWhoamiPuzzle(puzzle, extra = {}) {
   return {
     puzzleId: puzzle.puzzle_key || String(puzzle.movie_id || puzzle.id),
     mode: 'whoami',
-    askBank: publicAskBank(),
+    askBank: await publicAskBank(),
     attribution: puzzle.attribution || null,
     ...extra,
   }
@@ -1484,8 +1492,12 @@ app.post('/api/cast/guess', async (req, res) => {
 })
 
 /** ——— Quem sou eu ——— */
-app.get('/api/whoami/bank', (_req, res) => {
-  res.json(publicAskBank())
+app.get('/api/whoami/bank', async (_req, res) => {
+  try {
+    res.json(await publicAskBank())
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
 })
 
 app.get('/api/whoami/daily', async (req, res) => {
@@ -1518,7 +1530,7 @@ app.get('/api/whoami/daily', async (req, res) => {
       }
     }
     res.json(
-      publicWhoamiPuzzle(puzzle, {
+      await publicWhoamiPuzzle(puzzle, {
         date,
         alreadyPlayed,
         priorResult,
@@ -1566,7 +1578,7 @@ app.get('/api/whoami/next', async (req, res) => {
       return
     }
     const puzzle = await ensureWhoamiTraits(rows[0])
-    res.json(publicWhoamiPuzzle(puzzle, { endless: true }))
+    res.json(await publicWhoamiPuzzle(puzzle, { endless: true }))
   } catch (err) {
     res.status(500).json({ error: String(err.message) })
   }
@@ -1586,7 +1598,7 @@ app.post('/api/whoami/ask', async (req, res) => {
       return
     }
     const enriched = await ensureWhoamiTraits(puzzle)
-    const result = evaluateQuestion(enriched, questionId)
+    const result = await evaluateQuestion(enriched, questionId)
     if (!result.text) {
       res.status(400).json({ error: 'Pergunta inválida' })
       return
@@ -2909,15 +2921,91 @@ app.get('/api/admin/clips', authAdminRequired, async (req, res) => {
   }
 })
 
-/** ——— Admin Quem sou eu (traits) ——— */
-app.get('/api/admin/whoami/meta', authAdminRequired, (_req, res) => {
-  res.json({
-    categories: WHOAMI_CATEGORIES,
-    studios: STUDIO_OPTIONS,
-    tags: TAG_OPTIONS,
-    askBank: publicAskBank(),
-  })
+/** ——— Admin Quem sou eu (traits + perguntas) ——— */
+app.get('/api/admin/whoami/meta', authAdminRequired, async (_req, res) => {
+  try {
+    res.json({
+      categories: WHOAMI_CATEGORIES,
+      studios: STUDIO_OPTIONS,
+      tags: TAG_OPTIONS,
+      ruleTypes: RULE_TYPES,
+      boolFields: BOOL_FIELDS,
+      boolPaths: BOOL_PATHS,
+      eqPaths: EQ_PATHS,
+      askBank: await publicAskBank(),
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
 })
+
+app.get('/api/admin/whoami/questions', authAdminRequired, async (_req, res) => {
+  try {
+    const data = await listAdminQuestions()
+    res.json({
+      ...data,
+      ruleTypes: RULE_TYPES,
+      boolFields: BOOL_FIELDS,
+      boolPaths: BOOL_PATHS,
+      eqPaths: EQ_PATHS,
+      studios: STUDIO_OPTIONS,
+      tags: TAG_OPTIONS,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.post('/api/admin/whoami/categories', authAdminRequired, async (req, res) => {
+  try {
+    const cat = await upsertAdminCategory({
+      id: req.body?.id,
+      label: req.body?.label,
+      sortOrder: req.body?.sortOrder,
+    })
+    res.json({ category: cat })
+  } catch (err) {
+    res.status(400).json({ error: String(err.message) })
+  }
+})
+
+app.post('/api/admin/whoami/questions', authAdminRequired, async (req, res) => {
+  try {
+    const question = await upsertAdminQuestion(req.body)
+    res.json({ question })
+  } catch (err) {
+    res.status(400).json({ error: String(err.message) })
+  }
+})
+
+app.patch(
+  '/api/admin/whoami/questions/:id',
+  authAdminRequired,
+  async (req, res) => {
+    try {
+      const question = await upsertAdminQuestion({
+        ...req.body,
+        id: req.params.id,
+      })
+      res.json({ question })
+    } catch (err) {
+      res.status(400).json({ error: String(err.message) })
+    }
+  },
+)
+
+app.delete(
+  '/api/admin/whoami/questions/:id',
+  authAdminRequired,
+  async (req, res) => {
+    try {
+      await deleteAdminQuestion(req.params.id)
+      res.json({ ok: true })
+    } catch (err) {
+      res.status(500).json({ error: String(err.message) })
+    }
+  },
+)
 
 app.get('/api/admin/whoami/movies', authAdminRequired, async (req, res) => {
   try {
@@ -2980,7 +3068,7 @@ app.get('/api/admin/whoami/movies/:id', authAdminRequired, async (req, res) => {
         posterUrl: movie.poster_path || null,
         traits: publicTraitsForAdmin(movie),
         completeness,
-        preview: previewAllAnswers(movie),
+        preview: await previewAllAnswers(movie),
       },
       meta: {
         categories: WHOAMI_CATEGORIES,
@@ -3029,7 +3117,7 @@ app.patch(
           posterUrl: movie.poster_path || null,
           traits: publicTraitsForAdmin(movie),
           completeness: traitsCompleteness(movie),
-          preview: previewAllAnswers(movie),
+          preview: await previewAllAnswers(movie),
         },
       })
     } catch (err) {

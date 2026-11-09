@@ -774,6 +774,14 @@ input:disabled {
   color: #fda4af;
 }
 
+.whoami-chip-unknown {
+  border-color: rgba(160, 160, 170, 0.45);
+  background: rgba(80, 80, 90, 0.25);
+  color: #a8a8b3;
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+}
+
 .keyword-board {
   position: relative;
   border: 10px solid #5c3a1e;

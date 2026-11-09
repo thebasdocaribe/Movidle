@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { seedCharacterCatalog } from './characterCatalog.js'
 import { seedMoviesCatalog } from './moviesCatalog.js'
 import { pool } from './db.js'
+import { seedWhoamiCatalog } from './whoami.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const DB_DIR = path.join(__dirname, '../../db')
@@ -23,6 +24,7 @@ const MIGRATION_FILES = [
   'admin.sql',
   'character_crops.sql',
   'achievements_stats.sql',
+  'whoami_questions.sql',
 ]
 
 /** Clips em web/public/clips (vão pro dist no build). */
@@ -127,6 +129,13 @@ export async function migrate() {
     }
   } finally {
     client.release()
+  }
+
+  try {
+    await seedWhoamiCatalog()
+    console.log('[migrate] whoami perguntas/categorias OK')
+  } catch (err) {
+    console.warn('[migrate] whoami catalog:', err.message)
   }
 }
 

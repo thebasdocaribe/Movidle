@@ -8,6 +8,7 @@ import {
   type WhoamiAnswer,
   type WhoamiTraits,
 } from '../api'
+import { AdminWhoamiQuestionsPanel } from './AdminWhoamiQuestionsPanel'
 
 type Tri = boolean | null
 
@@ -98,6 +99,7 @@ function ChipMulti({
 }
 
 export function AdminWhoamiPanel() {
+  const [subTab, setSubTab] = useState<'movies' | 'questions'>('movies')
   const [query, setQuery] = useState('')
   const [list, setList] = useState<AdminWhoamiMovieCard[]>([])
   const [loadingList, setLoadingList] = useState(true)
@@ -175,12 +177,39 @@ export function AdminWhoamiPanel() {
   }
 
   return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap gap-1.5">
+        {(
+          [
+            ['movies', 'Traits dos filmes'],
+            ['questions', 'Perguntas'],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setSubTab(id)}
+            className={`border px-3 py-1.5 text-[11px] font-bold tracking-wide uppercase ${
+              subTab === id
+                ? 'border-cinema-gold bg-cinema-gold/15 text-cinema-gold'
+                : 'border-cinema-line text-cinema-muted'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {subTab === 'questions' ? (
+        <AdminWhoamiQuestionsPanel />
+      ) : (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
       <section className="panel-frame flex flex-col gap-3 p-3">
         <div>
           <h2 className="font-display text-2xl text-cinema-gold">Filmes</h2>
           <p className="text-[11px] text-cinema-muted">
-            Cadastre traits pra o Quem Sou Eu responder SIM/NÃO/NÃO SEI.
+            Quanto mais traits você preenche, menos “NÃO SEI” o jogo responde.
+            Campo vazio = informação indisponível (nunca inventa NÃO).
           </p>
         </div>
         <input
@@ -583,6 +612,8 @@ export function AdminWhoamiPanel() {
           </>
         )}
       </section>
+    </div>
+      )}
     </div>
   )
 }
