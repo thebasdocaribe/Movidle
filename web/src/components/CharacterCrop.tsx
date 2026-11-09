@@ -1,34 +1,38 @@
 /** Estágios estilo Gamedle: detalhe → corpo inteiro */
-export const CHARACTER_STAGES = [
-  { label: 'Pernas', position: '50% 92%', zoom: 4.2 },
-  // Mão/antebraço na faixa média-baixa (evita canto vazio do frame)
-  { label: 'Mão', position: '72% 62%', zoom: 3.4 },
-  { label: 'Cabelo', position: '50% 8%', zoom: 3.4 },
-  { label: 'Rosto', position: '50% 22%', zoom: 2.6 },
-  { label: 'Busto', position: '50% 38%', zoom: 1.7 },
-  { label: 'Completo', position: '50% 50%', zoom: 1 },
-] as const
+
+export type CropStage = {
+  label: string
+  x: number
+  y: number
+  zoom: number
+}
+
+export const CHARACTER_STAGES: CropStage[] = [
+  { label: 'Pernas', x: 50, y: 92, zoom: 4.2 },
+  { label: 'Mão', x: 72, y: 62, zoom: 3.4 },
+  { label: 'Cabelo', x: 50, y: 8, zoom: 3.4 },
+  { label: 'Busto', x: 50, y: 38, zoom: 1.7 },
+  { label: 'Rosto', x: 50, y: 22, zoom: 2.6 },
+  { label: 'Completo', x: 50, y: 50, zoom: 1 },
+]
 
 export const CHARACTER_MAX_TAKE = CHARACTER_STAGES.length
 
-/** Overrides por arquivo (ex.: Jaws → “pernas” na barbatana). */
-const STAGE_OVERRIDES: Record<
-  string,
-  Partial<Record<number, { label?: string; position: string; zoom: number }>>
-> = {
-  'tubarao.jpg': {
-    0: { label: 'Barbatana', position: '58% 70%', zoom: 3.8 },
-    1: { label: 'Nadadeira', position: '35% 55%', zoom: 3.2 },
-    3: { label: 'Boca', position: '55% 35%', zoom: 2.8 },
-  },
-  // Herbert West: só busto — stages apontam pra seringa / mãos / óculos
-  'herbert-west.jpg': {
-    0: { label: 'Jaleco', position: '50% 78%', zoom: 3.2 },
-    1: { label: 'Seringa', position: '78% 42%', zoom: 3.6 },
-    2: { label: 'Cabelo', position: '48% 12%', zoom: 3.4 },
-    3: { label: 'Óculos', position: '50% 28%', zoom: 2.8 },
-  },
-}
+/** Overrides legados: só enquadramento. Labels sempre genéricos. */
+const STAGE_OVERRIDES: Record<string, Partial<Record<number, Partial<CropStage>>>> =
+  {
+    'tubarao.jpg': {
+      0: { x: 58, y: 70, zoom: 3.8 },
+      1: { x: 35, y: 55, zoom: 3.2 },
+      4: { x: 55, y: 35, zoom: 2.8 },
+    },
+    'herbert-west.jpg': {
+      0: { x: 50, y: 78, zoom: 3.2 },
+      1: { x: 78, y: 42, zoom: 3.6 },
+      2: { x: 48, y: 12, zoom: 3.4 },
+      4: { x: 50, y: 28, zoom: 2.8 },
+    },
+  }
 
 type CharacterCropProps = {
   src: string
@@ -36,6 +40,8 @@ type CharacterCropProps = {
   stage: number
   /** vitória / fim: mostra inteiro */
   reveal?: boolean
+  /** Crops vindos da API; se omitido, usa defaults + overrides por arquivo */
+  stages?: CropStage[] | null
 }
 
 function fileKey(src: string) {
@@ -44,17 +50,42 @@ function fileKey(src: string) {
   return parts[parts.length - 1] || ''
 }
 
-export function CharacterCrop({ src, stage, reveal = false }: CharacterCropProps) {
-  const idx = reveal
-    ? CHARACTER_STAGES.length - 1
-    : Math.min(Math.max(stage, 0), CHARACTER_STAGES.length - 1)
-  const base = CHARACTER_STAGES[idx]
+function resolveStage(
+  src: string,
+  idx: number,
+  stages?: CropStage[] | null,
+): CropStage {
+  const base = CHARACTER_STAGES[idx] || CHARACTER_STAGES[CHARACTER_STAGES.length - 1]
+  if (stages && stages[idx]) {
+    const s = stages[idx]
+    return {
+      label: base.label,
+      x: Number.isFinite(s.x) ? s.x : base.x,
+      y: Number.isFinite(s.y) ? s.y : base.y,
+      zoom: Number.isFinite(s.zoom) ? s.zoom : base.zoom,
+    }
+  }
   const over = STAGE_OVERRIDES[fileKey(src)]?.[idx]
-  const s = {
-    label: over?.label || base.label,
-    position: over?.position || base.position,
+  return {
+    label: base.label,
+    x: over?.x ?? base.x,
+    y: over?.y ?? base.y,
     zoom: over?.zoom ?? base.zoom,
   }
+}
+
+export function CharacterCrop({
+  src,
+  stage,
+  reveal = false,
+  stages = null,
+}: CharacterCropProps) {
+  const max = stages?.length || CHARACTER_STAGES.length
+  const idx = reveal
+    ? max - 1
+    : Math.min(Math.max(stage, 0), max - 1)
+  const s = resolveStage(src, idx, stages)
+  const position = `${s.x}% ${s.y}%`
   const fullFrame = reveal || s.zoom <= 1
 
   return (
@@ -62,17 +93,19 @@ export function CharacterCrop({ src, stage, reveal = false }: CharacterCropProps
       <img
         src={src}
         alt=""
+        data-role="crop-img"
         draggable={false}
-        className={`pointer-events-none h-full w-full select-none ${
+        onDragStart={(e) => e.preventDefault()}
+        className={`pointer-events-none h-full w-full select-none [-webkit-user-drag:none] ${
           fullFrame ? 'object-contain' : 'object-cover'
         }`}
         style={
           fullFrame
             ? undefined
             : {
-                objectPosition: s.position,
+                objectPosition: position,
                 transform: `scale(${s.zoom})`,
-                transformOrigin: s.position,
+                transformOrigin: position,
               }
         }
       />

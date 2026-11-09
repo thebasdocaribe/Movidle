@@ -14,6 +14,7 @@ type AppShellProps = {
   onProfile?: () => void
   onBrowseProfiles?: () => void
   onOscars?: () => void
+  onAdmin?: () => void
   loggedIn: boolean
   user?: AuthUser | null
   username?: string | null
@@ -34,6 +35,7 @@ export function AppShell({
   onProfile,
   onBrowseProfiles,
   onOscars,
+  onAdmin,
   loggedIn,
   user,
   username,
@@ -125,6 +127,8 @@ export function AppShell({
         onProfile={loggedIn ? onProfile : undefined}
         onBrowseProfiles={onBrowseProfiles}
         onOscars={onOscars}
+        onAdmin={onAdmin}
+        isAdmin={Boolean(user?.isAdmin)}
         loggedIn={loggedIn}
         onLogout={onLogout}
       />

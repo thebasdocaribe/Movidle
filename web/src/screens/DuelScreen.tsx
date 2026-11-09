@@ -7,6 +7,7 @@ import {
   type DuelState,
 } from '../api'
 import type { AuthUser } from '../auth'
+import { clipFreezeAt, watchClipBoundary } from '../lib/clipPlayback'
 
 type DuelScreenProps = {
   user: AuthUser
@@ -73,26 +74,24 @@ export function DuelScreen({ user, initialCode, onBack }: DuelScreenProps) {
   useEffect(() => {
     if (!playing || !duel?.media) return
     const video = videoRef.current
-    const endAt = Math.max(0.05, clipSeconds - 0.08)
-    const ms = Math.max(200, clipSeconds * 1000 - 80)
+    const ms = Math.max(200, clipFreezeAt(clipSeconds) * 1000)
 
     if (duel.media.type === 'video' && video) {
-      const stopAtBoundary = () => {
-        if (video.currentTime >= endAt) {
-          video.pause()
-          video.currentTime = endAt
-        }
-      }
+      let unwatch: (() => void) | null = null
       try {
         video.currentTime = 0
       } catch {
         /* seek race */
       }
-      video.addEventListener('timeupdate', stopAtBoundary)
+      unwatch = watchClipBoundary(video, {
+        startAt: 0,
+        endSeconds: clipSeconds,
+        onStop: () => setPlaying(false),
+      })
       void video.play().catch(() => {})
       const id = window.setTimeout(() => setPlaying(false), ms)
       return () => {
-        video.removeEventListener('timeupdate', stopAtBoundary)
+        unwatch?.()
         video.pause()
         window.clearTimeout(id)
       }

@@ -10,12 +10,18 @@ export type AuthUser = {
   emailVerified?: boolean
   avatarUrl?: string | null
   bio?: string
+  isAdmin?: boolean
 }
 
 export type ModeProgress = {
   totalScore: number
   firstTryStreak: number
   wins: number
+  winStreak?: number
+  bestWinStreak?: number
+  endlessWins?: number
+  endlessStreak?: number
+  endlessBestStreak?: number
 }
 
 export type ProgressMap = {

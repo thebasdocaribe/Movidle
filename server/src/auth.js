@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'cineblitz-dev-secret-change-me'
 const TOKEN_TTL_MS = 60 * 60 * 1000
 
 const USER_COLS = `id, username, display_name, email, email_verified, password_hash,
-  avatar_url, bio, favorite_movies`
+  avatar_url, bio, favorite_movies, is_admin`
 
 export function signToken(user) {
   return jwt.sign(
@@ -41,6 +41,23 @@ export function authRequired(req, res, next) {
       return
     }
     next()
+  })
+}
+
+/** Exige login + is_admin no banco (não confia só no JWT). */
+export function authAdminRequired(req, res, next) {
+  authRequired(req, res, async () => {
+    try {
+      const user = await findUserById(req.user.id)
+      if (!user || !user.is_admin) {
+        res.status(403).json({ error: 'Acesso de administrador necessário' })
+        return
+      }
+      req.adminUser = user
+      next()
+    } catch (err) {
+      res.status(500).json({ error: String(err.message || err) })
+    }
   })
 }
 
@@ -189,11 +206,25 @@ export async function consumeEmailVerifyToken(token) {
 
 export async function getProgress(userId) {
   const { rows } = await query(
-    `SELECT mode, total_score, first_try_streak, wins
+    `SELECT mode, total_score, first_try_streak, wins,
+            COALESCE(win_streak, 0) AS win_streak,
+            COALESCE(best_win_streak, 0) AS best_win_streak,
+            COALESCE(endless_wins, 0) AS endless_wins,
+            COALESCE(endless_streak, 0) AS endless_streak,
+            COALESCE(endless_best_streak, 0) AS endless_best_streak
      FROM user_progress WHERE user_id = $1`,
     [userId],
   )
-  const empty = { totalScore: 0, firstTryStreak: 0, wins: 0 }
+  const empty = {
+    totalScore: 0,
+    firstTryStreak: 0,
+    wins: 0,
+    winStreak: 0,
+    bestWinStreak: 0,
+    endlessWins: 0,
+    endlessStreak: 0,
+    endlessBestStreak: 0,
+  }
   const out = {
     daily: { ...empty },
     classic: { ...empty },
@@ -208,6 +239,11 @@ export async function getProgress(userId) {
         totalScore: row.total_score,
         firstTryStreak: row.first_try_streak,
         wins: row.wins,
+        winStreak: row.win_streak,
+        bestWinStreak: row.best_win_streak,
+        endlessWins: row.endless_wins,
+        endlessStreak: row.endless_streak,
+        endlessBestStreak: row.endless_best_streak,
       }
     }
   }

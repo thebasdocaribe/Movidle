@@ -4,10 +4,13 @@ import {
   fetchWhoamiDaily,
   fetchWhoamiNext,
   finishWhoami,
+  giveUpWhoami,
   postWhoamiAsk,
   postWhoamiGuess,
+  type Achievement,
   type AutocompleteItem,
-  type WhoamiAskChip,
+  type WhoamiAnswer,
+  type WhoamiHistoryItem,
   type WhoamiPayload,
 } from '../api'
 import {
@@ -23,6 +26,7 @@ type WhoAmIScreenProps = {
   user: AuthUser | null
   progress: ProgressMap
   onProgress: (p: ProgressMap) => void
+  onAchievements?: (list: Achievement[]) => void
   puzzleDate?: string | null
   onBack: () => void
   onPlayEndless?: () => void
@@ -34,12 +38,17 @@ type WhoAmIScreenProps = {
   onDailyModePlayed?: () => void
 }
 
-type Chip = WhoamiAskChip & { key: string }
+const ANSWER_CLASS: Record<WhoamiAnswer, string> = {
+  yes: 'whoami-chip whoami-chip-green',
+  no: 'whoami-chip whoami-chip-red',
+  partial: 'whoami-chip whoami-chip-yellow',
+  unknown: 'whoami-chip whoami-chip-unknown',
+}
 
-const VERDICT_CLASS: Record<string, string> = {
-  green: 'whoami-chip whoami-chip-green',
-  yellow: 'whoami-chip whoami-chip-yellow',
-  red: 'whoami-chip whoami-chip-red',
+function formatElapsed(sec: number) {
+  const m = Math.floor(sec / 60)
+  const s = sec % 60
+  return `${m}:${String(s).padStart(2, '0')}`
 }
 
 export function WhoAmIScreen({
@@ -47,6 +56,7 @@ export function WhoAmIScreen({
   user,
   progress,
   onProgress,
+  onAchievements,
   puzzleDate = null,
   onBack,
   onPlayEndless,
@@ -57,12 +67,9 @@ export function WhoAmIScreen({
   const [puzzle, setPuzzle] = useState<WhoamiPayload | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  type AskTab = 'genre' | 'decade' | 'era' | 'region' | 'runtime' | 'flag'
-  const [tab, setTab] = useState<AskTab>('genre')
-  const [chips, setChips] = useState<Chip[]>([])
+  const [categoryId, setCategoryId] = useState<string>('identity')
+  const [history, setHistory] = useState<WhoamiHistoryItem[]>([])
   const [asksUsed, setAsksUsed] = useState(0)
-  const [askBonus, setAskBonus] = useState(0)
-  const [adsUsed, setAdsUsed] = useState(0)
   const [wrong, setWrong] = useState(0)
   const [guess, setGuess] = useState('')
   const [busy, setBusy] = useState(false)
@@ -73,32 +80,29 @@ export function WhoAmIScreen({
   const [revealYear, setRevealYear] = useState<number | undefined>()
   const [revealPoster, setRevealPoster] = useState<string | null>(null)
   const [hint, setHint] = useState<string | null>(null)
+  const [confirmGiveUp, setConfirmGiveUp] = useState(false)
   const [playedIds, setPlayedIds] = useState<string[]>([])
   const [suggestions, setSuggestions] = useState<AutocompleteItem[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [elapsed, setElapsed] = useState(0)
   const suggestTimer = useRef<number | null>(null)
+  const startedAt = useRef<number>(Date.now())
 
   const prog = modeProgress(progress, 'whoami')
-  const baseAsks = puzzle?.askBank.maxAsks ?? 16
-  const adBonusUnit = puzzle?.askBank.adBonusAsks ?? 5
-  const maxAds = puzzle?.askBank.maxAds ?? 2
-  const maxAsks = baseAsks + askBonus
-  const asksLeft = Math.max(0, maxAsks - asksUsed)
-  const maxWrong = puzzle?.askBank.maxWrong ?? 6
-  const askedKeys = useMemo(
-    () => new Set(chips.map((c) => `${c.kind}:${c.value}`)),
-    [chips],
+  const askedIds = useMemo(
+    () => new Set(history.map((h) => h.questionId)),
+    [history],
   )
 
-  const options = useMemo(() => {
+  const categories = puzzle?.askBank.categories ?? []
+  const questions = useMemo(() => {
     if (!puzzle) return []
-    if (tab === 'genre') return puzzle.askBank.genres ?? []
-    if (tab === 'decade') return puzzle.askBank.decades ?? []
-    if (tab === 'era') return puzzle.askBank.eras ?? []
-    if (tab === 'runtime') return puzzle.askBank.runtimes ?? []
-    if (tab === 'flag') return puzzle.askBank.flags ?? []
-    return puzzle.askBank.regions ?? []
-  }, [puzzle, tab])
+    return puzzle.askBank.questions.filter((q) => q.category === categoryId)
+  }, [puzzle, categoryId])
+
+  function durationSec() {
+    return Math.max(0, Math.floor((Date.now() - startedAt.current) / 1000))
+  }
 
   async function load(exclude: string[] = []) {
     setLoading(true)
@@ -108,10 +112,8 @@ export function WhoAmIScreen({
         ? await fetchWhoamiNext(exclude)
         : await fetchWhoamiDaily(puzzleDate || undefined)
       setPuzzle(data)
-      setChips([])
+      setHistory([])
       setAsksUsed(0)
-      setAskBonus(0)
-      setAdsUsed(0)
       setWrong(0)
       setGuess('')
       setEnded(false)
@@ -121,7 +123,11 @@ export function WhoAmIScreen({
       setRevealYear(undefined)
       setRevealPoster(null)
       setHint(null)
-      setTab('genre')
+      setConfirmGiveUp(false)
+      setElapsed(0)
+      startedAt.current = Date.now()
+      const firstCat = data.askBank?.categories?.[0]?.id || 'identity'
+      setCategoryId(firstCat)
       if (endless && data.puzzleId) {
         setPlayedIds((prev) =>
           prev.includes(data.puzzleId) ? prev : [...prev, data.puzzleId],
@@ -150,6 +156,14 @@ export function WhoAmIScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [variant, puzzleDate])
 
+  useEffect(() => {
+    if (ended || loading) return
+    const id = window.setInterval(() => {
+      setElapsed(durationSec())
+    }, 1000)
+    return () => window.clearInterval(id)
+  }, [ended, loading, puzzle?.puzzleId])
+
   function queueAutocomplete(value: string) {
     if (suggestTimer.current) window.clearTimeout(suggestTimer.current)
     suggestTimer.current = window.setTimeout(() => {
@@ -165,15 +179,10 @@ export function WhoAmIScreen({
     }, 200)
   }
 
-  async function askOption(opt: { kind: string; value: string; label: string }) {
+  async function askQuestion(questionId: string) {
     if (!puzzle || busy || ended) return
-    const key = `${opt.kind}:${opt.value}`
-    if (askedKeys.has(key)) {
+    if (askedIds.has(questionId)) {
       setHint('Você já perguntou isso')
-      return
-    }
-    if (asksUsed >= maxAsks) {
-      setHint('Acabaram as dicas do orçamento — chute ou assista um anúncio')
       return
     }
     setBusy(true)
@@ -181,17 +190,16 @@ export function WhoAmIScreen({
     try {
       const res = await postWhoamiAsk({
         puzzleId: puzzle.puzzleId,
-        kind: opt.kind as WhoamiAskChip['kind'],
-        value: opt.value,
+        questionId,
       })
-      setChips((prev) => [
+      setHistory((prev) => [
         ...prev,
         {
-          kind: opt.kind as Chip['kind'],
-          value: opt.value,
-          label: res.label || opt.label,
-          verdict: res.verdict,
-          key: `${key}-${Date.now()}`,
+          questionId: res.questionId,
+          text: res.text,
+          answer: res.answer,
+          answerLabel: res.answerLabel,
+          key: `${res.questionId}-${Date.now()}`,
         },
       ])
       setAsksUsed((n) => n + 1)
@@ -215,6 +223,7 @@ export function WhoAmIScreen({
         guess: typed,
         asksUsed,
         wrongGuesses: wrong,
+        durationSec: durationSec(),
       })
       if (res.correct) {
         setWon(true)
@@ -230,9 +239,13 @@ export function WhoAmIScreen({
             outcome: 'win',
             asksUsed,
             wrongGuesses: wrong,
+            durationSec: durationSec(),
             endless,
           })
           onProgress(finished.progress)
+          if (finished.unlockedAchievements?.length) {
+            onAchievements?.(finished.unlockedAchievements)
+          }
           setPoints(finished.points)
         }
         return
@@ -241,27 +254,37 @@ export function WhoAmIScreen({
       const nextWrong = wrong + 1
       setWrong(nextWrong)
       setGuess('')
-      if (nextWrong >= maxWrong || res.title || res.titlePt) {
-        setWon(false)
-        setEnded(true)
-        if (!endless) onDailyModePlayed?.()
-        setPoints(0)
-        setRevealTitle(res.titlePt || res.title || '?')
-        setRevealYear(res.year)
-        setRevealPoster(res.posterUrl || null)
-        if (user) {
-          const finished = await finishWhoami({
-            puzzleId: puzzle.puzzleId,
-            outcome: 'lose',
-            asksUsed,
-            wrongGuesses: nextWrong,
-            endless,
-          })
-          onProgress(finished.progress)
-        }
-        return
+      setHint(`Errou: “${typed}” · continue investigando`)
+    } catch (err) {
+      setHint((err as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function confirmGiveUpAction() {
+    if (!puzzle || busy || ended) return
+    setBusy(true)
+    setConfirmGiveUp(false)
+    try {
+      const res = await giveUpWhoami({
+        puzzleId: puzzle.puzzleId,
+        asksUsed,
+        wrongGuesses: wrong,
+        durationSec: durationSec(),
+        endless,
+      })
+      setWon(false)
+      setEnded(true)
+      if (!endless) onDailyModePlayed?.()
+      setPoints(0)
+      setRevealTitle(res.titlePt || res.title || '?')
+      setRevealYear(res.year)
+      setRevealPoster(res.posterUrl || null)
+      if (res.progress) onProgress(res.progress)
+      if (res.unlockedAchievements?.length) {
+        onAchievements?.(res.unlockedAchievements)
       }
-      setHint(`Errou: “${typed}” · ${maxWrong - nextWrong} chute(s)`)
     } catch (err) {
       setHint((err as Error).message)
     } finally {
@@ -283,9 +306,7 @@ export function WhoAmIScreen({
           <h1 className="font-display text-2xl text-white sm:text-3xl">
             QUEM SOU EU
           </h1>
-          <p className="text-[10px] text-cinema-muted">
-            +{prog.totalScore}
-          </p>
+          <p className="text-[10px] text-cinema-muted">+{prog.totalScore}</p>
         </div>
 
         {modeNav ? (
@@ -298,18 +319,34 @@ export function WhoAmIScreen({
 
         <p className="text-center text-xs text-cinema-muted">
           {endless ? 'Ilimitado' : 'Diário'} ·{' '}
-          <span className="text-cinema-gold">difícil</span>
+          <span className="text-cinema-gold">investigação</span>
         </p>
-        <div className="panel-frame px-3 py-2 text-center">
-          <p className="font-mono text-sm text-cinema-gold tabular-nums">
-            Dicas restantes: {asksLeft}/{maxAsks}
-          </p>
-          <p className="mt-0.5 text-[11px] text-cinema-muted">
-            Orçamento único pra todos os tópicos (gênero, década, origem…)
-          </p>
-          <p className="mt-0.5 text-[11px] text-cinema-muted">
-            Chutes errados: {wrong}/{maxWrong}
-          </p>
+
+        <div className="panel-frame grid grid-cols-3 gap-2 px-3 py-2 text-center">
+          <div>
+            <p className="text-[9px] font-bold tracking-wide text-cinema-muted uppercase">
+              Perguntas
+            </p>
+            <p className="font-mono text-sm text-cinema-gold tabular-nums">
+              {asksUsed}
+            </p>
+          </div>
+          <div>
+            <p className="text-[9px] font-bold tracking-wide text-cinema-muted uppercase">
+              Chutes
+            </p>
+            <p className="font-mono text-sm text-cinema-gold tabular-nums">
+              {wrong}
+            </p>
+          </div>
+          <div>
+            <p className="text-[9px] font-bold tracking-wide text-cinema-muted uppercase">
+              Tempo
+            </p>
+            <p className="font-mono text-sm text-cinema-gold tabular-nums">
+              {formatElapsed(elapsed)}
+            </p>
+          </div>
         </div>
 
         {loading ? (
@@ -328,7 +365,7 @@ export function WhoAmIScreen({
                   />
                 ) : null}
                 <p className="font-display text-4xl text-cinema-gold">
-                  {won ? 'ACERTOU!' : 'FIM'}
+                  {won ? 'ACERTOU!' : 'DESISTIU'}
                 </p>
                 {won ? (
                   <p className="font-display text-2xl text-cinema-red">
@@ -338,6 +375,10 @@ export function WhoAmIScreen({
                 <p className="text-lg text-white">
                   {revealTitle}
                   {revealYear ? ` (${revealYear})` : ''}
+                </p>
+                <p className="text-[11px] text-cinema-muted">
+                  {asksUsed} pergunta(s) · {wrong} chute(s) ·{' '}
+                  {formatElapsed(elapsed)}
                 </p>
                 {endless ? (
                   <button
@@ -371,91 +412,80 @@ export function WhoAmIScreen({
             ) : (
               <>
                 <p className="text-center text-sm text-white">
-                  Sou um filme. Cada pergunta gasta 1 dica do total —{' '}
-                  <span className="text-emerald-400">verde</span> sim,{' '}
-                  <span className="text-amber-300">amarelo</span> em parte,{' '}
-                  <span className="text-cinema-red">vermelho</span> não.
+                  Sou um filme misterioso. Faça perguntas, monte hipóteses e
+                  chute quando quiser.{' '}
+                  <span className="text-emerald-400">SIM</span> ·{' '}
+                  <span className="text-cinema-red">NÃO</span> ·{' '}
+                  <span className="text-amber-300">PARCIAL</span> ·{' '}
+                  <span className="text-cinema-muted">NÃO SEI</span>
                 </p>
 
-                {chips.length > 0 ? (
-                  <ul className="flex flex-wrap justify-center gap-1.5">
-                    {chips.map((c) => (
-                      <li key={c.key} className={VERDICT_CLASS[c.verdict]}>
-                        {c.label}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-center text-xs text-cinema-muted">
-                    Nenhuma pista ainda — escolha abaixo
+                <section className="panel-frame px-3 py-2">
+                  <p className="mb-1.5 text-[10px] font-bold tracking-[0.16em] text-cinema-muted uppercase">
+                    Perguntas realizadas
                   </p>
-                )}
+                  {history.length === 0 ? (
+                    <p className="text-[11px] text-cinema-muted italic">
+                      Nenhuma ainda — escolha uma categoria abaixo
+                    </p>
+                  ) : (
+                    <ul className="flex max-h-36 flex-col gap-1 overflow-y-auto">
+                      {history.map((h) => (
+                        <li
+                          key={h.key}
+                          className="flex items-start justify-between gap-2 text-[12px]"
+                        >
+                          <span className="text-white/90">{h.text}</span>
+                          <span className={`${ANSWER_CLASS[h.answer]} shrink-0`}>
+                            {h.answerLabel}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
 
                 <div className="flex flex-wrap justify-center gap-1">
-                  {(
-                    [
-                      ['genre', 'Gênero'],
-                      ['decade', 'Década'],
-                      ['era', 'Época'],
-                      ['region', 'Origem'],
-                      ['runtime', 'Duração'],
-                      ['flag', 'Extras'],
-                    ] as const
-                  ).map(([id, label]) => (
+                  {categories.map((c) => (
                     <button
-                      key={id}
+                      key={c.id}
                       type="button"
-                      onClick={() => setTab(id)}
+                      onClick={() => setCategoryId(c.id)}
                       className={`border px-2.5 py-1 text-[10px] font-bold tracking-wide uppercase ${
-                        tab === id
+                        categoryId === c.id
                           ? 'border-cinema-gold bg-cinema-gold/15 text-cinema-gold'
                           : 'border-cinema-line text-cinema-muted'
                       }`}
                     >
-                      {label}
+                      {c.label}
                     </button>
                   ))}
                 </div>
 
-                <div className="max-h-48 overflow-y-auto border border-cinema-line/60 bg-black/30 p-2">
-                  <ul className="flex flex-wrap gap-1.5">
-                    {options.map((opt) => {
-                      const used = askedKeys.has(`${opt.kind}:${opt.value}`)
+                <div className="max-h-52 overflow-y-auto border border-cinema-line/60 bg-black/30 p-2">
+                  <ul className="flex flex-col gap-1">
+                    {questions.map((q) => {
+                      const used = askedIds.has(q.id)
                       return (
-                        <li key={`${opt.kind}:${opt.value}`}>
+                        <li key={q.id}>
                           <button
                             type="button"
-                            disabled={busy || used || asksLeft <= 0}
-                            onClick={() => void askOption(opt)}
-                            className={`border px-2 py-1 text-[11px] ${
+                            disabled={busy || used}
+                            onClick={() => void askQuestion(q.id)}
+                            className={`w-full border px-2.5 py-2 text-left text-[12px] ${
                               used
-                                ? 'border-cinema-line/40 text-cinema-muted/50'
+                                ? 'border-cinema-line/40 text-cinema-muted/55'
                                 : 'border-cinema-line text-white hover:border-cinema-gold hover:text-cinema-gold'
                             } disabled:opacity-40`}
                           >
-                            {opt.label}?
+                            {q.text}
+                            {used ? ' · feita' : ''}
                           </button>
                         </li>
                       )
                     })}
                   </ul>
                 </div>
-
-                {asksLeft <= 0 && adsUsed < maxAds && !ended ? (
-                  <button
-                    type="button"
-                    disabled={busy}
-                    className="mode-btn mode-btn-inline w-full border-cinema-cyan px-4 py-2.5 font-display text-lg text-cinema-cyan"
-                    onClick={() => {
-                      // Stub de anúncio — plugar AdMob/rewarded depois
-                      setAskBonus((b) => b + adBonusUnit)
-                      setAdsUsed((n) => n + 1)
-                      setHint(`+${adBonusUnit} dicas (anúncio)`)
-                    }}
-                  >
-                    ASSISTIR ANÚNCIO · +{adBonusUnit} DICAS ({adsUsed}/{maxAds})
-                  </button>
-                ) : null}
 
                 <form
                   onSubmit={submitGuess}
@@ -508,6 +538,41 @@ export function WhoAmIScreen({
                     CHUTAR
                   </button>
                 </form>
+
+                {confirmGiveUp ? (
+                  <div className="panel-frame flex flex-col gap-2 p-3 text-center">
+                    <p className="text-sm text-white">
+                      Desistir e revelar o filme?
+                    </p>
+                    <div className="flex justify-center gap-2">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => setConfirmGiveUp(false)}
+                        className="border border-cinema-line px-3 py-1.5 text-xs text-cinema-muted"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void confirmGiveUpAction()}
+                        className="border border-cinema-red px-3 py-1.5 text-xs font-bold text-cinema-red uppercase"
+                      >
+                        Confirmar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => setConfirmGiveUp(true)}
+                    className="border border-cinema-line/80 px-3 py-2 text-[11px] font-bold tracking-wide text-cinema-muted uppercase hover:border-cinema-red hover:text-cinema-red"
+                  >
+                    Desistir
+                  </button>
+                )}
               </>
             )}
 

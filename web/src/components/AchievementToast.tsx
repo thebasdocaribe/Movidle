@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Achievement } from '../api'
+import { CinemaIcon, cinemaIconForAchievement } from './CinemaIcon'
 
 type ToastItem = Achievement & { key: string }
 
@@ -54,11 +55,18 @@ export function AchievementToastHost({
       aria-live="polite"
     >
       <div className="ach-toast-icon" aria-hidden>
-        ★
+        <CinemaIcon
+          name={cinemaIconForAchievement(current)}
+          className="h-6 w-6"
+        />
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-[10px] font-bold tracking-[0.14em] text-cinema-gold uppercase">
-          Conquista desbloqueada
+          {current.tier === 'super'
+            ? 'Super conquista'
+            : current.tier === 'special'
+              ? 'Conquista especial'
+              : 'Conquista desbloqueada'}
         </p>
         <p className="truncate font-display text-xl leading-none text-white">
           {current.title}

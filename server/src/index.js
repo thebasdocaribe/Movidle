@@ -6,6 +6,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import express from 'express'
 import {
+  authAdminRequired,
   authOptional,
   authRequired,
   consumeEmailVerifyToken,
@@ -34,12 +35,37 @@ import {
   verifyPassword,
 } from './auth.js'
 import { CHARACTER_EPOCH } from './characterCatalog.js'
+import {
+  resolveCropStages,
+  sanitizeCropJson,
+  slugCharacter,
+} from './characterCrops.js'
 import { drawWithoutReplacement } from './dailyRotation.js'
 import { query } from './db.js'
+import { migrate } from './migrate.js'
+import {
+  buildAchievements,
+  CATEGORY_LABEL,
+  diffUnlockedAchievements,
+  loadCommunityRates,
+  withCommunityRates,
+} from './achievements.js'
+import {
+  buildCastJsonFromTmdb,
+  directorNameFromCredits,
+  posterUrlFromPath,
+  previewCastHints,
+} from './castFromTmdb.js'
+import {
+  loadDailyWinsByMode,
+  recordModeOutcome,
+} from './modeProgress.js'
 import {
   enrichHintsWithTmdb,
+  fetchMovieBundle,
   fetchMovieDetails,
   fetchMovieKeywords,
+  searchTmdbMovies,
   tmdbConfigured,
 } from './tmdb.js'
 import {
@@ -72,7 +98,6 @@ import {
   sendPasswordResetEmail,
   sendVerifyEmail,
 } from './mail.js'
-import { migrate } from './migrate.js'
 import {
   formatCharacterLabel,
   formatMovieLabel,
@@ -83,14 +108,17 @@ import {
 } from './normalize.js'
 import { CAST_POINTS, scoreRound } from './scoring.js'
 import {
-  evaluateAsk,
+  evaluateQuestion,
+  mergeTraitsPatch,
+  previewAllAnswers,
   publicAskBank,
+  publicTraitsForAdmin,
+  STUDIO_OPTIONS,
+  TAG_OPTIONS,
+  traitsCompleteness,
   traitsFromMovie,
   whoamiPoints,
-  WHOAMI_AD_BONUS_ASKS,
-  WHOAMI_MAX_ADS,
-  WHOAMI_MAX_ASKS,
-  WHOAMI_MAX_WRONG,
+  WHOAMI_CATEGORIES,
 } from './whoami.js'
 
 const CHARACTER_MAX_TAKE = 6
@@ -153,9 +181,213 @@ const POINTS_BY_TAKE = [100, 50, 25, 15, 10, 5]
 const CAST_MAX_TAKE = 7
 
 app.use(cors())
+app.use(authOptional)
+
+const CHARACTERS_DIR = path.join(__dirname, '../../web/public/characters')
+const CLIPS_DIR = path.join(__dirname, '../../web/public/clips')
+const adminJson = express.json({ limit: '12mb' })
+const adminClipRaw = express.raw({
+  type: ['video/mp4', 'application/octet-stream'],
+  limit: '40mb',
+})
+
+function decodeDataUrlImage(dataUrl) {
+  const m = String(dataUrl || '').match(
+    /^data:image\/(jpeg|jpg|png|webp);base64,([A-Za-z0-9+/=\s]+)$/i,
+  )
+  if (!m) return null
+  const ext = m[1].toLowerCase() === 'jpg' ? 'jpg' : m[1].toLowerCase()
+  const buffer = Buffer.from(m[2].replace(/\s+/g, ''), 'base64')
+  if (buffer.length < 100 || buffer.length > 10 * 1024 * 1024) return null
+  return { ext: ext === 'jpeg' ? 'jpg' : ext, buffer }
+}
+
+function publicAdminCharacter(row) {
+  const stages = resolveCropStages(row.crop_json, row.image_path)
+  return {
+    id: row.id,
+    name: row.name,
+    namePt: row.name_pt || row.name,
+    filmTitle: row.film_title || null,
+    movieId: row.movie_id || null,
+    imageUrl: row.image_path,
+    attribution: row.attribution || null,
+    cropStages: stages,
+    hasPhoto: String(row.image_path || '').startsWith('/characters/'),
+  }
+}
+
+/** Upload/create personagem — body grande, antes do json 1mb. */
+app.post('/api/admin/characters', authAdminRequired, adminJson, async (req, res) => {
+  try {
+    const name = String(req.body?.name || '').trim()
+    const namePt = String(req.body?.namePt || name).trim() || name
+    const filmTitle = String(req.body?.filmTitle || '').trim() || null
+    const movieId = req.body?.movieId ? String(req.body.movieId) : null
+    const imageData = decodeDataUrlImage(req.body?.imageDataUrl)
+    if (!name || name.length < 2) {
+      res.status(400).json({ error: 'Nome do personagem obrigatório' })
+      return
+    }
+    if (!imageData) {
+      res.status(400).json({ error: 'Envie uma imagem (JPEG/PNG/WebP) em data URL' })
+      return
+    }
+
+    let resolvedFilm = filmTitle
+    let resolvedMovieId = movieId
+    if (movieId) {
+      const { rows: movies } = await query(
+        `SELECT id::text AS id, title, title_pt FROM movies WHERE id = $1::uuid`,
+        [movieId],
+      )
+      if (!movies[0]) {
+        res.status(400).json({ error: 'Filme não encontrado no catálogo' })
+        return
+      }
+      resolvedFilm = movies[0].title_pt || movies[0].title
+      resolvedMovieId = movies[0].id
+    }
+
+    fs.mkdirSync(CHARACTERS_DIR, { recursive: true })
+    let slug = slugCharacter(namePt || name) || `char-${Date.now()}`
+    let filename = `${slug}.${imageData.ext}`
+    let full = path.join(CHARACTERS_DIR, filename)
+    let n = 2
+    while (fs.existsSync(full)) {
+      filename = `${slug}-${n}.${imageData.ext}`
+      full = path.join(CHARACTERS_DIR, filename)
+      n += 1
+    }
+    fs.writeFileSync(full, imageData.buffer)
+    const imagePath = `/characters/${filename}`
+    const cropJson = sanitizeCropJson(req.body?.cropStages || {})
+
+    const { rows } = await query(
+      `INSERT INTO characters
+         (name, name_pt, aliases, film_title, image_path, attribution, crop_json, movie_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8::uuid)
+       RETURNING id::text AS id, name, name_pt, film_title, image_path, attribution,
+                 crop_json, movie_id::text AS movie_id`,
+      [
+        name,
+        namePt,
+        [namePt, name].filter((v, i, a) => v && a.indexOf(v) === i),
+        resolvedFilm,
+        imagePath,
+        resolvedFilm,
+        JSON.stringify(cropJson),
+        resolvedMovieId,
+      ],
+    )
+    res.status(201).json({ character: publicAdminCharacter(rows[0]) })
+  } catch (err) {
+    if (String(err.message || '').includes('characters_name_lower_idx')) {
+      res.status(409).json({ error: 'Já existe personagem com esse nome' })
+      return
+    }
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.patch(
+  '/api/admin/characters/:id',
+  authAdminRequired,
+  adminJson,
+  async (req, res) => {
+    try {
+      const id = String(req.params.id || '')
+      const { rows: existing } = await query(
+        `SELECT id::text AS id, name, name_pt, film_title, image_path, attribution,
+                crop_json, movie_id::text AS movie_id
+         FROM characters WHERE id = $1::uuid`,
+        [id],
+      )
+      if (!existing[0]) {
+        res.status(404).json({ error: 'Personagem não encontrado' })
+        return
+      }
+
+      const name =
+        req.body?.name !== undefined
+          ? String(req.body.name || '').trim()
+          : existing[0].name
+      const namePt =
+        req.body?.namePt !== undefined
+          ? String(req.body.namePt || '').trim() || name
+          : existing[0].name_pt
+      let filmTitle = existing[0].film_title
+      let movieId = existing[0].movie_id
+      if (req.body?.movieId !== undefined) {
+        if (!req.body.movieId) {
+          movieId = null
+        } else {
+          const { rows: movies } = await query(
+            `SELECT id::text AS id, title, title_pt FROM movies WHERE id = $1::uuid`,
+            [String(req.body.movieId)],
+          )
+          if (!movies[0]) {
+            res.status(400).json({ error: 'Filme não encontrado no catálogo' })
+            return
+          }
+          movieId = movies[0].id
+          filmTitle = movies[0].title_pt || movies[0].title
+        }
+      } else if (req.body?.filmTitle !== undefined) {
+        filmTitle = String(req.body.filmTitle || '').trim() || null
+      }
+
+      let imagePath = existing[0].image_path
+      if (req.body?.imageDataUrl) {
+        const imageData = decodeDataUrlImage(req.body.imageDataUrl)
+        if (!imageData) {
+          res.status(400).json({ error: 'Imagem inválida' })
+          return
+        }
+        fs.mkdirSync(CHARACTERS_DIR, { recursive: true })
+        const slug = slugCharacter(namePt || name) || `char-${Date.now()}`
+        const filename = `${slug}.${imageData.ext}`
+        const full = path.join(CHARACTERS_DIR, filename)
+        fs.writeFileSync(full, imageData.buffer)
+        imagePath = `/characters/${filename}`
+      }
+
+      const cropJson =
+        req.body?.cropStages !== undefined
+          ? sanitizeCropJson(req.body.cropStages)
+          : null
+
+      const { rows } = await query(
+        `UPDATE characters SET
+           name = $2,
+           name_pt = $3,
+           film_title = $4,
+           image_path = $5,
+           attribution = COALESCE($4, attribution),
+           crop_json = COALESCE($6::jsonb, crop_json),
+           movie_id = $7::uuid
+         WHERE id = $1::uuid
+         RETURNING id::text AS id, name, name_pt, film_title, image_path, attribution,
+                   crop_json, movie_id::text AS movie_id`,
+        [
+          id,
+          name,
+          namePt,
+          filmTitle,
+          imagePath,
+          cropJson ? JSON.stringify(cropJson) : null,
+          movieId,
+        ],
+      )
+      res.json({ character: publicAdminCharacter(rows[0]) })
+    } catch (err) {
+      res.status(500).json({ error: String(err.message) })
+    }
+  },
+)
+
 /** Avatares vão em data URL no JSON — default 100kb do Express estoura (413). */
 app.use(express.json({ limit: '1mb' }))
-app.use(authOptional)
 
 function todayBRT() {
   return new Intl.DateTimeFormat('en-CA', {
@@ -1343,24 +1575,22 @@ app.get('/api/whoami/next', async (req, res) => {
 app.post('/api/whoami/ask', async (req, res) => {
   try {
     const puzzleId = String(req.body?.puzzleId || '')
-    const kind = String(req.body?.kind || '')
-    const value = String(req.body?.value || '')
-    if (
-      !puzzleId ||
-      !['genre', 'decade', 'era', 'region', 'runtime', 'flag'].includes(kind) ||
-      !value
-    ) {
-      res.status(400).json({ error: 'puzzleId, kind e value obrigatórios' })
+    const questionId = String(req.body?.questionId || '')
+    if (!puzzleId || !questionId) {
+      res.status(400).json({ error: 'puzzleId e questionId obrigatórios' })
       return
     }
-    const mode = isDateId(puzzleId) ? 'whoami' : 'whoami'
-    const puzzle = await resolvePuzzle(puzzleId, mode)
+    const puzzle = await resolvePuzzle(puzzleId, 'whoami')
     if (!puzzle) {
       res.status(404).json({ error: 'Puzzle não encontrado' })
       return
     }
     const enriched = await ensureWhoamiTraits(puzzle)
-    const result = evaluateAsk(enriched, kind, value)
+    const result = evaluateQuestion(enriched, questionId)
+    if (!result.text) {
+      res.status(400).json({ error: 'Pergunta inválida' })
+      return
+    }
     res.json(result)
   } catch (err) {
     res.status(500).json({ error: String(err.message) })
@@ -1371,8 +1601,9 @@ app.post('/api/whoami/guess', async (req, res) => {
   try {
     const puzzleId = String(req.body?.puzzleId || '')
     const guess = String(req.body?.guess || '')
-    const asksUsed = Number(req.body?.asksUsed) || 0
-    const wrongGuesses = Number(req.body?.wrongGuesses) || 0
+    const asksUsed = Math.max(0, Number(req.body?.asksUsed) || 0)
+    const wrongGuesses = Math.max(0, Number(req.body?.wrongGuesses) || 0)
+    const durationSec = Math.max(0, Number(req.body?.durationSec) || 0)
     if (!puzzleId || !guess.trim()) {
       res.status(400).json({ error: 'puzzleId e guess obrigatórios' })
       return
@@ -1386,18 +1617,18 @@ app.post('/api/whoami/guess', async (req, res) => {
       return
     }
     const correct = matchesTitle(guess, puzzle)
-    const reveal = correct || wrongGuesses + (correct ? 0 : 1) >= WHOAMI_MAX_WRONG
     const points = correct
       ? whoamiPoints({
           won: true,
           asksUsed,
           wrongGuesses,
+          durationSec,
         })
       : 0
     res.json({
       correct,
       points,
-      ...(reveal || correct
+      ...(correct
         ? {
             title: puzzle.title,
             titlePt: primaryTitle(puzzle),
@@ -1411,19 +1642,87 @@ app.post('/api/whoami/guess', async (req, res) => {
   }
 })
 
+app.post('/api/whoami/give-up', async (req, res) => {
+  try {
+    const puzzleId = String(req.body?.puzzleId || '')
+    const asksUsed = Math.max(0, Number(req.body?.asksUsed) || 0)
+    const wrongGuesses = Math.max(0, Number(req.body?.wrongGuesses) || 0)
+    const durationSec = Math.max(0, Number(req.body?.durationSec) || 0)
+    const endless = Boolean(req.body?.endless)
+    if (!puzzleId) {
+      res.status(400).json({ error: 'puzzleId obrigatório' })
+      return
+    }
+    const puzzle = await resolvePuzzle(
+      puzzleId,
+      isDateId(puzzleId) ? 'whoami' : 'daily',
+    )
+    if (!puzzle) {
+      res.status(404).json({ error: 'Puzzle não encontrado' })
+      return
+    }
+
+    let progress = null
+    let unlockedAchievements = []
+    let points = 0
+
+    if (req.user?.id) {
+      const today = todayBRT()
+      const playDate = !endless && isDateId(puzzleId) ? puzzleId : null
+      const isArchive = Boolean(playDate && playDate < today)
+      const beforeSnap = await achievementsSnapshot(req.user.id)
+      if (playDate && !isArchive) {
+        await query(
+          `INSERT INTO user_whoami_daily_plays (user_id, puzzle_date, won, asks, points)
+           VALUES ($1, $2::date, false, $3, 0)
+           ON CONFLICT (user_id, puzzle_date) DO NOTHING`,
+          [req.user.id, playDate, asksUsed],
+        )
+      }
+      if (!isArchive) {
+        await recordModeOutcome({
+          userId: req.user.id,
+          mode: 'whoami',
+          won: false,
+          points: 0,
+          firstTryStreakNext: 0,
+          endless: Boolean(endless),
+          playDate: endless ? null : playDate,
+        })
+      }
+      const afterSnap = await achievementsSnapshot(req.user.id)
+      progress = afterSnap.progress
+      unlockedAchievements = diffUnlockedAchievements(
+        beforeSnap.achievements,
+        afterSnap.achievements,
+      )
+      void durationSec
+      void wrongGuesses
+      void points
+    }
+
+    res.json({
+      givenUp: true,
+      points: 0,
+      progress,
+      unlockedAchievements,
+      title: puzzle.title,
+      titlePt: primaryTitle(puzzle),
+      year: puzzle.year,
+      posterUrl: puzzle.poster_path,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
 app.post('/api/whoami/finish', authRequired, async (req, res) => {
   try {
     const puzzleId = String(req.body?.puzzleId || '')
     const outcome = req.body?.outcome === 'win' ? 'win' : 'lose'
-    const asksCap = WHOAMI_MAX_ASKS + WHOAMI_AD_BONUS_ASKS * WHOAMI_MAX_ADS
-    const asksUsed = Math.min(
-      asksCap,
-      Math.max(0, Number(req.body?.asksUsed) || 0),
-    )
-    const wrongGuesses = Math.min(
-      WHOAMI_MAX_WRONG,
-      Math.max(0, Number(req.body?.wrongGuesses) || 0),
-    )
+    const asksUsed = Math.max(0, Number(req.body?.asksUsed) || 0)
+    const wrongGuesses = Math.max(0, Number(req.body?.wrongGuesses) || 0)
+    const durationSec = Math.max(0, Number(req.body?.durationSec) || 0)
     const endless = Boolean(req.body?.endless)
     if (!puzzleId) {
       res.status(400).json({ error: 'puzzleId obrigatório' })
@@ -1442,37 +1741,10 @@ app.post('/api/whoami/finish', authRequired, async (req, res) => {
     const isArchive = Boolean(playDate && playDate < today)
     const points =
       outcome === 'win' && !isArchive
-        ? whoamiPoints({ won: true, asksUsed, wrongGuesses })
+        ? whoamiPoints({ won: true, asksUsed, wrongGuesses, durationSec })
         : 0
 
-    if (!isArchive) {
-      const { rows: progRows } = await query(
-        `SELECT total_score, first_try_streak, wins
-         FROM user_progress WHERE user_id = $1 AND mode = 'whoami'`,
-        [req.user.id],
-      )
-      let totalScore = progRows[0]?.total_score ?? 0
-      let wins = progRows[0]?.wins ?? 0
-      let streak = progRows[0]?.first_try_streak ?? 0
-      totalScore += points
-      if (outcome === 'win') {
-        wins += 1
-        streak += 1
-      } else {
-        streak = 0
-      }
-      await query(
-        `INSERT INTO user_progress (user_id, mode, total_score, first_try_streak, wins, updated_at)
-         VALUES ($1, 'whoami', $2, $3, $4, now())
-         ON CONFLICT (user_id, mode) DO UPDATE SET
-           total_score = EXCLUDED.total_score,
-           first_try_streak = EXCLUDED.first_try_streak,
-           wins = EXCLUDED.wins,
-           updated_at = now()`,
-        [req.user.id, totalScore, streak, wins],
-      )
-    }
-
+    const beforeSnap = await achievementsSnapshot(req.user.id)
     if (playDate && !isArchive) {
       await query(
         `INSERT INTO user_whoami_daily_plays (user_id, puzzle_date, won, asks, points)
@@ -1482,10 +1754,27 @@ app.post('/api/whoami/finish', authRequired, async (req, res) => {
       )
     }
 
-    const progress = await getProgress(req.user.id)
+    if (!isArchive) {
+      const prevStreak = beforeSnap.progress?.whoami?.firstTryStreak ?? 0
+      await recordModeOutcome({
+        userId: req.user.id,
+        mode: 'whoami',
+        won: outcome === 'win',
+        points,
+        firstTryStreakNext: outcome === 'win' ? prevStreak + 1 : 0,
+        endless: Boolean(endless),
+        playDate: endless ? null : playDate,
+      })
+    }
+
+    const afterSnap = await achievementsSnapshot(req.user.id)
     res.json({
       points,
-      progress,
+      progress: afterSnap.progress,
+      unlockedAchievements: diffUnlockedAchievements(
+        beforeSnap.achievements,
+        afterSnap.achievements,
+      ),
       title: puzzle.title,
       titlePt: primaryTitle(puzzle),
       year: puzzle.year,
@@ -1676,35 +1965,7 @@ app.post('/api/keywords/finish', authRequired, async (req, res) => {
         ? keywordsPoints({ won: true, attempt })
         : 0
 
-    if (!isArchive) {
-      const { rows: progRows } = await query(
-        `SELECT total_score, first_try_streak, wins
-         FROM user_progress WHERE user_id = $1 AND mode = 'keywords'`,
-        [req.user.id],
-      )
-      let totalScore = progRows[0]?.total_score ?? 0
-      let wins = progRows[0]?.wins ?? 0
-      let streak = progRows[0]?.first_try_streak ?? 0
-      totalScore += points
-      if (outcome === 'win') {
-        wins += 1
-        if (guesses === 1) streak += 1
-        else streak = streak
-      } else {
-        streak = 0
-      }
-      await query(
-        `INSERT INTO user_progress (user_id, mode, total_score, first_try_streak, wins, updated_at)
-         VALUES ($1, 'keywords', $2, $3, $4, now())
-         ON CONFLICT (user_id, mode) DO UPDATE SET
-           total_score = EXCLUDED.total_score,
-           first_try_streak = EXCLUDED.first_try_streak,
-           wins = EXCLUDED.wins,
-           updated_at = now()`,
-        [req.user.id, totalScore, streak, wins],
-      )
-    }
-
+    const beforeSnap = await achievementsSnapshot(req.user.id)
     if (playDate && !isArchive) {
       await query(
         `INSERT INTO user_keywords_daily_plays (user_id, puzzle_date, won, guesses, points)
@@ -1714,10 +1975,28 @@ app.post('/api/keywords/finish', authRequired, async (req, res) => {
       )
     }
 
-    const progress = await getProgress(req.user.id)
+    if (!isArchive) {
+      const prevStreak = beforeSnap.progress?.keywords?.firstTryStreak ?? 0
+      await recordModeOutcome({
+        userId: req.user.id,
+        mode: 'keywords',
+        won: outcome === 'win',
+        points,
+        firstTryStreakNext:
+          outcome === 'win' ? (guesses === 1 ? prevStreak + 1 : prevStreak) : 0,
+        endless: false,
+        playDate,
+      })
+    }
+
+    const afterSnap = await achievementsSnapshot(req.user.id)
     res.json({
       points,
-      progress,
+      progress: afterSnap.progress,
+      unlockedAchievements: diffUnlockedAchievements(
+        beforeSnap.achievements,
+        afterSnap.achievements,
+      ),
       title: puzzle.title,
       titlePt: primaryTitle(puzzle),
       year: puzzle.year,
@@ -1731,7 +2010,7 @@ app.post('/api/keywords/finish', authRequired, async (req, res) => {
 async function getCharacterById(id) {
   const { rows } = await query(
     `SELECT id::text AS puzzle_key, id, name, name_pt, aliases,
-            film_title, image_path, attribution
+            film_title, image_path, attribution, crop_json
      FROM characters WHERE id = $1::uuid`,
     [id],
   )
@@ -1752,7 +2031,7 @@ async function ensureCharacterDaily(dateStr) {
 
   const { rows: existing } = await query(
     `SELECT c.id::text AS puzzle_key, c.id, c.name, c.name_pt, c.aliases,
-            c.film_title, c.image_path, c.attribution
+            c.film_title, c.image_path, c.attribution, c.crop_json
      FROM character_daily d
      JOIN characters c ON c.id = d.character_id
      WHERE d.puzzle_date = $1::date`,
@@ -1776,7 +2055,7 @@ async function ensureCharacterDaily(dateStr) {
 
   const { rows } = await query(
     `SELECT c.id::text AS puzzle_key, c.id, c.name, c.name_pt, c.aliases,
-            c.film_title, c.image_path, c.attribution
+            c.film_title, c.image_path, c.attribution, c.crop_json
      FROM character_daily d
      JOIN characters c ON c.id = d.character_id
      WHERE d.puzzle_date = $1::date`,
@@ -1793,6 +2072,7 @@ function publicCharacterPuzzle(ch, extra = {}) {
     filmHint: null,
     attribution: ch.attribution || null,
     maxTakes: CHARACTER_MAX_TAKE,
+    cropStages: resolveCropStages(ch.crop_json, ch.image_path),
     ...extra,
   }
 }
@@ -1856,7 +2136,7 @@ app.get('/api/character/next', async (req, res) => {
     const photoOnly = `image_path LIKE '/characters/%'`
     let { rows } = await query(
       `SELECT id::text AS puzzle_key, id, name, name_pt, aliases,
-              film_title, image_path, attribution
+              film_title, image_path, attribution, crop_json
        FROM characters WHERE (${where}) AND ${photoOnly}
        ORDER BY random() LIMIT 1`,
       params,
@@ -1864,7 +2144,7 @@ app.get('/api/character/next', async (req, res) => {
     if (rows.length === 0) {
       ;({ rows } = await query(
         `SELECT id::text AS puzzle_key, id, name, name_pt, aliases,
-                film_title, image_path, attribution
+                film_title, image_path, attribution, crop_json
          FROM characters WHERE ${photoOnly}
          ORDER BY random() LIMIT 1`,
       ))
@@ -1959,46 +2239,48 @@ app.post('/api/character/guess', async (req, res) => {
         }
       }
 
+      let unlockedAchievements = []
+      let scoredPoints = 0
+      let scoredNextStreak = 0
       if (!isArchive) {
-        const { rows: progRows } = await query(
-          `SELECT total_score, first_try_streak, wins
-           FROM user_progress WHERE user_id = $1 AND mode = 'character'`,
-          [req.user.id],
-        )
-        let totalScore = progRows[0]?.total_score ?? 0
-        let firstTryStreak = progRows[0]?.first_try_streak ?? 0
-        let wins = progRows[0]?.wins ?? 0
+        const beforeSnap = await achievementsSnapshot(req.user.id)
+        const firstTryStreak =
+          beforeSnap.progress?.character?.firstTryStreak ?? 0
         const scored = scoreRound({
           won: correct,
           take: attempt,
           firstTryStreak,
           pointsTable: CHARACTER_POINTS,
         })
+        scoredPoints = scored.points
+        scoredNextStreak = scored.nextStreak
         points = scored.points
-        totalScore += scored.points
-        firstTryStreak = scored.nextStreak
-        if (correct) wins += 1
-        await query(
-          `INSERT INTO user_progress (user_id, mode, total_score, first_try_streak, wins, updated_at)
-           VALUES ($1, 'character', $2, $3, $4, now())
-           ON CONFLICT (user_id, mode) DO UPDATE SET
-             total_score = EXCLUDED.total_score,
-             first_try_streak = EXCLUDED.first_try_streak,
-             wins = EXCLUDED.wins,
-             updated_at = now()`,
-          [req.user.id, totalScore, firstTryStreak, wins],
-        )
-      }
 
-      if (!endless && dateKey && !isArchive) {
-        await query(
-          `INSERT INTO user_character_daily_plays (user_id, puzzle_date, won, take, points)
-           VALUES ($1, $2::date, $3, $4, $5)
-           ON CONFLICT (user_id, puzzle_date) DO NOTHING`,
-          [req.user.id, dateKey, correct, attempt, points],
+        if (!endless && dateKey) {
+          await query(
+            `INSERT INTO user_character_daily_plays (user_id, puzzle_date, won, take, points)
+             VALUES ($1, $2::date, $3, $4, $5)
+             ON CONFLICT (user_id, puzzle_date) DO NOTHING`,
+            [req.user.id, dateKey, correct, attempt, points],
+          )
+        }
+
+        await recordModeOutcome({
+          userId: req.user.id,
+          mode: 'character',
+          won: correct,
+          points: scoredPoints,
+          firstTryStreakNext: scoredNextStreak,
+          endless: Boolean(endless),
+          playDate: endless ? null : dateKey,
+        })
+        const afterSnap = await achievementsSnapshot(req.user.id)
+        unlockedAchievements = diffUnlockedAchievements(
+          beforeSnap.achievements,
+          afterSnap.achievements,
         )
-      }
-      if (!endless && dateKey && isArchive) {
+        progress = afterSnap.progress
+      } else if (!endless && dateKey) {
         await query(
           `INSERT INTO user_character_daily_plays (user_id, puzzle_date, won, take, points)
            VALUES ($1, $2::date, $3, $4, 0)
@@ -2007,7 +2289,19 @@ app.post('/api/character/guess', async (req, res) => {
           [req.user.id, dateKey, correct, attempt],
         )
       }
-      progress = await getProgress(req.user.id)
+      if (!progress) progress = await getProgress(req.user.id)
+
+      res.json({
+        correct,
+        points,
+        progress,
+        unlockedAchievements,
+        name: ch.name,
+        namePt: ch.name_pt || ch.name,
+        filmTitle: ch.film_title,
+        imageUrl: ch.image_path,
+      })
+      return
     } else if (correct) {
       points = CHARACTER_POINTS[attempt - 1] ?? 5
     }
@@ -2079,78 +2373,47 @@ function isStrongPassword(password) {
   )
 }
 
-function buildAchievements({ progress, endless }) {
-  const dailyWins = progress?.daily?.wins ?? 0
-  const classicScore = progress?.classic?.totalScore ?? 0
-  const castWins = progress?.cast?.wins ?? 0
-  const characterWins = progress?.character?.wins ?? 0
-  const endlessTotal = endless?.totalWins ?? 0
-  const anyWin =
-    dailyWins + castWins + characterWins + (classicScore > 0 ? 1 : 0) > 0
-
-  return [
-    {
-      id: 'first_win',
-      title: 'Primeira luz',
-      desc: 'Vença qualquer modo',
-      locked: !anyWin,
-    },
-    {
-      id: 'take_one',
-      title: 'Take 1',
-      desc: 'Acerte no primeiro take',
-      locked: true,
-    },
-    {
-      id: 'daily_week',
-      title: 'Semana no set',
-      desc: '7 dailies seguidos',
-      locked: true,
-    },
-    {
-      id: 'cast_hunter',
-      title: 'Caçador de posters',
-      desc: '10 vitórias no Poster',
-      locked: castWins < 10,
-    },
-    {
-      id: 'endless_10',
-      title: 'Cartaz quente',
-      desc: 'Acerte 10 posters do modo infinito',
-      locked: endlessTotal < 10,
-    },
-    {
-      id: 'endless_30',
-      title: 'Sala de montagem',
-      desc: 'Acerte 30 posters do modo infinito',
-      locked: endlessTotal < 30,
-    },
-    {
-      id: 'endless_40',
-      title: 'Cópia final',
-      desc: 'Acerte 40 posters do modo infinito',
-      locked: endlessTotal < 40,
-    },
-    {
-      id: 'endless_50',
-      title: 'Lenda do set',
-      desc: 'Acerte 50 posters do modo infinito',
-      locked: endlessTotal < 50,
-    },
-    {
-      id: 'who_is_that',
-      title: 'Quem é esse?',
-      desc: 'Acerte um personagem',
-      locked: characterWins < 1,
-    },
-    {
-      id: 'marathon',
-      title: 'Maratonista',
-      desc: '50 pts na Maratona',
-      locked: classicScore < 50,
-    },
-  ]
+async function achievementsSnapshot(userId) {
+  const progress = await getProgress(userId)
+  const endless = await getCastEndlessProgress(userId)
+  const dailyWinsByMode = await loadDailyWinsByMode(userId)
+  return {
+    progress,
+    endless,
+    achievements: buildAchievements({ progress, endless, dailyWinsByMode }),
+  }
 }
+
+/** Catálogo de Óscares + progresso do user (se logado) + % comunidade */
+app.get('/api/oscars', async (req, res) => {
+  try {
+    const rates = await loadCommunityRates()
+    let achievements
+    if (req.user?.id) {
+      const snap = await achievementsSnapshot(req.user.id)
+      achievements = withCommunityRates(snap.achievements, rates)
+    } else {
+      achievements = withCommunityRates(
+        buildAchievements({
+          progress: null,
+          endless: null,
+          dailyWinsByMode: {},
+        }),
+        rates,
+      )
+    }
+    const unlocked = achievements.filter((a) => !a.locked).length
+    res.json({
+      achievements,
+      categories: CATEGORY_LABEL,
+      unlocked,
+      total: achievements.length,
+      remaining: Math.max(0, achievements.length - unlocked),
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
 
 function publicUser(user) {
   return {
@@ -2161,20 +2424,22 @@ function publicUser(user) {
     emailVerified: Boolean(user.email_verified),
     avatarUrl: user.avatar_url || null,
     bio: user.bio || '',
+    isAdmin: Boolean(user.is_admin),
   }
 }
 
 async function publicProfileCard(user, progress = null) {
-  const endless = await getCastEndlessProgress(user.id)
+  const snap = await achievementsSnapshot(user.id)
+  const rates = await loadCommunityRates()
   return {
     id: user.id,
     username: user.username,
     displayName: user.display_name || user.username,
     avatarUrl: user.avatar_url || null,
     bio: user.bio || '',
-    progress: progress || null,
-    endlessProgress: endless,
-    achievements: buildAchievements({ progress, endless }),
+    progress: progress || snap.progress,
+    endlessProgress: snap.endless,
+    achievements: withCommunityRates(snap.achievements, rates),
   }
 }
 
@@ -2452,6 +2717,617 @@ app.get('/api/me', authRequired, async (req, res) => {
   }
 })
 
+/** Ping do dashboard — 403 se não for admin. */
+app.get('/api/admin/status', authAdminRequired, async (req, res) => {
+  try {
+    const { rows: movieCount } = await query(
+      `SELECT COUNT(*)::int AS n FROM movies`,
+    )
+    const { rows: clipCount } = await query(
+      `SELECT COUNT(*)::int AS n FROM movies
+       WHERE clip_path IS NOT NULL AND clip_path <> ''`,
+    )
+    const { rows: charCount } = await query(
+      `SELECT COUNT(*)::int AS n FROM characters
+       WHERE image_path LIKE '/characters/%'`,
+    )
+    res.json({
+      ok: true,
+      admin: publicUser(req.adminUser),
+      stats: {
+        movies: movieCount[0]?.n ?? 0,
+        clips: clipCount[0]?.n ?? 0,
+        characters: charCount[0]?.n ?? 0,
+      },
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.get('/api/admin/characters', authAdminRequired, async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim()
+    const params = []
+    let where = `image_path LIKE '/characters/%'`
+    if (q) {
+      params.push(`%${q}%`)
+      where += ` AND (name ILIKE $1 OR name_pt ILIKE $1 OR film_title ILIKE $1)`
+    }
+    const { rows } = await query(
+      `SELECT id::text AS id, name, name_pt, film_title, image_path, attribution,
+              crop_json, movie_id::text AS movie_id
+       FROM characters
+       WHERE ${where}
+       ORDER BY lower(COALESCE(name_pt, name)) ASC
+       LIMIT 200`,
+      params,
+    )
+    res.json({ characters: rows.map(publicAdminCharacter) })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.get('/api/admin/characters/:id', authAdminRequired, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `SELECT id::text AS id, name, name_pt, film_title, image_path, attribution,
+              crop_json, movie_id::text AS movie_id
+       FROM characters WHERE id = $1::uuid`,
+      [String(req.params.id)],
+    )
+    if (!rows[0]) {
+      res.status(404).json({ error: 'Personagem não encontrado' })
+      return
+    }
+    res.json({ character: publicAdminCharacter(rows[0]) })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.get('/api/admin/tmdb/search', authAdminRequired, async (req, res) => {
+  try {
+    if (!tmdbConfigured()) {
+      res.status(503).json({ error: 'TMDB_API_KEY não configurada no server' })
+      return
+    }
+    const q = String(req.query.q || '').trim()
+    if (q.length < 2) {
+      res.json({ results: [] })
+      return
+    }
+    const yearRaw = req.query.year
+    const year = yearRaw != null && yearRaw !== '' ? Number(yearRaw) : null
+    const results = await searchTmdbMovies(q, {
+      year: Number.isFinite(year) ? year : null,
+      limit: 12,
+    })
+    res.json({ results })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.get('/api/admin/tmdb/movie/:tmdbId', authAdminRequired, async (req, res) => {
+  try {
+    if (!tmdbConfigured()) {
+      res.status(503).json({ error: 'TMDB_API_KEY não configurada no server' })
+      return
+    }
+    const tmdbId = Number(req.params.tmdbId)
+    if (!Number.isFinite(tmdbId)) {
+      res.status(400).json({ error: 'tmdbId inválido' })
+      return
+    }
+    const bundle = await fetchMovieBundle(tmdbId)
+    if (!bundle) {
+      res.status(404).json({ error: 'Filme não encontrado no TMDB' })
+      return
+    }
+    const { details, credits } = bundle
+    const castJson = buildCastJsonFromTmdb(details, credits, {
+      id: details.id,
+      popularity: details.popularity,
+      vote_count: details.vote_count,
+    })
+    const director = directorNameFromCredits(credits)
+    const year = details.release_date
+      ? Number(String(details.release_date).slice(0, 4)) || null
+      : null
+    const title = details.original_title || details.title || ''
+    const titlePt = details.title || details.original_title || title
+    const posterUrl = posterUrlFromPath(details.poster_path)
+    const moviePreview = {
+      tmdbId: details.id,
+      title,
+      titlePt,
+      year,
+      director,
+      posterPath: details.poster_path || null,
+      posterUrl,
+      overview: details.overview || '',
+      castJson,
+      hints: previewCastHints({
+        director,
+        year,
+        cast_json: castJson,
+      }),
+    }
+
+    const { rows: existing } = await query(
+      `SELECT id::text AS id, title, title_pt, year, poster_path
+       FROM movies
+       WHERE cast_json -> '_tmdb' ->> 'id' = $1
+          OR (
+            (lower(title) = lower($2) OR lower(coalesce(title_pt,'')) = lower($3))
+            AND ($4::int IS NULL OR year = $4::int)
+          )
+       LIMIT 1`,
+      [String(details.id), title, titlePt, year],
+    )
+
+    res.json({
+      movie: moviePreview,
+      existingId: existing[0]?.id || null,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.get('/api/admin/clips', authAdminRequired, async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim()
+    const params = []
+    let where = `clip_path IS NOT NULL AND clip_path <> ''`
+    if (q) {
+      params.push(`%${q}%`)
+      where += ` AND (title ILIKE $1 OR title_pt ILIKE $1)`
+    }
+    const { rows } = await query(
+      `SELECT id::text AS id, title, title_pt, year, poster_path, clip_path
+       FROM movies
+       WHERE ${where}
+       ORDER BY lower(COALESCE(title_pt, title)) ASC
+       LIMIT 200`,
+      params,
+    )
+    res.json({
+      clips: rows.map((r) => ({
+        id: r.id,
+        title: r.title,
+        titlePt: r.title_pt || r.title,
+        year: r.year,
+        posterUrl: r.poster_path || null,
+        clipUrl: r.clip_path,
+      })),
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+/** ——— Admin Quem sou eu (traits) ——— */
+app.get('/api/admin/whoami/meta', authAdminRequired, (_req, res) => {
+  res.json({
+    categories: WHOAMI_CATEGORIES,
+    studios: STUDIO_OPTIONS,
+    tags: TAG_OPTIONS,
+    askBank: publicAskBank(),
+  })
+})
+
+app.get('/api/admin/whoami/movies', authAdminRequired, async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim()
+    const params = []
+    let where = `year IS NOT NULL`
+    if (q) {
+      params.push(`%${q}%`)
+      where += ` AND (title ILIKE $1 OR title_pt ILIKE $1)`
+    }
+    const { rows } = await query(
+      `SELECT id::text AS id, title, title_pt, year, poster_path, cast_json
+       FROM movies
+       WHERE ${where}
+       ORDER BY lower(COALESCE(title_pt, title)) ASC
+       LIMIT 120`,
+      params,
+    )
+    res.json({
+      movies: rows.map((r) => {
+        const completeness = traitsCompleteness(r)
+        return {
+          id: r.id,
+          title: r.title,
+          titlePt: r.title_pt || r.title,
+          year: r.year,
+          posterUrl: r.poster_path || null,
+          completeness,
+        }
+      }),
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.get('/api/admin/whoami/movies/:id', authAdminRequired, async (req, res) => {
+  try {
+    const id = String(req.params.id || '')
+    const { rows } = await query(
+      `SELECT id::text AS id, title, title_pt, year, poster_path, director,
+              cast_json, source_url
+       FROM movies WHERE id::text = $1 LIMIT 1`,
+      [id],
+    )
+    if (!rows[0]) {
+      res.status(404).json({ error: 'Filme não encontrado' })
+      return
+    }
+    let movie = rows[0]
+    movie = await ensureWhoamiTraits(movie)
+    const completeness = traitsCompleteness(movie)
+    res.json({
+      movie: {
+        id: movie.id,
+        title: movie.title,
+        titlePt: movie.title_pt || movie.title,
+        year: movie.year,
+        director: movie.director || null,
+        posterUrl: movie.poster_path || null,
+        traits: publicTraitsForAdmin(movie),
+        completeness,
+        preview: previewAllAnswers(movie),
+      },
+      meta: {
+        categories: WHOAMI_CATEGORIES,
+        studios: STUDIO_OPTIONS,
+        tags: TAG_OPTIONS,
+      },
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.patch(
+  '/api/admin/whoami/movies/:id/traits',
+  authAdminRequired,
+  async (req, res) => {
+    try {
+      const id = String(req.params.id || '')
+      const patch = req.body?.traits
+      if (!id || !patch || typeof patch !== 'object') {
+        res.status(400).json({ error: 'traits obrigatório' })
+        return
+      }
+      const { rows } = await query(
+        `SELECT id::text AS id, title, title_pt, year, poster_path, director, cast_json
+         FROM movies WHERE id::text = $1 LIMIT 1`,
+        [id],
+      )
+      if (!rows[0]) {
+        res.status(404).json({ error: 'Filme não encontrado' })
+        return
+      }
+      const merged = mergeTraitsPatch(rows[0].cast_json, patch)
+      await query(`UPDATE movies SET cast_json = $2::jsonb WHERE id::text = $1`, [
+        id,
+        JSON.stringify(merged),
+      ])
+      const movie = { ...rows[0], cast_json: merged }
+      res.json({
+        movie: {
+          id: movie.id,
+          title: movie.title,
+          titlePt: movie.title_pt || movie.title,
+          year: movie.year,
+          director: movie.director || null,
+          posterUrl: movie.poster_path || null,
+          traits: publicTraitsForAdmin(movie),
+          completeness: traitsCompleteness(movie),
+          preview: previewAllAnswers(movie),
+        },
+      })
+    } catch (err) {
+      res.status(500).json({ error: String(err.message) })
+    }
+  },
+)
+
+app.get('/api/admin/movies/:id', authAdminRequired, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `SELECT id::text AS id, title, title_pt, year, poster_path, clip_path,
+              director, cast_json
+       FROM movies WHERE id = $1::uuid`,
+      [String(req.params.id)],
+    )
+    if (!rows[0]) {
+      res.status(404).json({ error: 'Filme não encontrado' })
+      return
+    }
+    const r = rows[0]
+    res.json({
+      movie: {
+        id: r.id,
+        title: r.title,
+        titlePt: r.title_pt || r.title,
+        year: r.year,
+        posterUrl: r.poster_path || null,
+        clipUrl: r.clip_path || null,
+        director: r.director || null,
+        hasClip: Boolean(r.clip_path),
+      },
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
+app.post(
+  '/api/admin/movies/:id/clip',
+  authAdminRequired,
+  adminClipRaw,
+  async (req, res) => {
+    try {
+      const id = String(req.params.id || '')
+      const overwrite =
+        String(req.query.overwrite || req.headers['x-overwrite'] || '') ===
+          '1' ||
+        String(req.query.overwrite || '').toLowerCase() === 'true'
+
+      const { rows: existing } = await query(
+        `SELECT id::text AS id, title, title_pt, year, poster_path, clip_path
+         FROM movies WHERE id = $1::uuid`,
+        [id],
+      )
+      if (!existing[0]) {
+        res.status(404).json({ error: 'Filme não encontrado' })
+        return
+      }
+      if (existing[0].clip_path && !overwrite) {
+        res.status(409).json({
+          error: 'Filme já tem clipe — confirme sobrescrita',
+          clipUrl: existing[0].clip_path,
+        })
+        return
+      }
+
+      const buf = Buffer.isBuffer(req.body) ? req.body : null
+      if (!buf || buf.length < 1000) {
+        res.status(400).json({
+          error: 'Envie o MP4 no body (video/mp4, até ~40MB)',
+        })
+        return
+      }
+      if (buf.length > 40 * 1024 * 1024) {
+        res.status(413).json({ error: 'Clipe muito grande (máx 40MB)' })
+        return
+      }
+      // ftyp box roughly marks MP4/QuickTime
+      const head = buf.subarray(0, 12).toString('latin1')
+      if (!head.includes('ftyp') && !head.includes('moov')) {
+        res.status(400).json({ error: 'Arquivo não parece MP4 válido' })
+        return
+      }
+
+      fs.mkdirSync(CLIPS_DIR, { recursive: true })
+      const baseName =
+        slugCharacter(existing[0].title_pt || existing[0].title) ||
+        `clip-${Date.now()}`
+      let filename = `${baseName}.mp4`
+      let full = path.join(CLIPS_DIR, filename)
+      // Se já existe outro filme com o mesmo path, ou estamos sobrescrevendo o mesmo arquivo,
+      // reutiliza o nome do slug; se o arquivo existe mas é de outro filme, sufixa.
+      if (fs.existsSync(full) && existing[0].clip_path !== `/clips/${filename}`) {
+        filename = `${baseName}-${Date.now()}.mp4`
+        full = path.join(CLIPS_DIR, filename)
+      }
+      fs.writeFileSync(full, buf)
+      const clipPath = `/clips/${filename}`
+
+      // Remove arquivo antigo se era outro path sob /clips/
+      const old = existing[0].clip_path
+      if (
+        old &&
+        old !== clipPath &&
+        String(old).startsWith('/clips/') &&
+        !String(old).includes('..')
+      ) {
+        const oldFull = path.join(CLIPS_DIR, path.basename(old))
+        if (fs.existsSync(oldFull)) {
+          try {
+            fs.unlinkSync(oldFull)
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+
+      const { rows } = await query(
+        `UPDATE movies SET clip_path = $2
+         WHERE id = $1::uuid
+         RETURNING id::text AS id, title, title_pt, year, poster_path, clip_path`,
+        [id, clipPath],
+      )
+      const r = rows[0]
+      res.json({
+        movie: {
+          id: r.id,
+          title: r.title,
+          titlePt: r.title_pt || r.title,
+          year: r.year,
+          posterUrl: r.poster_path || null,
+          clipUrl: r.clip_path,
+          hasClip: true,
+          overwritten: Boolean(old),
+        },
+      })
+    } catch (err) {
+      res.status(500).json({ error: String(err.message) })
+    }
+  },
+)
+
+app.post('/api/admin/movies/from-tmdb', authAdminRequired, async (req, res) => {
+  try {
+    if (!tmdbConfigured()) {
+      res.status(503).json({ error: 'TMDB_API_KEY não configurada no server' })
+      return
+    }
+    const tmdbId = Number(req.body?.tmdbId)
+    if (!Number.isFinite(tmdbId)) {
+      res.status(400).json({ error: 'tmdbId obrigatório' })
+      return
+    }
+
+    const bundle = await fetchMovieBundle(tmdbId)
+    if (!bundle) {
+      res.status(404).json({ error: 'Filme não encontrado no TMDB' })
+      return
+    }
+    const { details, credits } = bundle
+    let castJson = buildCastJsonFromTmdb(details, credits, {
+      id: details.id,
+      popularity: details.popularity,
+      vote_count: details.vote_count,
+    })
+    if (req.body?.castJson && typeof req.body.castJson === 'object') {
+      castJson = {
+        ...castJson,
+        ...req.body.castJson,
+        _tmdb: castJson._tmdb,
+      }
+    }
+
+    const director =
+      String(req.body?.director || '').trim() ||
+      directorNameFromCredits(credits) ||
+      null
+    const year = details.release_date
+      ? Number(String(details.release_date).slice(0, 4)) || null
+      : null
+    const title =
+      String(req.body?.title || '').trim() ||
+      details.original_title ||
+      details.title ||
+      ''
+    const titlePt =
+      String(req.body?.titlePt || '').trim() ||
+      details.title ||
+      details.original_title ||
+      title
+    if (!title) {
+      res.status(400).json({ error: 'Título obrigatório' })
+      return
+    }
+    const posterUrl = posterUrlFromPath(details.poster_path)
+    if (!posterUrl) {
+      res.status(400).json({ error: 'Filme sem pôster no TMDB' })
+      return
+    }
+    const aliases = Array.from(
+      new Set([title, titlePt].filter(Boolean).map((s) => String(s).trim())),
+    )
+    const attribution = 'TMDB'
+    const sourceUrl = `https://www.themoviedb.org/movie/${details.id}`
+
+    const { rows: byTmdb } = await query(
+      `SELECT id::text AS id FROM movies
+       WHERE cast_json -> '_tmdb' ->> 'id' = $1
+       LIMIT 1`,
+      [String(details.id)],
+    )
+    let existingId = byTmdb[0]?.id || null
+    if (!existingId) {
+      const { rows: byTitle } = await query(
+        `SELECT id::text AS id FROM movies
+         WHERE (lower(title) = lower($1) OR lower(coalesce(title_pt,'')) = lower($2))
+           AND ($3::int IS NULL OR year = $3::int)
+         LIMIT 1`,
+        [title, titlePt, year],
+      )
+      existingId = byTitle[0]?.id || null
+    }
+
+    let row
+    if (existingId) {
+      const { rows } = await query(
+        `UPDATE movies SET
+           title = $2,
+           title_pt = $3,
+           year = $4,
+           aliases = $5,
+           poster_path = $6,
+           director = COALESCE($7, director),
+           cast_json = $8::jsonb,
+           attribution = COALESCE(NULLIF(attribution, ''), $9),
+           source_url = COALESCE(NULLIF(source_url, ''), $10)
+         WHERE id = $1::uuid
+         RETURNING id::text AS id, title, title_pt, year, poster_path, director, cast_json`,
+        [
+          existingId,
+          title,
+          titlePt,
+          year,
+          aliases,
+          posterUrl,
+          director,
+          JSON.stringify(castJson),
+          attribution,
+          sourceUrl,
+        ],
+      )
+      row = rows[0]
+    } else {
+      const { rows } = await query(
+        `INSERT INTO movies
+           (title, title_pt, year, aliases, license, source_url, attribution,
+            poster_path, clip_path, director, cast_json)
+         VALUES
+           ($1,$2,$3,$4,'review',$5,$6,$7,NULL,$8,$9::jsonb)
+         RETURNING id::text AS id, title, title_pt, year, poster_path, director, cast_json`,
+        [
+          title,
+          titlePt,
+          year,
+          aliases,
+          sourceUrl,
+          attribution,
+          posterUrl,
+          director,
+          JSON.stringify(castJson),
+        ],
+      )
+      row = rows[0]
+    }
+
+    res.status(existingId ? 200 : 201).json({
+      movie: {
+        id: row.id,
+        title: row.title,
+        titlePt: row.title_pt,
+        year: row.year,
+        director: row.director,
+        posterUrl: row.poster_path,
+        castJson: row.cast_json,
+        hints: previewCastHints({
+          director: row.director,
+          year: row.year,
+          cast_json: row.cast_json,
+        }),
+        updated: Boolean(existingId),
+      },
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err.message) })
+  }
+})
+
 app.patch('/api/me/profile', authRequired, async (req, res) => {
   try {
     const username = String(req.body?.username || '')
@@ -2640,46 +3516,21 @@ app.post('/api/round/finish', authRequired, async (req, res) => {
 
     let scored = { points: 0, multiplier: 1, nextStreak: 0 }
 
-    const progressBefore = await getProgress(req.user.id)
-    const endlessBefore = await getCastEndlessProgress(req.user.id)
-    const achievementsBefore = buildAchievements({
-      progress: progressBefore,
-      endless: endlessBefore,
-    })
+    const beforeSnap = await achievementsSnapshot(req.user.id)
+    const endlessBefore = beforeSnap.endless
+    const achievementsBefore = beforeSnap.achievements
 
     if (!isArchive) {
-      const { rows: progRows } = await query(
-        `SELECT total_score, first_try_streak, wins
-         FROM user_progress WHERE user_id = $1 AND mode = $2`,
-        [req.user.id, mode],
-      )
-      let totalScore = progRows[0]?.total_score ?? 0
-      let firstTryStreak = progRows[0]?.first_try_streak ?? 0
-      let wins = progRows[0]?.wins ?? 0
-
+      const firstTryStreak = beforeSnap.progress?.[mode]?.firstTryStreak ?? 0
       scored = scoreRound({
         won: outcome === 'win',
         take,
         firstTryStreak,
         pointsTable: mode === 'cast' ? CAST_POINTS : undefined,
       })
-
-      totalScore += scored.points
-      firstTryStreak = scored.nextStreak
-      if (outcome === 'win') wins += 1
-
-      await query(
-        `INSERT INTO user_progress (user_id, mode, total_score, first_try_streak, wins, updated_at)
-         VALUES ($1, $2, $3, $4, $5, now())
-         ON CONFLICT (user_id, mode) DO UPDATE SET
-           total_score = EXCLUDED.total_score,
-           first_try_streak = EXCLUDED.first_try_streak,
-           wins = EXCLUDED.wins,
-           updated_at = now()`,
-        [req.user.id, mode, totalScore, firstTryStreak, wins],
-      )
     }
 
+    // Grava daily play antes do snapshot de conquistas (contagem de wins)
     if (mode === 'daily' && playDate && !isArchive) {
       await query(
         `INSERT INTO user_daily_plays (user_id, puzzle_date, won, take, points)
@@ -2695,6 +3546,18 @@ app.post('/api/round/finish', authRequired, async (req, res) => {
          ON CONFLICT (user_id, puzzle_date) DO NOTHING`,
         [req.user.id, playDate, outcome === 'win', take, scored.points],
       )
+    }
+
+    if (!isArchive) {
+      await recordModeOutcome({
+        userId: req.user.id,
+        mode,
+        won: outcome === 'win',
+        points: scored.points,
+        firstTryStreakNext: scored.nextStreak,
+        endless: endlessRound,
+        playDate: endlessRound ? null : playDate,
+      })
     }
     // Arquivo: grava tentativa com 0 pts (permite jogar de novo; não trava)
     if (isArchive && mode === 'daily' && playDate) {
@@ -2726,23 +3589,19 @@ app.post('/api/round/finish', authRequired, async (req, res) => {
       endlessProgress = await recordCastEndlessWin(req.user.id)
     }
 
-    const progress = await getProgress(req.user.id)
-    const achievementsAfter = buildAchievements({
-      progress,
-      endless: endlessProgress,
-    })
-    const unlockedAchievements = achievementsAfter.filter((a) => {
-      if (a.locked) return false
-      const prev = achievementsBefore.find((b) => b.id === a.id)
-      return Boolean(prev?.locked)
-    })
+    const afterSnap = await achievementsSnapshot(req.user.id)
+    const unlockedAchievements = diffUnlockedAchievements(
+      achievementsBefore,
+      afterSnap.achievements,
+    )
 
     res.json({
       points: scored.points,
       multiplier: scored.multiplier,
       archive: isArchive,
-      progress,
-      endlessProgress,
+      progress: afterSnap.progress,
+      endlessProgress:
+        mode === 'cast' ? endlessProgress : afterSnap.endless,
       unlockedAchievements,
       title: puzzle.title,
       titlePt: primaryTitle(puzzle),

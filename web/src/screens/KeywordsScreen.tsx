@@ -10,6 +10,7 @@ import {
   fetchKeywordsDaily,
   finishKeywords,
   postKeywordsGuess,
+  type Achievement,
   type AutocompleteItem,
   type KeywordsPayload,
 } from '../api'
@@ -26,6 +27,7 @@ type KeywordsScreenProps = {
   user: AuthUser | null
   progress: ProgressMap
   onProgress: (p: ProgressMap) => void
+  onAchievements?: (list: Achievement[]) => void
   puzzleDate?: string | null
   onBack: () => void
   modeNav?: {
@@ -40,6 +42,7 @@ export function KeywordsScreen({
   user,
   progress,
   onProgress,
+  onAchievements,
   puzzleDate = null,
   onBack,
   modeNav = null,
@@ -146,6 +149,9 @@ export function KeywordsScreen({
         guesses,
       })
       onProgress(res.progress)
+      if (res.unlockedAchievements?.length) {
+        onAchievements?.(res.unlockedAchievements)
+      }
       setPoints(res.points)
       setRevealTitle(res.titlePt || res.title)
       setRevealYear(res.year)

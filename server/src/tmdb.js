@@ -18,7 +18,46 @@ export function tmdbConfigured() {
 
 /** Detalhes do filme (gêneros etc.) — cache simples em memória. */
 const movieCache = new Map()
+const creditsCache = new Map()
 const keywordsCache = new Map()
+
+async function tmdbGet(pathname, params = {}, timeoutMs = 4000) {
+  const key = apiKey()
+  if (!key) return null
+  const url = new URL(`https://api.themoviedb.org/3${pathname}`)
+  url.searchParams.set('api_key', key)
+  for (const [k, v] of Object.entries(params)) {
+    if (v != null && v !== '') url.searchParams.set(k, String(v))
+  }
+  const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) })
+  if (!res.ok) return null
+  return res.json()
+}
+
+export async function searchTmdbMovies(query, { year = null, limit = 12 } = {}) {
+  const q = String(query || '').trim()
+  if (!q || !apiKey()) return []
+  const data = await tmdbGet('/search/movie', {
+    query: q,
+    language: 'pt-BR',
+    include_adult: 'false',
+    ...(year ? { year: String(year) } : {}),
+  })
+  const results = Array.isArray(data?.results) ? data.results : []
+  return results.slice(0, Math.max(1, Math.min(24, Number(limit) || 12))).map((m) => ({
+    tmdbId: m.id,
+    title: m.original_title || m.title || '',
+    titlePt: m.title || m.original_title || '',
+    year: m.release_date ? Number(String(m.release_date).slice(0, 4)) || null : null,
+    overview: m.overview || '',
+    posterPath: m.poster_path || null,
+    posterUrl: m.poster_path
+      ? `https://image.tmdb.org/t/p/w185${m.poster_path}`
+      : null,
+    popularity: m.popularity ?? 0,
+    voteCount: m.vote_count ?? 0,
+  }))
+}
 
 export async function fetchMovieDetails(tmdbId) {
   const key = apiKey()
@@ -26,21 +65,40 @@ export async function fetchMovieDetails(tmdbId) {
   if (!key || !Number.isFinite(id)) return null
   if (movieCache.has(id)) return movieCache.get(id)
   try {
-    const url = new URL(`https://api.themoviedb.org/3/movie/${id}`)
-    url.searchParams.set('api_key', key)
-    url.searchParams.set('language', 'pt-BR')
-    const res = await fetch(url, { signal: AbortSignal.timeout(2500) })
-    if (!res.ok) {
-      movieCache.set(id, null)
-      return null
-    }
-    const data = await res.json()
+    const data = await tmdbGet(`/movie/${id}`, { language: 'pt-BR' })
     movieCache.set(id, data)
     return data
   } catch {
     movieCache.set(id, null)
     return null
   }
+}
+
+export async function fetchMovieCredits(tmdbId) {
+  const key = apiKey()
+  const id = Number(tmdbId)
+  if (!key || !Number.isFinite(id)) return null
+  if (creditsCache.has(id)) return creditsCache.get(id)
+  try {
+    const data = await tmdbGet(`/movie/${id}/credits`, { language: 'pt-BR' })
+    creditsCache.set(id, data)
+    return data
+  } catch {
+    creditsCache.set(id, null)
+    return null
+  }
+}
+
+/** Details + credits em paralelo pro dashboard admin. */
+export async function fetchMovieBundle(tmdbId) {
+  const id = Number(tmdbId)
+  if (!Number.isFinite(id)) return null
+  const [details, credits] = await Promise.all([
+    fetchMovieDetails(id),
+    fetchMovieCredits(id),
+  ])
+  if (!details) return null
+  return { details, credits: credits || { cast: [], crew: [] } }
 }
 
 /**

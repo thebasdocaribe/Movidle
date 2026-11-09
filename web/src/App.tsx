@@ -23,6 +23,7 @@ import { AchievementToastHost } from './components/AchievementToast'
 import type { DailyNavMode, DailyPlayedMap } from './components/DailyModeNav'
 import { todayBRT, yesterdayOf } from './components/DayCalendarModal'
 import type { Achievement } from './api'
+import { AdminScreen } from './screens/AdminScreen'
 
 const EMPTY_DAILY_PLAYED: DailyPlayedMap = {
   daily: false,
@@ -45,6 +46,7 @@ type Screen =
   | 'profile'
   | 'profiles'
   | 'oscars'
+  | 'admin'
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('hub')
@@ -194,6 +196,11 @@ export default function App() {
     setScreen('oscars')
   }
 
+  function openAdmin() {
+    if (!user?.isAdmin) return
+    setScreen('admin')
+  }
+
   function markDailyPlayed(modeKey: DailyNavMode) {
     setDailyPlayed((prev) =>
       prev[modeKey] ? prev : { ...prev, [modeKey]: true },
@@ -300,12 +307,15 @@ export default function App() {
         onProfile={() => openProfile(user?.username)}
         onBrowseProfiles={openBrowseProfiles}
         onOscars={openOscars}
+        onAdmin={openAdmin}
         loggedIn={Boolean(user)}
         user={user}
         username={user?.username}
         showFooter={screen === 'hub'}
       >
-        {screen === 'hub' ? (
+        {screen === 'admin' && user?.isAdmin ? (
+          <AdminScreen user={user} onBack={goHome} />
+        ) : screen === 'hub' ? (
           <HubScreen
             user={user}
             progress={progress}
@@ -326,6 +336,7 @@ export default function App() {
             username={profileUsername}
             viewer={user}
             onBack={backFromProfile}
+            onOpenOscars={openOscars}
             onSaved={(u) => {
               setUser(u)
               setProfileUsername(u.username)
@@ -350,6 +361,7 @@ export default function App() {
             user={user}
             progress={progress}
             onProgress={(p) => setProgress({ ...emptyProgress(), ...p })}
+            onAchievements={pushAchievements}
             puzzleDate={playDate}
             onBack={goHome}
             modeNav={{
@@ -365,6 +377,7 @@ export default function App() {
             user={user}
             progress={progress}
             onProgress={(p) => setProgress({ ...emptyProgress(), ...p })}
+            onAchievements={pushAchievements}
             puzzleDate={screen === 'whoami' ? playDate : null}
             onBack={goHome}
             onPlayEndless={() => openMode('whoami-endless')}
@@ -384,6 +397,7 @@ export default function App() {
             user={user}
             progress={progress}
             onProgress={(p) => setProgress({ ...emptyProgress(), ...p })}
+            onAchievements={pushAchievements}
             puzzleDate={playDate}
             onBack={goHome}
             modeNav={{

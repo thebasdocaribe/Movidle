@@ -485,6 +485,186 @@ input:disabled {
   box-shadow: 0 0 0 2px rgba(255, 196, 77, 0.55);
 }
 
+/* Óscares — cards por tier */
+.oscar-card {
+  position: relative;
+  height: 100%;
+  border: 1px solid rgba(120, 100, 110, 0.55);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0.85rem 0.75rem;
+  overflow: hidden;
+}
+
+.oscar-card-won {
+  border-color: rgba(255, 196, 77, 0.55);
+  background: linear-gradient(145deg, rgba(255, 196, 77, 0.12), rgba(10, 6, 12, 0.9));
+}
+
+.oscar-card-special {
+  border-color: rgba(255, 196, 77, 0.75);
+  box-shadow: inset 0 0 0 1px rgba(255, 196, 77, 0.12);
+}
+
+.oscar-card-special.oscar-card-won {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 196, 77, 0.2) 0%,
+    rgba(40, 18, 22, 0.95) 55%,
+    rgba(10, 6, 12, 0.98) 100%
+  );
+}
+
+.oscar-card-super {
+  border-color: rgba(255, 220, 140, 0.85);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 196, 77, 0.2),
+    0 0 24px rgba(255, 196, 77, 0.08);
+}
+
+.oscar-card-super.oscar-card-won {
+  background:
+    radial-gradient(ellipse at top right, rgba(255, 220, 140, 0.22), transparent 55%),
+    linear-gradient(160deg, #3a1a12 0%, #12080e 55%, #0a060c 100%);
+}
+
+.oscar-card-locked.oscar-card-super {
+  background:
+    radial-gradient(ellipse at top right, rgba(255, 196, 77, 0.06), transparent 50%),
+    rgba(0, 0, 0, 0.4);
+}
+
+.oscar-tier-badge {
+  display: inline-block;
+  border: 1px solid rgba(255, 196, 77, 0.55);
+  background: rgba(10, 6, 12, 0.85);
+  padding: 0.15rem 0.4rem;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #ffc44d;
+  white-space: nowrap;
+}
+
+.oscar-tier-super {
+  border-color: rgba(255, 230, 170, 0.85);
+  color: #ffe6aa;
+  background: linear-gradient(90deg, rgba(90, 40, 20, 0.9), rgba(10, 6, 12, 0.95));
+}
+
+.oscar-icon {
+  display: flex;
+  height: 3.5rem;
+  width: 3.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(120, 100, 110, 0.6);
+  background: #0a060c;
+  color: rgba(255, 196, 77, 0.65);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.oscar-card-won .oscar-icon {
+  border-color: rgba(255, 196, 77, 0.7);
+  background: rgba(255, 196, 77, 0.14);
+  color: #ffc44d;
+}
+
+.oscar-icon-medium {
+  border-color: rgba(180, 150, 255, 0.65);
+  color: #c4b0ff;
+}
+
+.oscar-card-medium {
+  border-color: rgba(160, 140, 220, 0.55);
+}
+
+.oscar-card-medium.oscar-card-won {
+  background: linear-gradient(
+    145deg,
+    rgba(140, 110, 220, 0.16) 0%,
+    rgba(10, 6, 12, 0.95) 100%
+  );
+}
+
+.oscar-icon-special {
+  border-color: rgba(255, 196, 77, 0.75);
+}
+
+.oscar-icon-super {
+  border-color: rgba(255, 230, 170, 0.9);
+  background: linear-gradient(145deg, rgba(255, 196, 77, 0.22), #12080e);
+  color: #ffe6aa;
+  box-shadow: inset 0 0 12px rgba(255, 196, 77, 0.15);
+}
+
+.oscar-icon-art {
+  overflow: hidden;
+  background: #0a060c;
+  padding: 0.15rem;
+}
+
+.oscar-tier-medium {
+  border-color: rgba(180, 150, 255, 0.7);
+  color: #c4b0ff;
+}
+
+.oscar-shelf {
+  display: flex;
+  gap: 0.55rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  scrollbar-width: thin;
+}
+
+.oscar-shelf-item {
+  display: flex;
+  width: 4.25rem;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+}
+
+.oscar-shelf-medal {
+  display: flex;
+  height: 3.25rem;
+  width: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 196, 77, 0.65);
+  background: linear-gradient(145deg, rgba(255, 196, 77, 0.18), rgba(10, 6, 12, 0.95));
+  color: #ffc44d;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.oscar-shelf-medal-medium {
+  border-color: rgba(180, 150, 255, 0.7);
+  color: #c4b0ff;
+}
+
+.oscar-shelf-medal-special {
+  border-color: rgba(255, 196, 77, 0.85);
+  box-shadow: 0 0 10px rgba(255, 196, 77, 0.12);
+}
+
+.oscar-shelf-medal-super {
+  border-color: rgba(255, 230, 170, 0.95);
+  background: linear-gradient(145deg, rgba(255, 220, 140, 0.28), #1a0a10);
+  color: #ffe6aa;
+  box-shadow: 0 0 14px rgba(255, 196, 77, 0.2);
+}
+
+.oscar-shelf-medal-art {
+  overflow: hidden;
+  padding: 0.15rem;
+  background: #0a060c;
+}
+
 /* Toast de conquista (canto inferior, estilo Steam) */
 .ach-toast {
   position: fixed;

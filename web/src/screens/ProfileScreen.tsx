@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import {
   fetchPublicProfile,
   updateProfile,
@@ -6,6 +6,12 @@ import {
   type PublicProfile,
 } from '../api'
 import type { AuthUser } from '../auth'
+import {
+  CinemaIcon,
+  cinemaIconForAchievement,
+  difficultyForAchievement,
+} from '../components/CinemaIcon'
+import { DIFFICULTY_LABEL, formatRarity } from '../data/oscars'
 
 type ProfileScreenProps = {
   /** username a abrir; null = próprio (se logado) */
@@ -13,6 +19,7 @@ type ProfileScreenProps = {
   viewer: AuthUser | null
   onBack: () => void
   onSaved?: (user: AuthUser) => void
+  onOpenOscars?: () => void
 }
 
 function avatarFallback(name: string) {
@@ -75,11 +82,20 @@ function CameraIcon({ className = 'h-5 w-5' }: { className?: string }) {
   )
 }
 
+function tierRank(a: Achievement) {
+  const d = difficultyForAchievement(a)
+  if (d === 'legendary') return 0
+  if (d === 'hard') return 1
+  if (d === 'medium') return 2
+  return 3
+}
+
 export function ProfileScreen({
   username,
   viewer,
   onBack,
   onSaved,
+  onOpenOscars,
 }: ProfileScreenProps) {
   const target = username || viewer?.username || null
   const isOwn = Boolean(
@@ -202,6 +218,16 @@ export function ProfileScreen({
     avatarFallback(profile?.displayName || profile?.username || 'U')
 
   const achievements: Achievement[] = profile?.achievements || []
+  const unlocked = useMemo(
+    () =>
+      achievements
+        .filter((a) => !a.locked)
+        .sort((a, b) => tierRank(a) - tierRank(b) || a.title.localeCompare(b.title)),
+    [achievements],
+  )
+  const total = achievements.length
+  const unlockedCount = unlocked.length
+  const platinumPct = total > 0 ? Math.round((unlockedCount / total) * 100) : 0
   const prog = profile?.progress
 
   return (
@@ -387,41 +413,89 @@ export function ProfileScreen({
               )}
             </div>
 
-            <section>
+            <section className="panel-frame px-4 py-3">
               <div className="mb-2 flex items-end justify-between gap-2">
-                <h2 className="font-display text-2xl text-cinema-gold">
-                  Conquistas
-                </h2>
-              </div>
-              <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {achievements.map((a) => (
-                  <li
-                    key={a.id}
-                    className={`border px-2.5 py-3 text-center ${
-                      a.locked
-                        ? 'border-cinema-line/50 bg-black/40 opacity-55'
-                        : 'border-cinema-gold/60 bg-cinema-gold/10'
-                    }`}
-                    title={a.desc}
+                <div>
+                  <h2 className="font-display text-2xl text-cinema-gold">
+                    Óscares
+                  </h2>
+                  <p className="text-[11px] text-cinema-muted">
+                    {unlockedCount}/{total || '—'}
+                    <span className="mx-1.5 opacity-40">·</span>
+                    {platinumPct}% da platina
+                  </p>
+                </div>
+                {onOpenOscars ? (
+                  <button
+                    type="button"
+                    onClick={onOpenOscars}
+                    className="border border-cinema-gold/70 px-2.5 py-1 text-[10px] font-bold tracking-[0.14em] text-cinema-gold uppercase"
                   >
-                    <div
-                      className={`mx-auto mb-2 flex h-10 w-10 items-center justify-center border text-xs font-bold tracking-wide ${
-                        a.locked
-                          ? 'border-cinema-line text-cinema-muted'
-                          : 'border-cinema-gold text-cinema-gold'
-                      }`}
-                    >
-                      {a.locked ? '?' : 'OK'}
-                    </div>
-                    <p className="text-[11px] font-bold tracking-wide text-white uppercase">
-                      {a.title}
-                    </p>
-                    <p className="mt-0.5 text-[10px] leading-snug text-cinema-muted">
-                      {a.desc}
-                    </p>
-                  </li>
-                ))}
-              </ul>
+                    Ver todos
+                  </button>
+                ) : null}
+              </div>
+
+              {total > 0 ? (
+                <div className="mb-3 h-1.5 overflow-hidden bg-black/50">
+                  <div
+                    className="h-full bg-gradient-to-r from-cinema-red to-cinema-gold"
+                    style={{ width: `${platinumPct}%` }}
+                  />
+                </div>
+              ) : null}
+
+              {unlockedCount === 0 ? (
+                <p className="text-center text-[12px] text-cinema-muted italic">
+                  Nenhum óscar ainda
+                  {isOwn ? ' · jogue pra encher a estante' : ''}
+                </p>
+              ) : (
+                <div className="oscar-shelf" role="list">
+                  {unlocked.map((a) => {
+                    const diff = difficultyForAchievement(a)
+                    const icon = cinemaIconForAchievement(a)
+                    const art = icon.startsWith('oscar') || icon === 'fries'
+                    return (
+                      <div
+                        key={a.id}
+                        className="oscar-shelf-item"
+                        role="listitem"
+                        title={`${a.title} — ${a.desc}${
+                          a.communityPct != null
+                            ? ` · ${formatRarity(a.communityPct)} da comunidade`
+                            : ''
+                        }`}
+                      >
+                        <div
+                          className={`oscar-shelf-medal ${
+                            diff === 'legendary'
+                              ? 'oscar-shelf-medal-super'
+                              : diff === 'hard'
+                                ? 'oscar-shelf-medal-special'
+                                : diff === 'medium'
+                                  ? 'oscar-shelf-medal-medium'
+                                  : ''
+                          } ${art ? 'oscar-shelf-medal-art' : ''}`}
+                        >
+                          <CinemaIcon
+                            name={icon}
+                            className={art ? 'h-7 w-7' : 'h-5 w-5'}
+                          />
+                        </div>
+                        <p className="line-clamp-2 text-[9px] leading-tight font-bold tracking-wide text-white uppercase">
+                          {a.title}
+                        </p>
+                        {diff !== 'easy' ? (
+                          <p className="text-[8px] font-bold tracking-[0.12em] text-cinema-gold uppercase">
+                            {DIFFICULTY_LABEL[diff]}
+                          </p>
+                        ) : null}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </section>
           </>
         ) : null}

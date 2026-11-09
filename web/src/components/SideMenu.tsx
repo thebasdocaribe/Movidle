@@ -8,6 +8,8 @@ type SideMenuProps = {
   onProfile?: () => void
   onBrowseProfiles?: () => void
   onOscars?: () => void
+  onAdmin?: () => void
+  isAdmin?: boolean
   loggedIn: boolean
   onLogout?: () => void
 }
@@ -22,6 +24,8 @@ export function SideMenu({
   onProfile,
   onBrowseProfiles,
   onOscars,
+  onAdmin,
+  isAdmin,
   loggedIn,
   onLogout,
 }: SideMenuProps) {
@@ -95,6 +99,15 @@ export function SideMenu({
             }}
           />
           <MenuRow label="Código apoiador" badge="em breve" disabled />
+          {isAdmin ? (
+            <MenuRow
+              label="Dashboard admin"
+              onClick={() => {
+                onClose()
+                onAdmin?.()
+              }}
+            />
+          ) : null}
 
           <div className="my-2 border-t border-cinema-line" />
 

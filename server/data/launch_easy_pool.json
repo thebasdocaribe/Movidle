@@ -1,0 +1,660 @@
+{
+  "note": "Pool fácil pro lançamento. Critério: quase qualquer pessoa no BR reconhece em 1–3s. title = EN do catálogo TMDB quando existir. Próximo passo: cortar clipes + priorizar esses no diário/maratona.",
+  "count": 109,
+  "films": [
+    {
+      "title": "Titanic",
+      "title_pt": "Titanic",
+      "year": 1997,
+      "bucket": "blockbuster"
+    },
+    {
+      "title": "Avatar",
+      "title_pt": "Avatar",
+      "year": 2009,
+      "bucket": "blockbuster"
+    },
+    {
+      "title": "Avatar: The Way of Water",
+      "title_pt": "Avatar: O Caminho da Água",
+      "year": 2022,
+      "bucket": "blockbuster"
+    },
+    {
+      "title": "The Avengers",
+      "title_pt": "Os Vingadores",
+      "year": 2012,
+      "bucket": "marvel"
+    },
+    {
+      "title": "Avengers: Infinity War",
+      "title_pt": "Vingadores: Guerra Infinita",
+      "year": 2018,
+      "bucket": "marvel"
+    },
+    {
+      "title": "Avengers: Endgame",
+      "title_pt": "Vingadores: Ultimato",
+      "year": 2019,
+      "bucket": "marvel"
+    },
+    {
+      "title": "Iron Man",
+      "title_pt": "Homem de Ferro",
+      "year": 2008,
+      "bucket": "marvel"
+    },
+    {
+      "title": "Spider-Man",
+      "title_pt": "Homem-Aranha",
+      "year": 2002,
+      "bucket": "marvel"
+    },
+    {
+      "title": "Spider-Man: No Way Home",
+      "title_pt": "Homem-Aranha: Sem Volta para Casa",
+      "year": 2021,
+      "bucket": "marvel"
+    },
+    {
+      "title": "Guardians of the Galaxy",
+      "title_pt": "Guardiões da Galáxia",
+      "year": 2014,
+      "bucket": "marvel"
+    },
+    {
+      "title": "Black Panther",
+      "title_pt": "Pantera Negra",
+      "year": 2018,
+      "bucket": "marvel"
+    },
+    {
+      "title": "Thor: Ragnarok",
+      "title_pt": "Thor: Ragnarok",
+      "year": 2017,
+      "bucket": "marvel"
+    },
+    {
+      "title": "Doctor Strange",
+      "title_pt": "Doutor Estranho",
+      "year": 2016,
+      "bucket": "marvel"
+    },
+    {
+      "title": "Deadpool",
+      "title_pt": "Deadpool",
+      "year": 2016,
+      "bucket": "marvel"
+    },
+    {
+      "title": "Deadpool & Wolverine",
+      "title_pt": "Deadpool & Wolverine",
+      "year": 2024,
+      "bucket": "marvel"
+    },
+    {
+      "title": "The Dark Knight",
+      "title_pt": "Batman: O Cavaleiro das Trevas",
+      "year": 2008,
+      "bucket": "dc"
+    },
+    {
+      "title": "Joker",
+      "title_pt": "Coringa",
+      "year": 2019,
+      "bucket": "dc"
+    },
+    {
+      "title": "Wonder Woman",
+      "title_pt": "Mulher-Maravilha",
+      "year": 2017,
+      "bucket": "dc"
+    },
+    {
+      "title": "Aquaman",
+      "title_pt": "Aquaman",
+      "year": 2018,
+      "bucket": "dc"
+    },
+    {
+      "title": "The Lion King",
+      "title_pt": "O Rei Leão",
+      "year": 1994,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Frozen",
+      "title_pt": "Frozen: Uma Aventura Congelante",
+      "year": 2013,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Frozen II",
+      "title_pt": "Frozen 2",
+      "year": 2019,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Moana",
+      "title_pt": "Moana: Um Mar de Aventuras",
+      "year": 2016,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Encanto",
+      "title_pt": "Encanto",
+      "year": 2021,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Toy Story",
+      "title_pt": "Toy Story",
+      "year": 1995,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Finding Nemo",
+      "title_pt": "Procurando Nemo",
+      "year": 2003,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Inside Out",
+      "title_pt": "Divertida Mente",
+      "year": 2015,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Inside Out 2",
+      "title_pt": "Divertida Mente 2",
+      "year": 2024,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Up",
+      "title_pt": "Up: Altas Aventuras",
+      "year": 2009,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Coco",
+      "title_pt": "Viva: A Vida é uma Festa",
+      "year": 2017,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Shrek",
+      "title_pt": "Shrek",
+      "year": 2001,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Shrek 2",
+      "title_pt": "Shrek 2",
+      "year": 2004,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Madagascar",
+      "title_pt": "Madagascar",
+      "year": 2005,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Kung Fu Panda",
+      "title_pt": "Kung Fu Panda",
+      "year": 2008,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Despicable Me",
+      "title_pt": "Meu Malvado Favorito",
+      "year": 2010,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Minions",
+      "title_pt": "Minions",
+      "year": 2015,
+      "bucket": "animacao"
+    },
+    {
+      "title": "How to Train Your Dragon",
+      "title_pt": "Como Treinar o Seu Dragão",
+      "year": 2010,
+      "bucket": "animacao"
+    },
+    {
+      "title": "The Incredibles",
+      "title_pt": "Os Incríveis",
+      "year": 2004,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Monsters, Inc.",
+      "title_pt": "Monstros S.A.",
+      "year": 2001,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Cars",
+      "title_pt": "Carros",
+      "year": 2006,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Zootopia",
+      "title_pt": "Zootopia",
+      "year": 2016,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Aladdin",
+      "title_pt": "Aladdin",
+      "year": 1992,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Beauty and the Beast",
+      "title_pt": "A Bela e a Fera",
+      "year": 1991,
+      "bucket": "animacao"
+    },
+    {
+      "title": "The Little Mermaid",
+      "title_pt": "A Pequena Sereia",
+      "year": 1989,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Mulan",
+      "title_pt": "Mulan",
+      "year": 1998,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Tangled",
+      "title_pt": "Enrolados",
+      "year": 2010,
+      "bucket": "animacao"
+    },
+    {
+      "title": "The Super Mario Bros. Movie",
+      "title_pt": "Super Mario Bros.: O Filme",
+      "year": 2023,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Spider-Man: Across the Spider-Verse",
+      "title_pt": "Homem-Aranha: Através do Aranhaverso",
+      "year": 2023,
+      "bucket": "animacao"
+    },
+    {
+      "title": "Harry Potter and the Sorcerer's Stone",
+      "title_pt": "Harry Potter e a Pedra Filosofal",
+      "year": 2001,
+      "bucket": "fantasia"
+    },
+    {
+      "title": "Harry Potter and the Chamber of Secrets",
+      "title_pt": "Harry Potter e a Câmara Secreta",
+      "year": 2002,
+      "bucket": "fantasia"
+    },
+    {
+      "title": "Harry Potter and the Prisoner of Azkaban",
+      "title_pt": "Harry Potter e o Prisioneiro de Azkaban",
+      "year": 2004,
+      "bucket": "fantasia"
+    },
+    {
+      "title": "The Lord of the Rings: The Fellowship of the Ring",
+      "title_pt": "O Senhor dos Anéis: A Sociedade do Anel",
+      "year": 2001,
+      "bucket": "fantasia"
+    },
+    {
+      "title": "The Lord of the Rings: The Return of the King",
+      "title_pt": "O Senhor dos Anéis: O Retorno do Rei",
+      "year": 2003,
+      "bucket": "fantasia"
+    },
+    {
+      "title": "Star Wars",
+      "title_pt": "Star Wars: Uma Nova Esperança",
+      "year": 1977,
+      "bucket": "fantasia"
+    },
+    {
+      "title": "Star Wars: Episode V - The Empire Strikes Back",
+      "title_pt": "O Império Contra-Ataca",
+      "year": 1980,
+      "bucket": "fantasia"
+    },
+    {
+      "title": "Star Wars: The Force Awakens",
+      "title_pt": "Star Wars: O Despertar da Força",
+      "year": 2015,
+      "bucket": "fantasia"
+    },
+    {
+      "title": "Jurassic Park",
+      "title_pt": "Jurassic Park",
+      "year": 1993,
+      "bucket": "aventura"
+    },
+    {
+      "title": "Jurassic World",
+      "title_pt": "Jurassic World",
+      "year": 2015,
+      "bucket": "aventura"
+    },
+    {
+      "title": "Jaws",
+      "title_pt": "Tubarão",
+      "year": 1975,
+      "bucket": "aventura"
+    },
+    {
+      "title": "E.T. the Extra-Terrestrial",
+      "title_pt": "E.T. - O Extraterrestre",
+      "year": 1982,
+      "bucket": "aventura"
+    },
+    {
+      "title": "Back to the Future",
+      "title_pt": "De Volta para o Futuro",
+      "year": 1985,
+      "bucket": "aventura"
+    },
+    {
+      "title": "Raiders of the Lost Ark",
+      "title_pt": "Indiana Jones e os Caçadores da Arca Perdida",
+      "year": 1981,
+      "bucket": "aventura"
+    },
+    {
+      "title": "Pirates of the Caribbean: The Curse of the Black Pearl",
+      "title_pt": "Piratas do Caribe",
+      "year": 2003,
+      "bucket": "aventura"
+    },
+    {
+      "title": "The Matrix",
+      "title_pt": "Matrix",
+      "year": 1999,
+      "bucket": "sci-fi"
+    },
+    {
+      "title": "Inception",
+      "title_pt": "A Origem",
+      "year": 2010,
+      "bucket": "sci-fi"
+    },
+    {
+      "title": "Interstellar",
+      "title_pt": "Interestelar",
+      "year": 2014,
+      "bucket": "sci-fi"
+    },
+    {
+      "title": "The Hunger Games",
+      "title_pt": "Jogos Vorazes",
+      "year": 2012,
+      "bucket": "ya"
+    },
+    {
+      "title": "Twilight",
+      "title_pt": "Creúsculo",
+      "year": 2008,
+      "bucket": "ya"
+    },
+    {
+      "title": "The Fast and the Furious",
+      "title_pt": "Velozes e Furiosos",
+      "year": 2001,
+      "bucket": "acao"
+    },
+    {
+      "title": "Furious 7",
+      "title_pt": "Velozes e Furiosos 7",
+      "year": 2015,
+      "bucket": "acao"
+    },
+    {
+      "title": "Transformers",
+      "title_pt": "Transformers",
+      "year": 2007,
+      "bucket": "acao"
+    },
+    {
+      "title": "Top Gun: Maverick",
+      "title_pt": "Top Gun: Maverick",
+      "year": 2022,
+      "bucket": "acao"
+    },
+    {
+      "title": "Mission: Impossible - Fallout",
+      "title_pt": "Missão Impossível - Efeito Fallout",
+      "year": 2018,
+      "bucket": "acao"
+    },
+    {
+      "title": "Home Alone",
+      "title_pt": "Esqueceram de Mim",
+      "year": 1990,
+      "bucket": "comedia"
+    },
+    {
+      "title": "The Hangover",
+      "title_pt": "Se Beber, Não Case!",
+      "year": 2009,
+      "bucket": "comedia"
+    },
+    {
+      "title": "The Mask",
+      "title_pt": "O Máscara",
+      "year": 1994,
+      "bucket": "comedia"
+    },
+    {
+      "title": "Bruce Almighty",
+      "title_pt": "Todo Poderoso",
+      "year": 2003,
+      "bucket": "comedia"
+    },
+    {
+      "title": "Click",
+      "title_pt": "Click",
+      "year": 2006,
+      "bucket": "comedia"
+    },
+    {
+      "title": "Night at the Museum",
+      "title_pt": "Uma Noite no Museu",
+      "year": 2006,
+      "bucket": "comedia"
+    },
+    {
+      "title": "Jumanji: Welcome to the Jungle",
+      "title_pt": "Jumanji: Bem-vindo à Selva",
+      "year": 2017,
+      "bucket": "comedia"
+    },
+    {
+      "title": "Mrs. Doubtfire",
+      "title_pt": "Uma Babá Quase Perfeita",
+      "year": 1993,
+      "bucket": "comedia"
+    },
+    {
+      "title": "Pretty Woman",
+      "title_pt": "Uma Linda Mulher",
+      "year": 1990,
+      "bucket": "romance"
+    },
+    {
+      "title": "The Notebook",
+      "title_pt": "Diário de uma Paixão",
+      "year": 2004,
+      "bucket": "romance"
+    },
+    {
+      "title": "La La Land",
+      "title_pt": "La La Land",
+      "year": 2016,
+      "bucket": "romance"
+    },
+    {
+      "title": "Grease",
+      "title_pt": "Grease",
+      "year": 1978,
+      "bucket": "romance"
+    },
+    {
+      "title": "Dirty Dancing",
+      "title_pt": "Dirty Dancing",
+      "year": 1987,
+      "bucket": "romance"
+    },
+    {
+      "title": "Cidade de Deus",
+      "title_pt": "Cidade de Deus",
+      "year": 2002,
+      "bucket": "br"
+    },
+    {
+      "title": "Tropa de Elite",
+      "title_pt": "Tropa de Elite",
+      "year": 2007,
+      "bucket": "br"
+    },
+    {
+      "title": "Tropa de Elite 2",
+      "title_pt": "Tropa de Elite 2",
+      "year": 2010,
+      "bucket": "br"
+    },
+    {
+      "title": "O Auto da Compadecida",
+      "title_pt": "O Auto da Compadecida",
+      "year": 2000,
+      "bucket": "br"
+    },
+    {
+      "title": "Central do Brasil",
+      "title_pt": "Central do Brasil",
+      "year": 1998,
+      "bucket": "br"
+    },
+    {
+      "title": "Minha Mãe É uma Peça",
+      "title_pt": "Minha Mãe É uma Peça",
+      "year": 2013,
+      "bucket": "br"
+    },
+    {
+      "title": "Se Eu Fosse Você",
+      "title_pt": "Se Eu Fosse Você",
+      "year": 2006,
+      "bucket": "br"
+    },
+    {
+      "title": "Os Farofeiros",
+      "title_pt": "Os Farofeiros",
+      "year": 2018,
+      "bucket": "br"
+    },
+    {
+      "title": "Get Out",
+      "title_pt": "Corra!",
+      "year": 2017,
+      "bucket": "terror"
+    },
+    {
+      "title": "It",
+      "title_pt": "It: A Coisa",
+      "year": 2017,
+      "bucket": "terror"
+    },
+    {
+      "title": "Scream",
+      "title_pt": "Pânico",
+      "year": 1996,
+      "bucket": "terror"
+    },
+    {
+      "title": "The Conjuring",
+      "title_pt": "Invocação do Mal",
+      "year": 2013,
+      "bucket": "terror"
+    },
+    {
+      "title": "A Nightmare on Elm Street",
+      "title_pt": "A Hora do Pesadelo",
+      "year": 1984,
+      "bucket": "terror"
+    },
+    {
+      "title": "Halloween",
+      "title_pt": "Halloween",
+      "year": 1978,
+      "bucket": "terror"
+    },
+    {
+      "title": "The Exorcist",
+      "title_pt": "O Exorcista",
+      "year": 1973,
+      "bucket": "terror"
+    },
+    {
+      "title": "Alien",
+      "title_pt": "Alien",
+      "year": 1979,
+      "bucket": "terror"
+    },
+    {
+      "title": "Forrest Gump",
+      "title_pt": "Forrest Gump",
+      "year": 1994,
+      "bucket": "drama"
+    },
+    {
+      "title": "The Shawshank Redemption",
+      "title_pt": "Um Sonho de Liberdade",
+      "year": 1994,
+      "bucket": "drama"
+    },
+    {
+      "title": "The Godfather",
+      "title_pt": "O Poderoso Chefão",
+      "year": 1972,
+      "bucket": "drama"
+    },
+    {
+      "title": "Gladiator",
+      "title_pt": "Gladiador",
+      "year": 2000,
+      "bucket": "drama"
+    },
+    {
+      "title": "Barbie",
+      "title_pt": "Barbie",
+      "year": 2023,
+      "bucket": "recente"
+    },
+    {
+      "title": "Oppenheimer",
+      "title_pt": "Oppenheimer",
+      "year": 2023,
+      "bucket": "recente"
+    },
+    {
+      "title": "Wonka",
+      "title_pt": "Wonka",
+      "year": 2023,
+      "bucket": "recente"
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import {
   fetchCharacterDaily,
   fetchCharacterNext,
   postCharacterGuess,
+  type Achievement,
   type AutocompleteItem,
   type CharacterPayload,
 } from '../api'
@@ -25,6 +26,7 @@ type CharacterScreenProps = {
   user: AuthUser | null
   progress: ProgressMap
   onProgress: (p: ProgressMap) => void
+  onAchievements?: (list: Achievement[]) => void
   puzzleDate?: string | null
   onBack: () => void
   modeNav?: {
@@ -40,6 +42,7 @@ export function CharacterScreen({
   user,
   progress,
   onProgress,
+  onAchievements,
   puzzleDate = null,
   onBack,
   modeNav = null,
@@ -177,6 +180,9 @@ export function CharacterScreen({
         endless,
       })
       if (result.progress) onProgress(result.progress)
+      if (result.unlockedAchievements?.length) {
+        onAchievements?.(result.unlockedAchievements)
+      }
 
       if (result.correct) {
         setWon(true)
@@ -222,6 +228,9 @@ export function CharacterScreen({
         endless,
       })
       if (result.progress) onProgress(result.progress)
+      if (result.unlockedAchievements?.length) {
+        onAchievements?.(result.unlockedAchievements)
+      }
       setWon(false)
       setEnded(true)
       if (!endless && !isArchive) onDailyModePlayed?.()
@@ -283,6 +292,7 @@ export function CharacterScreen({
                   src={puzzle.imageUrl}
                   stage={attempt}
                   reveal={ended}
+                  stages={puzzle.cropStages ?? null}
                 />
                 {ended ? (
                   <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/75 p-4 text-center">

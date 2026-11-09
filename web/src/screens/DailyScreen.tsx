@@ -17,6 +17,7 @@ import {
   type DailyNavMode,
   type DailyPlayedMap,
 } from '../components/DailyModeNav'
+import { clipFreezeAt, watchClipBoundary } from '../lib/clipPlayback'
 import { multiplierForStreak } from '../scoring'
 
 type Phase = 'idle' | 'ready' | 'countdown' | 'playing' | 'guess' | 'ended'
@@ -262,7 +263,7 @@ export function DailyScreen({
   useEffect(() => {
     if (phase !== 'playing') return
     // corta um frame antes do próximo take (evita “vazar” a cena N+1)
-    const ms = Math.max(200, clipSeconds * 1000 - 80)
+    const ms = Math.max(200, clipFreezeAt(clipSeconds) * 1000)
     const id = window.setTimeout(() => setPhase('guess'), ms)
     return () => window.clearTimeout(id)
   }, [phase, clipSeconds, attempt])
@@ -275,24 +276,21 @@ export function DailyScreen({
       return
     }
 
-    const endAt = Math.max(0.05, clipSeconds - 0.08)
-    const stopAtBoundary = () => {
-      if (video.currentTime >= endAt) {
-        video.pause()
-        video.currentTime = endAt
-      }
-    }
+    let unwatch: (() => void) | null = null
+    let cancelled = false
 
     const start = () => {
+      if (cancelled) return
       try {
         video.currentTime = 0
       } catch {
         /* ignore seek race */
       }
+      unwatch?.()
+      unwatch = watchClipBoundary(video, { startAt: 0, endSeconds: clipSeconds })
       void video.play().catch(() => {})
     }
 
-    video.addEventListener('timeupdate', stopAtBoundary)
     if (video.readyState >= 2) {
       start()
     } else {
@@ -302,13 +300,15 @@ export function DailyScreen({
       }
       video.addEventListener('canplay', onReady)
       return () => {
+        cancelled = true
         video.removeEventListener('canplay', onReady)
-        video.removeEventListener('timeupdate', stopAtBoundary)
+        unwatch?.()
         video.pause()
       }
     }
     return () => {
-      video.removeEventListener('timeupdate', stopAtBoundary)
+      cancelled = true
+      unwatch?.()
       video.pause()
     }
   }, [phase, attempt, mediaType, mediaUrl, clipSeconds])

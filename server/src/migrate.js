@@ -20,6 +20,9 @@ const MIGRATION_FILES = [
   'keywords_mode.sql',
   'profile.sql',
   'daily_rotation.sql',
+  'admin.sql',
+  'character_crops.sql',
+  'achievements_stats.sql',
 ]
 
 /** Clips em web/public/clips (vão pro dist no build). */
