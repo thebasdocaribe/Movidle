@@ -1658,6 +1658,141 @@ input:disabled {
   background: rgba(120, 20, 35, 0.55);
 }
 
+/* Quadro visual de estúdios (Who Am I v1) */
+.whoami-studio-board {
+  border: 1.5px solid rgba(255, 196, 77, 0.4);
+  border-radius: 10px;
+  background: linear-gradient(
+    165deg,
+    rgba(28, 14, 28, 0.92),
+    rgba(10, 6, 14, 0.94)
+  );
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.5),
+    0 12px 28px rgba(0, 0, 0, 0.4);
+  padding: 0.75rem 0.8rem 0.85rem;
+}
+
+.whoami-studio-board-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.whoami-studio-board-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  letter-spacing: 0.06em;
+  color: #ffc44d;
+  line-height: 1;
+}
+
+.whoami-studio-board-sub {
+  margin: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-cinema-muted);
+}
+
+.whoami-studio-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+@media (min-width: 640px) {
+  .whoami-studio-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.whoami-studio-tile {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+  border: 1.5px solid rgba(255, 196, 77, 0.35);
+  border-radius: 8px;
+  background: #0a0608;
+  transition:
+    opacity 220ms ease,
+    filter 220ms ease,
+    border-color 220ms ease,
+    transform 220ms ease;
+}
+
+.whoami-studio-tile-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.whoami-studio-tile-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0.35rem 0.4rem;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  color: #fff;
+  text-align: center;
+}
+
+.whoami-studio-tile-active {
+  border-color: rgba(255, 196, 77, 0.45);
+}
+
+.whoami-studio-tile-confirmed {
+  border-color: #ffc44d;
+  box-shadow: 0 0 0 1px rgba(255, 196, 77, 0.35), 0 0 16px rgba(255, 196, 77, 0.25);
+  transform: scale(1.02);
+}
+
+.whoami-studio-tile-eliminated {
+  opacity: 0.28;
+  filter: grayscale(1) brightness(0.55);
+  border-color: rgba(90, 58, 90, 0.5);
+}
+
+.whoami-studio-tile-eliminated .whoami-studio-tile-label {
+  text-decoration: line-through;
+  color: rgba(244, 238, 246, 0.55);
+}
+
+.whoami-studio-tile-x,
+.whoami-studio-tile-ok {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.4rem;
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.whoami-studio-tile-x {
+  background: rgba(120, 20, 35, 0.85);
+  color: #ffb4bc;
+}
+
+.whoami-studio-tile-ok {
+  background: rgba(31, 107, 69, 0.9);
+  color: #d8ffe8;
+}
+
 .keyword-board {
   position: relative;
   border: 10px solid #5c3a1e;

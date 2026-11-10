@@ -90,6 +90,7 @@ export const DEFAULT_QUESTIONS = [
   { id: 'is_disney', category_id: 'identity', text: 'Sou da Disney?', sort_order: 30, rule: { type: 'studio', value: 'disney' } },
   { id: 'is_pixar', category_id: 'identity', text: 'Sou da Pixar?', sort_order: 40, rule: { type: 'studio', value: 'pixar' } },
   { id: 'is_dreamworks', category_id: 'identity', text: 'Sou da DreamWorks?', sort_order: 50, rule: { type: 'studio', value: 'dreamworks' } },
+  { id: 'is_ghibli', category_id: 'identity', text: 'Sou do Studio Ghibli?', sort_order: 55, rule: { type: 'studio', value: 'ghibli' } },
   { id: 'based_on_book', category_id: 'identity', text: 'Sou uma adaptação de um livro?', sort_order: 60, rule: { type: 'bool', field: 'basedOnBook' } },
   { id: 'is_franchise', category_id: 'identity', text: 'Faço parte de uma franquia?', sort_order: 70, rule: { type: 'bool', field: 'franchise' } },
   { id: 'based_on_true', category_id: 'identity', text: 'Sou baseado em acontecimentos reais?', sort_order: 80, rule: { type: 'bool', field: 'basedOnTrueEvents' } },
@@ -721,8 +722,9 @@ export const TAG_OPTIONS = [
   { id: 'scifi', label: 'Ficção científica' },
 ]
 
-export const WHOAMI_MAX_ASKS = 999
-export const WHOAMI_MAX_WRONG = 999
+/** Orçamento do modo difícil: investiga com limite, depois tem que chutar. */
+export const WHOAMI_MAX_ASKS = 20
+export const WHOAMI_MAX_WRONG = 5
 export const WHOAMI_AD_BONUS_ASKS = 0
 export const WHOAMI_MAX_ADS = 0
 

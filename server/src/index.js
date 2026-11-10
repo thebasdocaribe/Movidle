@@ -126,6 +126,8 @@ import {
   upsertAdminQuestion,
   whoamiPoints,
   WHOAMI_CATEGORIES,
+  WHOAMI_MAX_ASKS,
+  WHOAMI_MAX_WRONG,
 } from './whoami.js'
 
 const CHARACTER_MAX_TAKE = 6
@@ -1024,6 +1026,8 @@ async function publicWhoamiPuzzle(puzzle, extra = {}) {
     mode: 'whoami',
     askBank: await publicAskBank(),
     attribution: puzzle.attribution || null,
+    maxAsks: WHOAMI_MAX_ASKS,
+    maxWrong: WHOAMI_MAX_WRONG,
     ...extra,
   }
 }
@@ -1607,8 +1611,15 @@ app.post('/api/whoami/ask', async (req, res) => {
   try {
     const puzzleId = String(req.body?.puzzleId || '')
     const questionId = String(req.body?.questionId || '')
+    const asksUsed = Math.max(0, Number(req.body?.asksUsed) || 0)
     if (!puzzleId || !questionId) {
       res.status(400).json({ error: 'puzzleId e questionId obrigatórios' })
+      return
+    }
+    if (asksUsed >= WHOAMI_MAX_ASKS) {
+      res.status(400).json({
+        error: `Orçamento esgotado · máx. ${WHOAMI_MAX_ASKS} perguntas`,
+      })
       return
     }
     const puzzle = await resolvePuzzle(puzzleId, 'whoami')
@@ -1622,7 +1633,12 @@ app.post('/api/whoami/ask', async (req, res) => {
       res.status(400).json({ error: 'Pergunta inválida' })
       return
     }
-    res.json(result)
+    res.json({
+      ...result,
+      asksUsed: asksUsed + 1,
+      asksLeft: Math.max(0, WHOAMI_MAX_ASKS - (asksUsed + 1)),
+      maxAsks: WHOAMI_MAX_ASKS,
+    })
   } catch (err) {
     res.status(500).json({ error: String(err.message) })
   }
@@ -1639,6 +1655,12 @@ app.post('/api/whoami/guess', async (req, res) => {
       res.status(400).json({ error: 'puzzleId e guess obrigatórios' })
       return
     }
+    if (wrongGuesses >= WHOAMI_MAX_WRONG) {
+      res.status(400).json({
+        error: `Sem chutes · máx. ${WHOAMI_MAX_WRONG} erros`,
+      })
+      return
+    }
     const puzzle = await resolvePuzzle(
       puzzleId,
       isDateId(puzzleId) ? 'whoami' : 'daily',
@@ -1648,6 +1670,8 @@ app.post('/api/whoami/guess', async (req, res) => {
       return
     }
     const correct = matchesTitle(guess, puzzle)
+    const nextWrong = correct ? wrongGuesses : wrongGuesses + 1
+    const lost = !correct && nextWrong >= WHOAMI_MAX_WRONG
     const points = correct
       ? whoamiPoints({
           won: true,
@@ -1659,7 +1683,11 @@ app.post('/api/whoami/guess', async (req, res) => {
     res.json({
       correct,
       points,
-      ...(correct
+      wrongGuesses: nextWrong,
+      wrongLeft: Math.max(0, WHOAMI_MAX_WRONG - nextWrong),
+      maxWrong: WHOAMI_MAX_WRONG,
+      ended: correct || lost,
+      ...(correct || lost
         ? {
             title: puzzle.title,
             titlePt: primaryTitle(puzzle),

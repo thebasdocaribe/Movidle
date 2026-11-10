@@ -281,6 +281,8 @@ export type WhoamiPayload = {
   endless?: boolean
   attribution: string | null
   askBank: WhoamiAskBank
+  maxAsks?: number
+  maxWrong?: number
   alreadyPlayed?: boolean
   priorResult?: PriorPlayResult & { asks?: number } | null
 }
@@ -307,7 +309,11 @@ export function fetchWhoamiNext(excludeIds: string[] = []) {
   )
 }
 
-export function postWhoamiAsk(body: { puzzleId: string; questionId: string }) {
+export function postWhoamiAsk(body: {
+  puzzleId: string
+  questionId: string
+  asksUsed: number
+}) {
   return fetch('/api/whoami/ask', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
@@ -318,6 +324,9 @@ export function postWhoamiAsk(body: { puzzleId: string; questionId: string }) {
       text: string
       answer: WhoamiAnswer
       answerLabel: string
+      asksUsed?: number
+      asksLeft?: number
+      maxAsks?: number
     }>(r),
   )
 }
@@ -337,6 +346,10 @@ export function postWhoamiGuess(body: {
     parseJson<{
       correct: boolean
       points: number
+      wrongGuesses?: number
+      wrongLeft?: number
+      maxWrong?: number
+      ended?: boolean
       title?: string
       titlePt?: string
       year?: number

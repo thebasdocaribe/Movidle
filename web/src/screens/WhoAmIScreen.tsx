@@ -29,6 +29,12 @@ import type { AuthUser, ProgressMap } from '../auth'
 import { modeProgress } from '../auth'
 import { DailyCalendarButton } from '../components/DailyCalendarButton'
 import { todayBRT } from '../components/DayCalendarModal'
+import {
+  WhoamiStudioBoard,
+  applyStudioBoardAnswer,
+  initialStudioBoard,
+  type StudioBoardState,
+} from '../components/WhoamiStudioBoard'
 
 type WhoAmIScreenProps = {
   variant: 'daily' | 'endless'
@@ -145,10 +151,18 @@ export function WhoAmIScreen({
   const [suggestions, setSuggestions] = useState<AutocompleteItem[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [elapsed, setElapsed] = useState(0)
+  const [studioBoard, setStudioBoard] = useState<StudioBoardState>(() =>
+    initialStudioBoard(),
+  )
   const suggestTimer = useRef<number | null>(null)
   const startedAt = useRef<number>(Date.now())
 
   const prog = modeProgress(progress, 'whoami')
+  const maxAsks = puzzle?.maxAsks ?? 20
+  const maxWrong = puzzle?.maxWrong ?? 5
+  const asksLeft = Math.max(0, maxAsks - asksUsed)
+  const wrongLeft = Math.max(0, maxWrong - wrong)
+  const asksExhausted = asksUsed >= maxAsks
   const askedIds = useMemo(
     () => new Set(history.map((h) => h.questionId)),
     [history],
@@ -186,6 +200,7 @@ export function WhoAmIScreen({
       setHint(null)
       setConfirmGiveUp(false)
       setElapsed(0)
+      setStudioBoard(initialStudioBoard())
       startedAt.current = Date.now()
       setCategoryId(null)
       if (endless && data.puzzleId) {
@@ -193,7 +208,8 @@ export function WhoAmIScreen({
           prev.includes(data.puzzleId) ? prev : [...prev, data.puzzleId],
         )
       }
-      if (!endless && data.priorResult) {
+      // Arquivo: pode rejogar mesmo com play antigo (só trava no dia corrente)
+      if (!endless && data.priorResult && !isArchive) {
         setEnded(true)
         onDailyModePlayed?.()
         setWon(Boolean(data.priorResult.won))
@@ -241,6 +257,10 @@ export function WhoAmIScreen({
 
   async function askQuestion(questionId: string) {
     if (!puzzle || busy || ended) return
+    if (asksExhausted) {
+      setHint(`Orçamento esgotado · máx. ${maxAsks} perguntas · chute o filme`)
+      return
+    }
     if (askedIds.has(questionId)) {
       setHint('Você já perguntou isso')
       return
@@ -251,6 +271,7 @@ export function WhoAmIScreen({
       const res = await postWhoamiAsk({
         puzzleId: puzzle.puzzleId,
         questionId,
+        asksUsed,
       })
       setHistory((prev) => [
         ...prev,
@@ -262,7 +283,15 @@ export function WhoAmIScreen({
           key: `${res.questionId}-${Date.now()}`,
         },
       ])
-      setAsksUsed((n) => n + 1)
+      setStudioBoard((prev) =>
+        applyStudioBoardAnswer(prev, res.questionId, res.answer),
+      )
+      const nextAsks = res.asksUsed ?? asksUsed + 1
+      setAsksUsed(nextAsks)
+      if (nextAsks >= maxAsks) {
+        setHint(`Última pergunta usada · agora é chutar (${maxWrong} tentativas)`)
+        setCategoryId(null)
+      }
     } catch (err) {
       setHint((err as Error).message)
     } finally {
@@ -311,10 +340,39 @@ export function WhoAmIScreen({
         return
       }
 
-      const nextWrong = wrong + 1
+      const nextWrong = res.wrongGuesses ?? wrong + 1
       setWrong(nextWrong)
       setGuess('')
-      setHint(`Errou: “${typed}” · continue investigando`)
+
+      if (res.ended) {
+        setWon(false)
+        setEnded(true)
+        if (!endless) onDailyModePlayed?.()
+        setPoints(0)
+        setRevealTitle(res.titlePt || res.title || '?')
+        setRevealYear(res.year)
+        setRevealPoster(res.posterUrl || null)
+        if (user) {
+          const finished = await finishWhoami({
+            puzzleId: puzzle.puzzleId,
+            outcome: 'lose',
+            asksUsed,
+            wrongGuesses: nextWrong,
+            durationSec: durationSec(),
+            endless,
+          })
+          onProgress(finished.progress)
+          if (finished.unlockedAchievements?.length) {
+            onAchievements?.(finished.unlockedAchievements)
+          }
+        }
+        return
+      }
+
+      const left = Math.max(0, maxWrong - nextWrong)
+      setHint(
+        `Errou: “${typed}” · ${left} chute${left === 1 ? '' : 's'} restante${left === 1 ? '' : 's'}`,
+      )
     } catch (err) {
       setHint((err as Error).message)
     } finally {
@@ -393,8 +451,8 @@ export function WhoAmIScreen({
                 : isArchive
                   ? `Arquivo ${activeDate}`
                   : 'Diário'}{' '}
-              · {formatElapsed(elapsed)}
-              {wrong > 0 ? ` · ${wrong} chute(s)` : ''}
+              · {formatElapsed(elapsed)} · perguntas {asksUsed}/{maxAsks} ·
+              chutes {wrong}/{maxWrong}
             </span>
             {!endless && onPickArchiveDate && activeDate ? (
               <DailyCalendarButton
@@ -468,6 +526,8 @@ export function WhoAmIScreen({
               </div>
             ) : (
               <>
+                <WhoamiStudioBoard state={studioBoard} />
+
                 <div className="grid gap-3 lg:grid-cols-2 lg:gap-4 lg:items-start">
                   <section className="whoami-panel">
                     <div className="mb-3 flex items-start gap-2">
@@ -479,14 +539,20 @@ export function WhoAmIScreen({
                           FAÇA UMA PERGUNTA
                         </h2>
                         <p className="mt-1 text-[11px] text-cinema-muted">
-                          {categoryId
-                            ? 'Escolha uma pergunta desta categoria.'
-                            : 'Escolha uma categoria para investigar.'}
+                          {asksExhausted
+                            ? 'Sem perguntas restantes — use os chutes.'
+                            : categoryId
+                              ? 'Escolha uma pergunta desta categoria.'
+                              : `Escolha uma categoria · ${asksLeft} pergunta${asksLeft === 1 ? '' : 's'} restante${asksLeft === 1 ? '' : 's'}.`}
                         </p>
                       </div>
                     </div>
 
-                    {categoryId && selectedMeta ? (
+                    {asksExhausted ? (
+                      <p className="rounded-md border border-dashed border-cinema-line/70 bg-black/20 px-3 py-6 text-center text-[12px] text-cinema-muted">
+                        Investigação encerrada. Chute o filme à direita.
+                      </p>
+                    ) : categoryId && selectedMeta ? (
                       <div className="flex flex-col gap-2">
                         <button
                           type="button"
@@ -581,9 +647,17 @@ export function WhoAmIScreen({
                           HISTÓRICO DA INVESTIGAÇÃO
                         </h2>
                         <span className="shrink-0 text-[10px] font-bold tracking-wide text-cinema-muted uppercase">
-                          {asksUsed} pergunta{asksUsed === 1 ? '' : 's'}
+                          {asksUsed}/{maxAsks} pergunta
+                          {maxAsks === 1 ? '' : 's'}
                         </span>
                       </div>
+                      {asksExhausted ? (
+                        <p className="mb-2 rounded-md border border-cinema-gold/40 bg-cinema-gold/10 px-3 py-2 text-center text-[11px] text-cinema-gold">
+                          Orçamento de perguntas esgotado — chute o filme (
+                          {wrongLeft} restante
+                          {wrongLeft === 1 ? '' : 's'}).
+                        </p>
+                      ) : null}
                       {history.length === 0 ? (
                         <p className="rounded-md border border-dashed border-cinema-line/70 bg-black/20 px-3 py-6 text-center text-[12px] text-cinema-muted italic">
                           Nenhuma pergunta ainda — comece por uma categoria.
@@ -607,11 +681,18 @@ export function WhoAmIScreen({
                     </section>
 
                     <section className="whoami-panel">
-                      <h2 className="font-display text-xl leading-none text-cinema-gold tracking-wide sm:text-2xl">
-                        SEU PALPITE
-                      </h2>
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <h2 className="font-display text-xl leading-none text-cinema-gold tracking-wide sm:text-2xl">
+                          SEU PALPITE
+                        </h2>
+                        <span className="shrink-0 text-[10px] font-bold tracking-wide text-cinema-muted uppercase">
+                          {wrong}/{maxWrong} erro{maxWrong === 1 ? '' : 's'}
+                        </span>
+                      </div>
                       <p className="mt-1 mb-3 text-[11px] text-cinema-muted">
-                        Acha que já descobriu? Digite o nome do filme!
+                        Acha que já descobriu? Digite o nome do filme ·{' '}
+                        {wrongLeft} chute{wrongLeft === 1 ? '' : 's'} restante
+                        {wrongLeft === 1 ? '' : 's'}.
                       </p>
                       <form
                         onSubmit={submitGuess}

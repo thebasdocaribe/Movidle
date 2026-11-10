@@ -186,7 +186,7 @@ export function HubScreen({
                 title="QUEM SOU EU"
                 tag="Difícil"
                 tagTone="hard"
-                subtitle="Orçamento único de dicas: gênero, época, origem…"
+                subtitle="20 perguntas · 5 chutes · gênero, época, origem…"
                 thumbKey="whoami"
                 icon={<IconSilhouette />}
                 onClick={() => onPlayWhoami()}

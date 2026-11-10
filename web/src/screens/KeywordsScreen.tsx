@@ -98,7 +98,8 @@ export function KeywordsScreen({
       setHint(null)
       setSuggestions([])
       setShowSuggestions(false)
-      if (data.priorResult) {
+      // Arquivo: pode rejogar mesmo com play antigo (só trava no dia corrente)
+      if (data.priorResult && !isArchive) {
         setEnded(true)
         onDailyModePlayed?.()
         setWon(Boolean(data.priorResult.won))
