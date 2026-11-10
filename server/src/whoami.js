@@ -18,6 +18,7 @@ const TMDB_GENRE = {
   horror: 27,
   adventure: 12,
   fantasy: 14,
+  action: 28,
   musical: 10402,
   kids: 10751,
   scifi: 878,
@@ -105,6 +106,7 @@ export const DEFAULT_QUESTIONS = [
 
   { id: 'tag_comedy', category_id: 'genre', text: 'Sou uma comédia?', sort_order: 10, rule: { type: 'tag', value: 'comedy' } },
   { id: 'tag_horror', category_id: 'genre', text: 'Sou um filme de terror?', sort_order: 20, rule: { type: 'tag', value: 'horror' } },
+  { id: 'tag_action', category_id: 'genre', text: 'Sou um filme de ação?', sort_order: 25, rule: { type: 'tag', value: 'action' } },
   { id: 'tag_adventure', category_id: 'genre', text: 'Sou uma aventura?', sort_order: 30, rule: { type: 'tag', value: 'adventure' } },
   { id: 'tag_fantasy', category_id: 'genre', text: 'Tenho elementos de fantasia?', sort_order: 40, rule: { type: 'tag', value: 'fantasy' } },
   { id: 'tag_parody', category_id: 'genre', text: 'Sou uma paródia?', sort_order: 50, rule: { type: 'tag', value: 'parody' } },
@@ -714,6 +716,7 @@ export const STUDIO_OPTIONS = [
 export const TAG_OPTIONS = [
   { id: 'comedy', label: 'Comédia' },
   { id: 'horror', label: 'Terror' },
+  { id: 'action', label: 'Ação' },
   { id: 'adventure', label: 'Aventura' },
   { id: 'fantasy', label: 'Fantasia' },
   { id: 'parody', label: 'Paródia' },

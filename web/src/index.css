@@ -1712,6 +1712,25 @@ input:disabled {
   }
 }
 
+.whoami-clue-boards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.whoami-clue-grid {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.whoami-clue-grid-genre {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.whoami-clue-grid-era {
+  grid-template-columns: minmax(0, 12rem);
+}
+
 .whoami-studio-tile {
   position: relative;
   overflow: hidden;

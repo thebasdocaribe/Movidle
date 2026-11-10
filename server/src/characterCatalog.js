@@ -472,389 +472,393 @@ export const CHARACTER_CATALOG = [
     'Estranho Mundo de Jack',
     'Jack',
   ]),
-]
-
-/**
- * Nomes curados sem foto — seed no banco; diário só usa CHARACTER_CATALOG
- * (image_path /characters/...). Quando a foto chegar, mover para o catálogo ativo.
- */
-export const CHARACTER_PENDING = [
-  pending('Mulan', 'Mulan', 'Mulan', []),
-  pending('Stanley Ipkiss', 'Stanley Ipkiss', 'The Mask', [
+  row('Mulan', 'Mulan', 'Mulan', []),
+  row('Stanley Ipkiss', 'Stanley Ipkiss', 'The Mask', [
     'O Máscara',
     'The Mask',
     'Ipkiss',
   ]),
-  pending('Mushu', 'Mushu', 'Mulan', []),
-  pending('Agent K', 'Kay', 'Men in Black', [
+  row('Mushu', 'Mushu', 'Mulan', []),
+  row('Agent K', 'Kay', 'Men in Black', [
     'K',
     'Agent Kay',
     'Homens de Preto',
   ]),
-  pending('Agent J', 'Jay', 'Men in Black', [
+  row('Agent J', 'Jay', 'Men in Black', [
     'J',
     'Agent Jay',
     'Homens de Preto',
   ]),
-  pending('Darth Maul', 'Darth Maul', 'Star Wars: Episode I', ['Maul']),
-  pending('Hercules', 'Hércules', 'Hercules', ['Hercules']),
-  pending('Matilda Wormwood', 'Matilda', 'Matilda', ['Matilda Wormwood']),
-  pending('Belle', 'Bela', 'Beauty and the Beast', [
+  row('Darth Maul', 'Darth Maul', 'Star Wars: Episode I', ['Maul']),
+  row('Hercules', 'Hércules', 'Hercules', ['Hercules']),
+  row('Matilda Wormwood', 'Matilda', 'Matilda', ['Matilda Wormwood']),
+  row('Belle', 'Bela', 'Beauty and the Beast', [
     'A Bela',
     'A Bela e a Fera',
   ]),
-  pending('Beast', 'Fera', 'Beauty and the Beast', [
+  row('Beast', 'Fera', 'Beauty and the Beast', [
     'A Fera',
     'A Bela e a Fera',
   ]),
-  pending('Flik', 'Flik', "A Bug's Life", [
+  row('Flik', 'Flik', "A Bug's Life", [
     'Flink',
     'Vida de Inseto',
     'Vida de Insetos',
   ]),
-  pending('Gomez Addams', 'Gomez Addams', 'The Addams Family', [
+  row('Gomez Addams', 'Gomez Addams', 'The Addams Family', [
     'Gomez',
     'Família Addams',
   ]),
-  pending('Morticia Addams', 'Morticia Addams', 'The Addams Family', [
+  row('Morticia Addams', 'Morticia Addams', 'The Addams Family', [
     'Morticia',
     'Família Addams',
   ]),
-  pending('Wednesday Addams', 'Wednesday', 'The Addams Family', [
+  row('Wednesday Addams', 'Wednesday', 'The Addams Family', [
     'Wednesday Addams',
     'Wandinha',
     'Família Addams',
   ]),
-  pending('The Penguin', 'Penguin', 'Batman Returns', [
+  row('The Penguin', 'Penguin', 'Batman Returns', [
     'Pinguim',
     'Oswald Cobblepot',
   ]),
-  pending('Catwoman', 'Catwoman', 'Batman Returns', [
+  row('Catwoman', 'Catwoman', 'Batman Returns', [
     'Mulher-Gato',
     'Selina Kyle',
   ]),
-  pending('Blade', 'Blade', 'Blade', ['Eric Brooks']),
-  pending('Kermit the Frog', 'Kermit', 'The Muppet Movie', [
+  row('Blade', 'Blade', 'Blade', ['Eric Brooks']),
+  row('Kermit the Frog', 'Kermit', 'The Muppet Movie', [
     'Kermit',
     'Sapo Kermit',
   ]),
-  pending('Tarzan', 'Tarzan', 'Tarzan', []),
-  pending('Jane Porter', 'Jane', 'Tarzan', ['Jane Porter']),
-  pending('Kala', 'Kala', 'Tarzan', []),
-  pending('Candyman', 'Candyman', 'Candyman', ['Daniel Robitaille']),
-  pending('The Riddler', 'Charada', 'Batman Forever', [
+  row('Tarzan', 'Tarzan', 'Tarzan', []),
+  row('Jane Porter', 'Jane', 'Tarzan', ['Jane Porter']),
+  row('Kala', 'Kala', 'Tarzan', []),
+  row('Candyman', 'Candyman', 'Candyman', ['Daniel Robitaille']),
+  row('The Riddler', 'Charada', 'Batman Forever', [
     'Riddler',
     'Edward Nygma',
   ]),
-  pending('Two-Face', 'Duas Caras', 'Batman Forever', [
+  row('Two-Face', 'Duas Caras', 'Batman Forever', [
     'Harvey Dent',
     'Two Face',
   ]),
-  pending('Bugs Bunny', 'Pernalonga', 'Space Jam', ['Bugs']),
-  pending('Daffy Duck', 'Patolino', 'Space Jam', ['Daffy']),
-  pending('Ace Ventura', 'Ace Ventura', 'Ace Ventura: Pet Detective', [
+  row('Bugs Bunny', 'Pernalonga', 'Space Jam', ['Bugs']),
+  row('Daffy Duck', 'Patolino', 'Space Jam', ['Daffy']),
+  row('Ace Ventura', 'Ace Ventura', 'Ace Ventura: Pet Detective', [
     'Ace',
   ]),
-  pending('Pennywise', 'Pennywise', 'It', [
+  row('Pennywise', 'Pennywise', 'It', [
     'It',
     'Pennywise the Dancing Clown',
   ]),
-  pending('Samara Morgan', 'Samara', 'The Ring', [
+  row('Samara Morgan', 'Samara', 'The Ring', [
     'Samara',
     'O Chamado',
   ]),
-  pending('Mr. Freeze', 'Dr. Frio', 'Batman & Robin', [
+  row('Mr. Freeze', 'Dr. Frio', 'Batman & Robin', [
     'Victor Fries',
     'Mr Freeze',
   ]),
-  pending('Stuart Little', 'Stuart Little', 'Stuart Little', ['Stuart']),
-  pending('Casper', 'Gasparzinho', 'Casper', ['Casper the Friendly Ghost']),
-  pending('Eric Cartman', 'Cartman', 'South Park: Bigger, Longer & Uncut', [
+  row('Stuart Little', 'Stuart Little', 'Stuart Little', ['Stuart']),
+  row('Casper', 'Gasparzinho', 'Casper', ['Casper the Friendly Ghost']),
+  row('Eric Cartman', 'Cartman', 'South Park: Bigger, Longer & Uncut', [
     'Cartman',
     'South Park',
   ]),
-  pending('Stan Marsh', 'Stan', 'South Park: Bigger, Longer & Uncut', [
+  row('Stan Marsh', 'Stan', 'South Park: Bigger, Longer & Uncut', [
     'Stan',
     'South Park',
   ]),
-  pending('Kenny McCormick', 'Kenny', 'South Park: Bigger, Longer & Uncut', [
+  row('Kenny McCormick', 'Kenny', 'South Park: Bigger, Longer & Uncut', [
     'Kenny',
     'South Park',
   ]),
-  pending('Kyle Broflovski', 'Kyle', 'South Park: Bigger, Longer & Uncut', [
+  row('Kyle Broflovski', 'Kyle', 'South Park: Bigger, Longer & Uncut', [
     'Kyle',
     'South Park',
   ]),
-  pending('Howard Langston', 'Howard Langston', 'Jingle All the Way', [
+  row('Howard Langston', 'Howard Langston', 'Jingle All the Way', [
     'Um Herói de Brinquedo',
   ]),
-  pending('Tiffany Valentine', 'Tiffany', 'Bride of Chucky', [
+  row('Tiffany Valentine', 'Tiffany', 'Bride of Chucky', [
     'Tiffany',
     'A Noiva do Chucky',
   ]),
-  pending('Lionel Cosgrove', 'Lionel', 'Braindead', [
+  row('Lionel Cosgrove', 'Lionel', 'Braindead', [
     'Lionel',
     'Dead Alive',
   ]),
-  pending('Z', 'Z', 'Antz', ['Formiguinhas', 'Formiginhaz']),
-  pending('Zorro', 'Zorro', 'The Mask of Zorro', ['Don Diego']),
-  pending('Mufasa', 'Mufasa', 'The Lion King', ['O Rei Leão']),
-  pending('Simba', 'Simba', 'The Lion King', ['O Rei Leão']),
-  pending('Timon', 'Timão', 'The Lion King', ['Timon', 'O Rei Leão']),
-  pending('Pumbaa', 'Pumba', 'The Lion King', ['Pumbaa', 'O Rei Leão']),
-  pending('Liu Kang', 'Liu Kang', 'Mortal Kombat', []),
-  pending('Raiden', 'Raiden', 'Mortal Kombat', ['Rayden']),
-  pending('Sub-Zero', 'Sub-Zero', 'Mortal Kombat', ['Sub Zero']),
-  pending('Scorpion', 'Scorpion', 'Mortal Kombat', [
+  row('Z', 'Z', 'Antz', ['Formiguinhas', 'Formiginhaz']),
+  row('Zorro', 'Zorro', 'The Mask of Zorro', ['Don Diego']),
+  row('Mufasa', 'Mufasa', 'The Lion King', ['O Rei Leão']),
+  row('Simba', 'Simba', 'The Lion King', ['O Rei Leão']),
+  row('Timon', 'Timão', 'The Lion King', ['Timon', 'O Rei Leão']),
+  row('Pumbaa', 'Pumba', 'The Lion King', ['Pumbaa', 'O Rei Leão']),
+  row('Liu Kang', 'Liu Kang', 'Mortal Kombat', []),
+  row('Raiden', 'Raiden', 'Mortal Kombat', ['Rayden']),
+  row('Sub-Zero', 'Sub-Zero', 'Mortal Kombat', ['Sub Zero']),
+  row('Scorpion', 'Scorpion', 'Mortal Kombat', [
     'Scorpian',
     'Hanzo Hasashi',
   ]),
-  pending('Darkman', 'Darkman', 'Darkman', ['Peyton Westlake']),
-  pending('Sherman Klump', 'Sherman Klump', 'The Nutty Professor', [
+  row('Darkman', 'Darkman', 'Darkman', ['Peyton Westlake']),
+  row('Sherman Klump', 'Sherman Klump', 'The Nutty Professor', [
     'Professor Aloprado',
     'Buddy Love',
   ]),
-  pending('Wallace', 'Wallace', 'Wallace & Gromit', []),
-  pending('Gromit', 'Gromit', 'Wallace & Gromit', []),
-  pending('Leprechaun', 'Leprechaun', 'Leprechaun', []),
-  pending('Spawn', 'Spawn', 'Spawn', ['Al Simmons']),
-  pending('Judge Dredd', 'Juiz Dredd', 'Judge Dredd', [
+  row('Wallace', 'Wallace', 'Wallace & Gromit', []),
+  row('Gromit', 'Gromit', 'Wallace & Gromit', []),
+  row('Leprechaun', 'Leprechaun', 'Leprechaun', []),
+  row('Spawn', 'Spawn', 'Spawn', ['Al Simmons']),
+  row('Judge Dredd', 'Juiz Dredd', 'Judge Dredd', [
     'Dredd',
     'Joseph Dredd',
   ]),
-  pending('Leonardo', 'Leonardo', 'Teenage Mutant Ninja Turtles', [
+  row('Leonardo', 'Leonardo', 'Teenage Mutant Ninja Turtles', [
     'Leo',
     'Tartarugas Ninja',
   ]),
-  pending('Raphael', 'Raphael', 'Teenage Mutant Ninja Turtles', [
+  row('Raphael', 'Raphael', 'Teenage Mutant Ninja Turtles', [
     'Raph',
     'Tartarugas Ninja',
   ]),
-  pending('Donatello', 'Donatello', 'Teenage Mutant Ninja Turtles', [
+  row('Donatello', 'Donatello', 'Teenage Mutant Ninja Turtles', [
     'Donnie',
     'Tartarugas Ninja',
   ]),
-  pending('Michelangelo', 'Michelangelo', 'Teenage Mutant Ninja Turtles', [
+  row('Michelangelo', 'Michelangelo', 'Teenage Mutant Ninja Turtles', [
     'Mikey',
     'Miquelangelo',
     'Tartarugas Ninja',
   ]),
-  pending('The Djinn', 'Djinn', 'Wishmaster', [
+  row('The Djinn', 'Djinn', 'Wishmaster', [
     'Djin',
     'Mestre dos Desejos',
   ]),
-  pending('Aladdin', 'Aladin', 'Aladdin', ['Aladdin']),
-  pending('Genie', 'Gênio', 'Aladdin', [
+  row('Aladdin', 'Aladin', 'Aladdin', ['Aladdin']),
+  row('Genie', 'Gênio', 'Aladdin', [
     'Djin Aladin',
     'Genie',
     'Gênio da Lâmpada',
   ]),
-  pending('Chihiro', 'Chihiro', 'Spirited Away', [
+  row('Chihiro', 'Chihiro', 'Spirited Away', [
     'Sen',
     'A Viagem de Chihiro',
   ]),
-  pending('Haku', 'Haku', 'Spirited Away', [
+  row('Haku', 'Haku', 'Spirited Away', [
     'A Viagem de Chihiro',
   ]),
-  pending('Frank', 'Frank', 'Donnie Darko', ['Frank the Rabbit']),
-  pending('Donnie Darko', 'Donnie Darko', 'Donnie Darko', ['Donnie']),
-  pending('WALL-E', 'WALL-E', 'WALL-E', ['Wall-E', 'Walle']),
-  pending('EVE', 'EVA', 'WALL-E', ['Eve', 'EVA']),
-  pending('Remy', 'Remy', 'Ratatouille', ['Remy Ratatouille']),
-  pending('Linguini', 'Linguini', 'Ratatouille', ['Alfredo Linguini']),
-  pending('Coraline Jones', 'Coraline', 'Coraline', ['Coraline']),
-  pending('Other Mother', 'Outra Mãe', 'Coraline', [
+  row('Frank', 'Frank', 'Donnie Darko', ['Frank the Rabbit']),
+  row('Donnie Darko', 'Donnie Darko', 'Donnie Darko', ['Donnie']),
+  row('WALL-E', 'WALL-E', 'WALL-E', ['Wall-E', 'Walle']),
+  row('EVE', 'EVA', 'WALL-E', ['Eve', 'EVA']),
+  row('Remy', 'Remy', 'Ratatouille', ['Remy Ratatouille']),
+  row('Linguini', 'Linguini', 'Ratatouille', ['Alfredo Linguini']),
+  row('Coraline Jones', 'Coraline', 'Coraline', ['Coraline']),
+  row('Other Mother', 'Outra Mãe', 'Coraline', [
     'Beldam',
     'Outra Mae',
   ]),
-  pending('Frodo Baggins', 'Frodo', 'The Lord of the Rings', [
+  row('Frodo Baggins', 'Frodo', 'The Lord of the Rings', [
     'Frodo',
     'Senhor dos Anéis',
   ]),
-  pending('Samwise Gamgee', 'Sam', 'The Lord of the Rings', [
+  row('Samwise Gamgee', 'Sam', 'The Lord of the Rings', [
     'Sam',
     'Samwise',
     'Senhor dos Anéis',
   ]),
-  pending('Gandalf', 'Gandalf', 'The Lord of the Rings', [
+  row('Gandalf', 'Gandalf', 'The Lord of the Rings', [
     'Gandalf the Grey',
     'Senhor dos Anéis',
   ]),
-  pending('Aragorn', 'Aragorn', 'The Lord of the Rings', [
+  row('Aragorn', 'Aragorn', 'The Lord of the Rings', [
     'Strider',
     'Senhor dos Anéis',
   ]),
-  pending('Saruman', 'Saruman', 'The Lord of the Rings', [
+  row('Saruman', 'Saruman', 'The Lord of the Rings', [
     'Saruman the White',
     'Senhor dos Anéis',
   ]),
-  pending('Legolas', 'Legolas', 'The Lord of the Rings', [
+  row('Legolas', 'Legolas', 'The Lord of the Rings', [
     'Senhor dos Anéis',
   ]),
-  pending('Gimli', 'Gimli', 'The Lord of the Rings', [
+  row('Gimli', 'Gimli', 'The Lord of the Rings', [
     'Senhor dos Anéis',
   ]),
-  pending('Sauron', 'Sauron', 'The Lord of the Rings', [
+  row('Sauron', 'Sauron', 'The Lord of the Rings', [
     'Senhor dos Anéis',
   ]),
-  pending('Harry Potter', 'Harry Potter', 'Harry Potter', ['Harry']),
-  pending('Ron Weasley', 'Ron Weasley', 'Harry Potter', [
+  row('Harry Potter', 'Harry Potter', 'Harry Potter', ['Harry']),
+  row('Ron Weasley', 'Ron Weasley', 'Harry Potter', [
     'Ron',
     'Ron Wesley',
   ]),
-  pending('Hermione Granger', 'Hermione', 'Harry Potter', [
+  row('Hermione Granger', 'Hermione', 'Harry Potter', [
     'Hermione Granger',
   ]),
-  pending('Albus Dumbledore', 'Dumbledore', 'Harry Potter', [
+  row('Albus Dumbledore', 'Dumbledore', 'Harry Potter', [
     'Dumbledor',
     'Albus Dumbledore',
   ]),
-  pending('Sirius Black', 'Sirius Black', 'Harry Potter', ['Sirius']),
-  pending('Peter Parker', 'Peter Parker', 'Spider-Man', [
+  row('Sirius Black', 'Sirius Black', 'Harry Potter', ['Sirius']),
+  row('Lord Voldemort', 'Voldemort', 'Harry Potter', [
+    'Voldemort',
+    'Tom Riddle',
+  ]),
+  row('Peter Parker', 'Peter Parker', 'Spider-Man', [
     'Spider-Man',
     'Homem-Aranha',
   ]),
-  pending('Mary Jane Watson', 'Mary Jane', 'Spider-Man', [
+  row('Mary Jane Watson', 'Mary Jane', 'Spider-Man', [
     'MJ',
     'Mary Jane',
   ]),
-  pending('Harry Osborn', 'Harry Osborn', 'Spider-Man', [
+  row('Harry Osborn', 'Harry Osborn', 'Spider-Man', [
     'Harry Osbon',
   ]),
-  pending('Doctor Octopus', 'Doc Otto', 'Spider-Man 2', [
+  row('Doctor Octopus', 'Doc Otto', 'Spider-Man 2', [
     'Doc Ock',
     'Otto Octavius',
   ]),
-  pending('Shrek', 'Shrek', 'Shrek', []),
-  pending('Puss in Boots', 'Gato de Botas', 'Shrek 2', [
+  row('Shrek', 'Shrek', 'Shrek', []),
+  row('Puss in Boots', 'Gato de Botas', 'Shrek 2', [
     'Gato',
     'Puss',
   ]),
-  pending('Donkey', 'Burro', 'Shrek', []),
-  pending('Fiona', 'Fiona', 'Shrek', ['Princesa Fiona']),
-  pending('Lightning McQueen', 'Relâmpago McQueen', 'Cars', [
+  row('Donkey', 'Burro', 'Shrek', []),
+  row('Fiona', 'Fiona', 'Shrek', ['Princesa Fiona']),
+  row('Lightning McQueen', 'Relâmpago McQueen', 'Cars', [
     'McQueen',
     'Relampago Macquin',
     'Carros',
   ]),
-  pending('James P. Sullivan', 'Sullivan', 'Monsters, Inc.', [
+  row('James P. Sullivan', 'Sullivan', 'Monsters, Inc.', [
     'Sulley',
     'Sulli',
     'Sully',
     'Monstros S.A.',
   ]),
-  pending('Mike Wazowski', 'Mike Wazowski', 'Monsters, Inc.', [
+  row('Mike Wazowski', 'Mike Wazowski', 'Monsters, Inc.', [
     'Mike',
     'Mick Wasalski',
     'Monstros S.A.',
   ]),
-  pending('Rocket', 'Buscapé', 'City of God', [
+  row('Rocket', 'Buscapé', 'City of God', [
     'Buscapé',
     'Cidade de Deus',
   ]),
-  pending('Lil Zé', 'Zé Pequeno', 'City of God', [
+  row('Lil Zé', 'Zé Pequeno', 'City of God', [
     'Ze Pequeno',
     'Cidade de Deus',
   ]),
-  pending('Benny', 'Bené', 'City of God', [
+  row('Benny', 'Bené', 'City of God', [
     'Bene',
     'Cidade de Deus',
   ]),
-  pending('Patrick Bateman', 'Patrick Bateman', 'American Psycho', [
+  row('Patrick Bateman', 'Patrick Bateman', 'American Psycho', [
     'Patrick Betman',
     'Psicopata Americano',
   ]),
-  pending('Jake Sully', 'Jake Sully', 'Avatar', ['Sully']),
-  pending('Bella Swan', 'Bella Swan', 'Twilight', [
+  row('Jake Sully', 'Jake Sully', 'Avatar', ['Sully']),
+  row('Bella Swan', 'Bella Swan', 'Twilight', [
     'Bela Swan',
     'Crepúsculo',
   ]),
-  pending('Edward Cullen', 'Edward Cullen', 'Twilight', [
+  row('Edward Cullen', 'Edward Cullen', 'Twilight', [
     'Edward',
     'Crepúsculo',
   ]),
-  pending('Anton Chigurh', 'Anton Chigurh', 'No Country for Old Men', [
+  row('Anton Chigurh', 'Anton Chigurh', 'No Country for Old Men', [
     'Chigurh',
   ]),
-  pending('Tony Stark', 'Tony Stark', 'Iron Man', [
+  row('Tony Stark', 'Tony Stark', 'Iron Man', [
     'Iron Man',
     'Homem de Ferro',
   ]),
-  pending('Oh Dae-su', 'Oh Dae-su', 'Oldboy', [
+  row('Oh Dae-su', 'Oh Dae-su', 'Oldboy', [
     'Oh Dae Su',
     'Old Boy',
   ]),
-  pending('Maximus', 'Maximus', 'Gladiator', [
+  row('Maximus', 'Maximus', 'Gladiator', [
     'Maximus Decimus Meridius',
     'Gladiador',
   ]),
-  pending('Commodus', 'Commodus', 'Gladiator', ['Gladiador']),
-  pending('Bob Parr', 'Beto Pêra', 'The Incredibles', [
+  row('Commodus', 'Commodus', 'Gladiator', ['Gladiador']),
+  row('Bob Parr', 'Beto Pêra', 'The Incredibles', [
     'Mr. Incredible',
     'Sr. Incrível',
     'Os Incríveis',
   ]),
-  pending('Violet Parr', 'Violeta', 'The Incredibles', [
+  row('Violet Parr', 'Violeta', 'The Incredibles', [
     'Violet',
     'Os Incríveis',
   ]),
-  pending('Dash Parr', 'Flecha', 'The Incredibles', [
+  row('Dash Parr', 'Flecha', 'The Incredibles', [
     'Dash',
     'Flasha',
     'Os Incríveis',
   ]),
-  pending('Helen Parr', 'Helena Pêra', 'The Incredibles', [
+  row('Helen Parr', 'Helena Pêra', 'The Incredibles', [
     'Elastigirl',
     'Mulher-Elástica',
     'Os Incríveis',
   ]),
-  pending('Jack-Jack Parr', 'Zezé', 'The Incredibles', [
+  row('Jack-Jack Parr', 'Zezé', 'The Incredibles', [
     'Jack-Jack',
     'Zeze',
     'Os Incríveis',
   ]),
-  pending('Syndrome', 'Síndrome', 'The Incredibles', [
+  row('Syndrome', 'Síndrome', 'The Incredibles', [
     'Buddy Pine',
     'Os Incríveis',
   ]),
-  pending('Carl Fredricksen', 'Carl Fredricksen', 'Up', [
+  row('Carl Fredricksen', 'Carl Fredricksen', 'Up', [
     'Carl',
     'Up - Altas Aventuras',
   ]),
-  pending('Russell', 'Russell', 'Up', [
+  row('Russell', 'Russell', 'Up', [
     'Russel',
     'Up - Altas Aventuras',
   ]),
-  pending('Sara Goldfarb', 'Sara Goldfarb', 'Requiem for a Dream', [
+  row('Sara Goldfarb', 'Sara Goldfarb', 'Requiem for a Dream', [
     'Réquiem para um Sonho',
   ]),
-  pending('Seth', 'Seth', 'Superbad', ['Super Bad']),
-  pending('Evan', 'Evan', 'Superbad', []),
-  pending('Fogell', 'Fogell', 'Superbad', ['McLovin']),
-  pending('Amélie Poulain', 'Amélie Poulain', 'Amélie', [
+  row('Seth', 'Seth', 'Superbad', ['Super Bad']),
+  row('Evan', 'Evan', 'Superbad', []),
+  row('Fogell', 'Fogell', 'Superbad', ['McLovin']),
+  row('Amélie Poulain', 'Amélie Poulain', 'Amélie', [
     'Amelie',
     'Amelie Poulan',
     'O Fabuloso Destino de Amélie Poulain',
   ]),
-  pending('Victor Van Dort', 'Victor Van Dort', 'Corpse Bride', [
+  row('Victor Van Dort', 'Victor Van Dort', 'Corpse Bride', [
     'Victor van Dorf',
     'A Noiva Cadáver',
   ]),
-  pending('The Bride', 'A Noiva', 'Kill Bill', [
-    'Beatrix Kiddo',
+  row('Beatrix Kiddo', 'A Noiva', 'Kill Bill', [
+    'The Bride',
     'Black Mamba',
+    'A Noiva Kill Bill',
   ]),
-  pending('Jack Sparrow', 'Jack Sparrow', 'Pirates of the Caribbean', [
+  row('Jack Sparrow', 'Jack Sparrow', 'Pirates of the Caribbean', [
     'Capitão Jack Sparrow',
     'Piratas do Caribe',
   ]),
-  pending('Will Turner', 'Will Turner', 'Pirates of the Caribbean', [
+  row('Will Turner', 'Will Turner', 'Pirates of the Caribbean', [
     'William Turner',
     'Piratas do Caribe',
   ]),
-  pending('Davy Jones', 'Davy Jones', 'Pirates of the Caribbean', [
+  row('Davy Jones', 'Davy Jones', 'Pirates of the Caribbean', [
     'Piratas do Caribe',
   ]),
+]
+
+/**
+ * Sem foto ainda — fora do diário até virar row() com JPG.
+ */
+export const CHARACTER_PENDING = [
   pending('Juno MacGuff', 'Juno', 'Juno', ['Juno MacGuff']),
 ]
 

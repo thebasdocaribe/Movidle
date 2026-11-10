@@ -35,6 +35,12 @@ import {
   initialStudioBoard,
   type StudioBoardState,
 } from '../components/WhoamiStudioBoard'
+import {
+  WhoamiClueBoard,
+  applyClueBoardAnswer,
+  initialClueBoard,
+  type ClueBoardState,
+} from '../components/WhoamiClueBoard'
 
 type WhoAmIScreenProps = {
   variant: 'daily' | 'endless'
@@ -154,6 +160,9 @@ export function WhoAmIScreen({
   const [studioBoard, setStudioBoard] = useState<StudioBoardState>(() =>
     initialStudioBoard(),
   )
+  const [clueBoard, setClueBoard] = useState<ClueBoardState>(() =>
+    initialClueBoard(),
+  )
   const suggestTimer = useRef<number | null>(null)
   const startedAt = useRef<number>(Date.now())
 
@@ -201,6 +210,7 @@ export function WhoAmIScreen({
       setConfirmGiveUp(false)
       setElapsed(0)
       setStudioBoard(initialStudioBoard())
+      setClueBoard(initialClueBoard())
       startedAt.current = Date.now()
       setCategoryId(null)
       if (endless && data.puzzleId) {
@@ -285,6 +295,9 @@ export function WhoAmIScreen({
       ])
       setStudioBoard((prev) =>
         applyStudioBoardAnswer(prev, res.questionId, res.answer),
+      )
+      setClueBoard((prev) =>
+        applyClueBoardAnswer(prev, res.questionId, res.answer),
       )
       const nextAsks = res.asksUsed ?? asksUsed + 1
       setAsksUsed(nextAsks)
@@ -527,6 +540,7 @@ export function WhoAmIScreen({
             ) : (
               <>
                 <WhoamiStudioBoard state={studioBoard} />
+                <WhoamiClueBoard state={clueBoard} />
 
                 <div className="grid gap-3 lg:grid-cols-2 lg:gap-4 lg:items-start">
                   <section className="whoami-panel">
