@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactElement,
+} from 'react'
 import {
   fetchAutocomplete,
   fetchWhoamiDaily,
@@ -50,7 +57,7 @@ const ANSWER_CLASS: Record<WhoamiAnswer, string> = {
 
 const CATEGORY_META: Record<
   string,
-  { title: string; blurb: string; Icon: () => JSX.Element }
+  { title: string; blurb: string; Icon: () => ReactElement }
 > = {
   identity: {
     title: 'Identidade',
