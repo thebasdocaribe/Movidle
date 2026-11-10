@@ -307,11 +307,25 @@ export default function App() {
         onProfile={() => openProfile(user?.username)}
         onBrowseProfiles={openBrowseProfiles}
         onOscars={openOscars}
+        onRanking={() => {
+          window.setTimeout(() => {
+            document
+              .getElementById('hall-da-fama')
+              ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }, 50)
+        }}
         onAdmin={openAdmin}
         loggedIn={Boolean(user)}
         user={user}
         username={user?.username}
         showFooter={screen === 'hub'}
+        navActive={
+          screen === 'oscars'
+            ? 'achievements'
+            : screen === 'hub'
+              ? 'play'
+              : 'play'
+        }
       >
         {screen === 'admin' && user?.isAdmin ? (
           <AdminScreen user={user} onBack={goHome} />
