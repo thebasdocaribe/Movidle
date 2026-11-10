@@ -80,7 +80,6 @@ import {
   keywordsPoints,
   looksLikeSequel,
   movieHasEnoughKeywords,
-  revealDeltaForWrong,
   resolvedKeywords,
   showPixelPoster,
   sliceRevealed,
@@ -778,23 +777,42 @@ function tmdbIdFromMovie(movie) {
 async function ensureKeywordsData(movie) {
   if (!movie) return movie
   let current = movie
+  // curatedPt curto/ruim não conta — força refresh do TMDB
   if (!movieHasEnoughKeywords(current)) {
     const tmdbId = keywordsTmdbId(current) || tmdbIdFromMovie(current)
     if (tmdbId && tmdbConfigured()) {
       const raw = await fetchMovieKeywords(tmdbId)
       if (raw?.length) {
         const curated = curateKeywords(raw, current)
+        const prevRaw = current.cast_json?._keywords?.raw
         const castJson = {
           ...(typeof current.cast_json === 'object' && current.cast_json
             ? current.cast_json
             : {}),
-          _keywords: { raw, curated },
+          _keywords: {
+            raw: raw.length >= (prevRaw?.length || 0) ? raw : prevRaw || raw,
+            curated,
+            // descarta curatedPt velho (frases EN longas / lista curta)
+          },
         }
         current = { ...current, cast_json: castJson }
         await query(`UPDATE movies SET cast_json = $2::jsonb WHERE id = $1`, [
           current.movie_id || current.id,
           JSON.stringify(castJson),
         ]).catch(() => {})
+      }
+    } else if (Array.isArray(current.cast_json?._keywords?.raw)) {
+      // Sem TMDB: re-cura o raw local e joga fora curatedPt ruim
+      const curated = curateKeywords(current.cast_json._keywords.raw, current)
+      current = {
+        ...current,
+        cast_json: {
+          ...current.cast_json,
+          _keywords: {
+            raw: current.cast_json._keywords.raw,
+            curated,
+          },
+        },
       }
     }
   }
@@ -916,6 +934,7 @@ function publicKeywordsPuzzle(puzzle, extra = {}) {
     pixelAt: KEYWORDS_PIXEL_AT,
     words: revealed,
     revealedCount: revealed.length,
+    poolSize: words.length,
     totalHintSlots: Math.min(
       words.length,
       KEYWORDS_REVEAL_BY_WRONG[KEYWORDS_REVEAL_BY_WRONG.length - 1],
@@ -1864,9 +1883,12 @@ async function handleKeywordsAdvance({
   const attempt = wrongGuesses + 1
   const points = correct ? keywordsPoints({ won: true, attempt }) : 0
   const words = resolvedKeywords(enriched)
+  const prevRevealed = sliceRevealed(words, wrongGuesses)
   const revealed = sliceRevealed(words, nextWrong)
   const pixel = showPixelPoster(nextWrong)
-  const added = correct ? 0 : revealDeltaForWrong(wrongGuesses)
+  const added = correct
+    ? 0
+    : Math.max(0, revealed.length - prevRevealed.length)
   return {
     status: 200,
     body: {
@@ -1876,6 +1898,7 @@ async function handleKeywordsAdvance({
       wrongGuesses: nextWrong,
       words: revealed,
       revealedCount: revealed.length,
+      poolSize: words.length,
       addedWords: added,
       showPixelPoster: pixel,
       pixelPosterUrl: pixel ? enriched.poster_path || null : null,
@@ -2178,15 +2201,48 @@ app.get('/api/character/autocomplete', async (req, res) => {
       res.json({ suggestions: [] })
       return
     }
+    // Fold acentos no SQL pra casar "dalmatas" com "Dálmatas" / film_title EN.
+    // from/to precisam ter o mesmo length (PostgreSQL translate).
+    const fold = (col) =>
+      `translate(lower(coalesce(${col}, '')),
+        'áàâãäåéèêëíìîïóòôõöøúùûüýÿçñ',
+        'aaaaaaeeeeiiiioooooouuuuyycn')`
     const { rows } = await query(
-      `SELECT name, name_pt, film_title
-       FROM characters
-       WHERE name ILIKE $1 OR name_pt ILIKE $1
+      `WITH matched_films AS (
+         SELECT DISTINCT film_title
+         FROM characters
+         WHERE film_title IS NOT NULL
+           AND film_title <> ''
+           AND (
+             ${fold('film_title')} LIKE $1
+             OR EXISTS (
+               SELECT 1 FROM unnest(aliases) a
+               WHERE ${fold('a')} LIKE $1
+             )
+           )
+       )
+       SELECT c.name, c.name_pt, c.film_title,
+              CASE
+                WHEN ${fold('c.name')} LIKE $1
+                  OR ${fold('c.name_pt')} LIKE $1
+                  OR EXISTS (
+                    SELECT 1 FROM unnest(c.aliases) a
+                    WHERE ${fold('a')} LIKE $1
+                  )
+                THEN 0
+                ELSE 1
+              END AS name_rank
+       FROM characters c
+       WHERE ${fold('c.name')} LIKE $1
+          OR ${fold('c.name_pt')} LIKE $1
+          OR ${fold('c.film_title')} LIKE $1
           OR EXISTS (
-            SELECT 1 FROM unnest(aliases) a WHERE a ILIKE $1
+            SELECT 1 FROM unnest(c.aliases) a
+            WHERE ${fold('a')} LIKE $1
           )
-       ORDER BY name ASC
-       LIMIT 12`,
+          OR c.film_title IN (SELECT film_title FROM matched_films)
+       ORDER BY name_rank ASC, c.film_title ASC NULLS LAST, c.name ASC
+       LIMIT 20`,
       [`%${q}%`],
     )
     res.json({

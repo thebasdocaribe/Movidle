@@ -144,7 +144,8 @@ export function HubScreen({
             <div className="flex flex-col gap-2">
               <ModeRow
                 title="CLÁSSICO"
-                tag="Diário"
+                tag="Fácil"
+                tagTone="easy"
                 subtitle="Adivinhe o filme pelo clipe."
                 thumbKey="classic"
                 icon={<IconCamera />}
@@ -153,7 +154,8 @@ export function HubScreen({
               />
               <ModeRow
                 title="POSTER"
-                tag="Diário"
+                tag="Fácil"
+                tagTone="easy"
                 subtitle="Adivinhe o poster pelo elenco."
                 thumbKey="poster"
                 icon={<IconMask />}
@@ -162,7 +164,8 @@ export function HubScreen({
               />
               <ModeRow
                 title="PERSONAGEM"
-                tag="Diário"
+                tag="Médio"
+                tagTone="medium"
                 subtitle="Adivinhe o personagem pelo recorte."
                 thumbKey="character"
                 icon={<IconHelmet />}
@@ -171,7 +174,8 @@ export function HubScreen({
               />
               <ModeRow
                 title="PALAVRA-CHAVE"
-                tag="Diário"
+                tag="Médio"
+                tagTone="medium"
                 subtitle="4 palavras → +3 por erro · pôster na 6ª."
                 thumbKey="keywords"
                 icon={<IconRing />}
@@ -409,7 +413,7 @@ const MODE_THUMB_EXT: Record<string, string> = {
 function ModeRow({
   title,
   tag,
-  tagTone = 'daily',
+  tagTone = 'easy',
   subtitle,
   thumbKey,
   thumbFit = 'cover',
@@ -419,7 +423,7 @@ function ModeRow({
 }: {
   title: string
   tag: string
-  tagTone?: 'daily' | 'hard'
+  tagTone?: 'easy' | 'medium' | 'hard'
   subtitle?: string
   thumbKey: string
   /** contain = zoom out, mostra a foto inteira no quadrado */
@@ -459,7 +463,11 @@ function ModeRow({
         <span className="min-w-0 flex-1 text-left">
           <span
             className={`hub-mode-tag ${
-              tagTone === 'hard' ? 'hub-mode-tag-hard' : ''
+              tagTone === 'hard'
+                ? 'hub-mode-tag-hard'
+                : tagTone === 'medium'
+                  ? 'hub-mode-tag-medium'
+                  : 'hub-mode-tag-easy'
             }`}
           >
             {tag}

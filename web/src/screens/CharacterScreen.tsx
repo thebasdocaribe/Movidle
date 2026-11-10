@@ -384,7 +384,7 @@ export function CharacterScreen({
                       window.setTimeout(() => setShowSuggestions(false), 150)
                     }}
                     disabled={busy}
-                    placeholder="Nome do personagem…"
+                    placeholder="Personagem ou filme…"
                     className="guess-input w-full"
                     autoComplete="off"
                   />
@@ -407,6 +407,9 @@ export function CharacterScreen({
                       ))}
                     </ul>
                   ) : null}
+                  <p className="mt-1 text-[10px] text-cinema-muted">
+                    Sem o nome? Digite o filme pra listar os personagens.
+                  </p>
                 </div>
                 <button
                   type="submit"

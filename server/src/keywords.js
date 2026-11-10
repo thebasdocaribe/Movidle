@@ -839,12 +839,25 @@ export async function translateListToPt(words) {
   return dedupeWords(out)
 }
 
+/** Frases longas demais poluem a lousa (parecem “10 palavras” sendo 1 keyword). */
+export function isKeywordTooLong(label) {
+  const raw = String(label || '').trim()
+  if (!raw) return true
+  if (raw.length > 28) return true
+  const tokens = normalizeKey(raw).split(/\s+/).filter(Boolean)
+  return tokens.length > 3
+}
+
+export function qualityFilterKeywords(words) {
+  return (words || []).map(String).filter((w) => w.trim() && !isKeywordTooLong(w))
+}
+
 /**
  * @param {{ id?: number, name?: string, namePt?: string }[]} raw
  * @param {{ title?: string, titlePt?: string } | null} movie
  */
 export function curateKeywords(raw, movie = null) {
-  const titles = [movie?.title, movie?.titlePt]
+  const titles = [movie?.title, movie?.titlePt, movie?.title_pt]
     .filter(Boolean)
     .map(normalizeKey)
 
@@ -861,12 +874,14 @@ export function curateKeywords(raw, movie = null) {
     if (!norm || norm.length < 2) continue
     if (BLACKLIST.has(norm)) continue
     if (/^\d+$/.test(norm)) continue
-    if (norm.length > 40) continue
+    if (norm.length > 28) continue
+    if (isKeywordTooLong(source)) continue
     if (titles.some((t) => t && (norm === t || t.includes(norm) || norm.includes(t)))) {
       continue
     }
     const label = translateLabel(pt || en)
     if (!label) continue
+    if (isKeywordTooLong(label)) continue
     if (dropsRivalFranchiseTag(label, movie) || dropsRivalFranchiseTag(en, movie)) {
       continue
     }
@@ -898,31 +913,39 @@ export function tmdbIdFromMovie(movie) {
 }
 
 /**
- * Lista final (override > curatedPt > curated > raw).
+ * Lista final (override > curatedPt bom > curated/raw).
+ * curatedPt curto/ruim NÃO bloqueia fallback — senão a lousa fica com 4 frases EN.
  * @returns {string[]}
  */
 export function resolvedKeywords(movie) {
   const tmdbId = tmdbIdFromMovie(movie)
   const overrides = loadKeywordOverrides()
   if (tmdbId && Array.isArray(overrides[String(tmdbId)])) {
-    return overrides[String(tmdbId)].map(String).filter(Boolean)
+    return qualityFilterKeywords(overrides[String(tmdbId)])
   }
   if (movie?.id && Array.isArray(overrides[String(movie.id)])) {
-    return overrides[String(movie.id)].map(String).filter(Boolean)
+    return qualityFilterKeywords(overrides[String(movie.id)])
   }
-  const pt = movie?.cast_json?._keywords?.curatedPt
-  if (Array.isArray(pt) && pt.length) {
-    return pt.map(String).filter(Boolean)
+  if (movie?.movie_id && Array.isArray(overrides[String(movie.movie_id)])) {
+    return qualityFilterKeywords(overrides[String(movie.movie_id)])
   }
-  const stored = movie?.cast_json?._keywords?.curated
-  if (Array.isArray(stored) && stored.length) {
-    return stored.map(String).filter(Boolean)
-  }
+
   const raw = movie?.cast_json?._keywords?.raw
-  if (Array.isArray(raw) && raw.length) {
-    return curateKeywords(raw, movie)
-  }
-  return []
+  const fromRaw =
+    Array.isArray(raw) && raw.length ? curateKeywords(raw, movie) : []
+  const stored = Array.isArray(movie?.cast_json?._keywords?.curated)
+    ? qualityFilterKeywords(movie.cast_json._keywords.curated)
+    : []
+  const pt = Array.isArray(movie?.cast_json?._keywords?.curatedPt)
+    ? qualityFilterKeywords(movie.cast_json._keywords.curatedPt)
+    : []
+
+  // curatedPt só manda se for lista completa o bastante
+  if (pt.length >= KEYWORDS_MIN_CURATED) return pt
+
+  // senão pega a maior fonte útil (re-curada do raw costuma ser melhor)
+  const best = [fromRaw, stored, pt].sort((a, b) => b.length - a.length)[0]
+  return best || []
 }
 
 function isEnglishish(word) {
@@ -953,57 +976,62 @@ export function ensurePortugueseKeywords(movie) {
     return { movie, words: resolvedKeywords(movie), changed: false }
   }
 
-  const rawBase =
-    (Array.isArray(movie?.cast_json?._keywords?.curated) &&
-      movie.cast_json._keywords.curated.map(String).filter(Boolean)) ||
-    (Array.isArray(movie?.cast_json?._keywords?.raw) &&
-      curateKeywords(movie.cast_json._keywords.raw, movie)) ||
-    []
-
-  const existingPt = Array.isArray(movie?.cast_json?._keywords?.curatedPt)
-    ? movie.cast_json._keywords.curatedPt.map(String).filter(Boolean)
+  const raw = movie?.cast_json?._keywords?.raw
+  const fromRaw =
+    Array.isArray(raw) && raw.length ? curateKeywords(raw, movie) : []
+  const fromCurated = Array.isArray(movie?.cast_json?._keywords?.curated)
+    ? qualityFilterKeywords(movie.cast_json._keywords.curated)
     : []
+  // Sempre preferir a lista mais rica (raw re-curado costuma recuperar termos)
+  const source =
+    fromRaw.length >= fromCurated.length && fromRaw.length
+      ? fromRaw
+      : fromCurated.length
+        ? fromCurated
+        : fromRaw
 
-  const ptLooksGood =
-    existingPt.length >=
-      Math.min(KEYWORDS_START, rawBase.length || KEYWORDS_START) &&
-    existingPt.every((w) => !isEnglishish(w))
+  const existingPt = qualityFilterKeywords(
+    Array.isArray(movie?.cast_json?._keywords?.curatedPt)
+      ? movie.cast_json._keywords.curatedPt
+      : [],
+  ).filter((w) => !isEnglishish(w))
 
-  if (ptLooksGood) {
+  if (!source.length) {
     return { movie, words: existingPt, changed: false }
   }
 
-  const source = rawBase.length ? rawBase : resolvedKeywords(movie)
-  if (!source.length) return { movie, words: [], changed: false }
+  const need = Math.min(
+    KEYWORDS_MIN_CURATED,
+    Math.max(source.length, existingPt.length),
+  )
+  const ptLooksGood =
+    existingPt.length >= KEYWORDS_MIN_CURATED &&
+    existingPt.every((w) => !isEnglishish(w) && !isKeywordTooLong(w))
 
-  // Sync: mapa + cache. Descarta residual inglês sem tradução.
-  const curatedPt = translateListToPtSync(source).filter((w) => !isEnglishish(w))
-  if (curatedPt.length < KEYWORDS_START) {
-    // se filtrou demais, mantém sync completo (melhor EN do que lista curta)
-    const loose = translateListToPtSync(source)
-    const castJsonLoose = {
-      ...(typeof movie.cast_json === 'object' && movie.cast_json
-        ? movie.cast_json
-        : {}),
-      _keywords: {
-        ...(movie.cast_json?._keywords || {}),
-        curated: movie.cast_json?._keywords?.curated || source,
-        curatedPt: loose,
-      },
-    }
-    return {
-      movie: { ...movie, cast_json: castJsonLoose },
-      words: loose,
-      changed: true,
-    }
+  if (ptLooksGood) {
+    return { movie, words: existingPt.slice(0, need), changed: false }
   }
+
+  // Preferir PT curto; completa com traduzidos pra progressão +3 até 15.
+  const translated = qualityFilterKeywords(translateListToPtSync(source))
+  const preferred = [
+    ...existingPt,
+    ...translated.filter((w) => !isEnglishish(w)),
+  ]
+  const curatedPt = padKeywordList(preferred, translated, need)
+  const curated = qualityFilterKeywords(
+    movie.cast_json?._keywords?.curated?.length
+      ? movie.cast_json._keywords.curated
+      : source,
+  )
+  const finalCurated = curated.length >= source.length ? curated : source
   const castJson = {
     ...(typeof movie.cast_json === 'object' && movie.cast_json
       ? movie.cast_json
       : {}),
     _keywords: {
       ...(movie.cast_json?._keywords || {}),
-      curated: movie.cast_json?._keywords?.curated || source,
+      curated: finalCurated,
       curatedPt,
     },
   }
@@ -1012,6 +1040,22 @@ export function ensurePortugueseKeywords(movie) {
     words: curatedPt,
     changed: true,
   }
+}
+
+/** Completa a lista até `min` sem duplicar (ordem: preferred → filler). */
+function padKeywordList(preferred, filler, min) {
+  const out = []
+  const seen = new Set()
+  for (const list of [preferred, filler]) {
+    for (const w of list || []) {
+      const n = normalizeKey(w)
+      if (!n || seen.has(n)) continue
+      seen.add(n)
+      out.push(String(w))
+      if (out.length >= min) return out
+    }
+  }
+  return out
 }
 
 /** Continuação / parte N / numeral romano no título. */

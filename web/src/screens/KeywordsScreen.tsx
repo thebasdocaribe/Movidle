@@ -205,19 +205,16 @@ export function KeywordsScreen({
         setRevealPoster(res.posterUrl || null)
         await persistFinish('lose', res.wrongGuesses, res.wrongGuesses)
       } else {
-        {
-          const added = res.addedWords ?? 0
-          const extra = res.showPixelPoster ? ' · pôster pixelizado' : ''
-          setHint(
-            added > 0
-              ? `${res.skipped ? 'Pulou' : 'Errou'} · +${added} palavras${extra}`
-              : res.showPixelPoster
-                ? `${res.skipped ? 'Pulou' : 'Errou'} · pôster pixelizado`
-                : res.skipped
-                  ? 'Pulou'
-                  : 'Errou',
-          )
-        }
+        const added = res.addedWords ?? 0
+        const prefix = res.skipped ? 'Pulou' : 'Errou'
+        const extra = res.showPixelPoster ? ' · pôster pixelizado' : ''
+        setHint(
+          added > 0
+            ? `${prefix} · +${added} palavra${added === 1 ? '' : 's'}${extra}`
+            : res.showPixelPoster
+              ? `${prefix} · pôster pixelizado`
+              : prefix,
+        )
       }
     } catch (err) {
       setHint((err as Error).message)
@@ -319,11 +316,17 @@ export function KeywordsScreen({
                 </p>
 
                 <div className="keyword-board">
-                  <p className="keyword-board-title">Hoje na lousa</p>
+                  <p className="keyword-board-title">
+                    Hoje na lousa
+                    <span className="keyword-board-count">
+                      {' '}
+                      · {words.length} palavra{words.length === 1 ? '' : 's'}
+                    </span>
+                  </p>
                   <ul className="keyword-board-words">
                     {words.map((w, i) => (
                       <li
-                        key={`${w}-${i}`}
+                        key={`kw-${wrong}-${i}-${w}`}
                         className="keyword-chalk"
                         style={
                           {

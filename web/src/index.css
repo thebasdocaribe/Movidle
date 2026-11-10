@@ -506,6 +506,16 @@ input:disabled {
   background: #7dffb0;
 }
 
+.hub-mode-tag-easy {
+  color: #140b14;
+  background: #7dffb0;
+}
+
+.hub-mode-tag-medium {
+  color: #1a0a12;
+  background: #ffc44d;
+}
+
 .hub-mode-tag-hard {
   color: #fff;
   background: #ff2a3c;
@@ -1686,6 +1696,14 @@ input:disabled {
   text-align: center;
   margin-bottom: 0.75rem;
   text-transform: uppercase;
+}
+
+.keyword-board-count {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: rgba(245, 245, 240, 0.4);
 }
 
 .keyword-board-words {
