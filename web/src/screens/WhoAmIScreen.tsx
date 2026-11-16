@@ -29,18 +29,19 @@ import type { AuthUser, ProgressMap } from '../auth'
 import { modeProgress } from '../auth'
 import { DailyCalendarButton } from '../components/DailyCalendarButton'
 import { todayBRT } from '../components/DayCalendarModal'
-import {
-  WhoamiStudioBoard,
-  applyStudioBoardAnswer,
-  initialStudioBoard,
-  type StudioBoardState,
-} from '../components/WhoamiStudioBoard'
-import {
-  WhoamiClueBoard,
-  applyClueBoardAnswer,
-  initialClueBoard,
-  type ClueBoardState,
-} from '../components/WhoamiClueBoard'
+// Quadro visual (estúdio / pistas) — pausado; volta com as artes novas
+// import {
+//   WhoamiStudioBoard,
+//   applyStudioBoardAnswer,
+//   initialStudioBoard,
+//   type StudioBoardState,
+// } from '../components/WhoamiStudioBoard'
+// import {
+//   WhoamiClueBoard,
+//   applyClueBoardAnswer,
+//   initialClueBoard,
+//   type ClueBoardState,
+// } from '../components/WhoamiClueBoard'
 
 type WhoAmIScreenProps = {
   variant: 'daily' | 'endless'
@@ -101,6 +102,87 @@ const CATEGORY_META: Record<
     blurb: 'Oscar, trilha…',
     Icon: IconBulb,
   },
+  niche_animation: {
+    title: 'Aprofundar · Animação',
+    blurb: '2D, 3D, anime…',
+    Icon: IconReel,
+  },
+  niche_horror: {
+    title: 'Aprofundar · Terror',
+    blurb: 'Slasher, possessão…',
+    Icon: IconStar,
+  },
+  niche_scifi: {
+    title: 'Aprofundar · Sci-fi',
+    blurb: 'Espaço, IA, tempo…',
+    Icon: IconStar,
+  },
+  niche_action: {
+    title: 'Aprofundar · Ação',
+    blurb: 'Espião, heist…',
+    Icon: IconStar,
+  },
+  niche_comedy: {
+    title: 'Aprofundar · Comédia',
+    blurb: 'Paródia, pastelão…',
+    Icon: IconStar,
+  },
+  niche_fantasy: {
+    title: 'Aprofundar · Fantasia',
+    blurb: 'Magia, reinos…',
+    Icon: IconClapper,
+  },
+  niche_thriller: {
+    title: 'Aprofundar · Suspense',
+    blurb: 'Mistério, twist…',
+    Icon: IconSearch,
+  },
+  niche_drama: {
+    title: 'Aprofundar · Drama',
+    blurb: 'Família, sociedade…',
+    Icon: IconPeople,
+  },
+  niche_romance: {
+    title: 'Aprofundar · Romance',
+    blurb: 'Casal, triângulo…',
+    Icon: IconPeople,
+  },
+  niche_western: {
+    title: 'Aprofundar · Faroeste',
+    blurb: 'Pistoleiro, duelo…',
+    Icon: IconClapper,
+  },
+  niche_war: {
+    title: 'Aprofundar · Guerra',
+    blurb: 'WW2, soldado…',
+    Icon: IconCalendar,
+  },
+  niche_musical: {
+    title: 'Aprofundar · Musical',
+    blurb: 'Canto, dança…',
+    Icon: IconBulb,
+  },
+  niche_documentary: {
+    title: 'Aprofundar · Doc',
+    blurb: 'Entrevistas, arquivo…',
+    Icon: IconBulb,
+  },
+  niche_family: {
+    title: 'Aprofundar · Família',
+    blurb: 'Infantil, moral…',
+    Icon: IconPeople,
+  },
+}
+
+function isQuestionUnlocked(
+  q: { unlock?: { any: { questionId: string; answer?: string }[] } | null },
+  answerById: Map<string, WhoamiAnswer>,
+) {
+  const unlock = q.unlock
+  if (!unlock?.any?.length) return true
+  return unlock.any.some(
+    (cond) => answerById.get(cond.questionId) === (cond.answer || 'yes'),
+  )
 }
 
 function formatElapsed(sec: number) {
@@ -157,12 +239,12 @@ export function WhoAmIScreen({
   const [suggestions, setSuggestions] = useState<AutocompleteItem[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [elapsed, setElapsed] = useState(0)
-  const [studioBoard, setStudioBoard] = useState<StudioBoardState>(() =>
-    initialStudioBoard(),
-  )
-  const [clueBoard, setClueBoard] = useState<ClueBoardState>(() =>
-    initialClueBoard(),
-  )
+  // const [studioBoard, setStudioBoard] = useState<StudioBoardState>(() =>
+  //   initialStudioBoard(),
+  // )
+  // const [clueBoard, setClueBoard] = useState<ClueBoardState>(() =>
+  //   initialClueBoard(),
+  // )
   const suggestTimer = useRef<number | null>(null)
   const startedAt = useRef<number>(Date.now())
 
@@ -176,13 +258,31 @@ export function WhoAmIScreen({
     () => new Set(history.map((h) => h.questionId)),
     [history],
   )
+  const answerById = useMemo(() => {
+    const m = new Map<string, WhoamiAnswer>()
+    for (const h of history) m.set(h.questionId, h.answer)
+    return m
+  }, [history])
 
   const categories = puzzle?.askBank.categories ?? []
   const activeCategory = categories.find((c) => c.id === categoryId) || null
   const questions = useMemo(() => {
     if (!puzzle || !categoryId) return []
-    return puzzle.askBank.questions.filter((q) => q.category === categoryId)
-  }, [puzzle, categoryId])
+    return puzzle.askBank.questions.filter(
+      (q) => q.category === categoryId && isQuestionUnlocked(q, answerById),
+    )
+  }, [puzzle, categoryId, answerById])
+  const visibleCategories = useMemo(() => {
+    if (!puzzle) return []
+    return categories.filter((c) =>
+      puzzle.askBank.questions.some(
+        (q) =>
+          q.category === c.id &&
+          !askedIds.has(q.id) &&
+          isQuestionUnlocked(q, answerById),
+      ),
+    )
+  }, [puzzle, categories, askedIds, answerById])
 
   function durationSec() {
     return Math.max(0, Math.floor((Date.now() - startedAt.current) / 1000))
@@ -209,8 +309,8 @@ export function WhoAmIScreen({
       setHint(null)
       setConfirmGiveUp(false)
       setElapsed(0)
-      setStudioBoard(initialStudioBoard())
-      setClueBoard(initialClueBoard())
+      // setStudioBoard(initialStudioBoard())
+      // setClueBoard(initialClueBoard())
       startedAt.current = Date.now()
       setCategoryId(null)
       if (endless && data.puzzleId) {
@@ -293,12 +393,12 @@ export function WhoAmIScreen({
           key: `${res.questionId}-${Date.now()}`,
         },
       ])
-      setStudioBoard((prev) =>
-        applyStudioBoardAnswer(prev, res.questionId, res.answer),
-      )
-      setClueBoard((prev) =>
-        applyClueBoardAnswer(prev, res.questionId, res.answer),
-      )
+      // setStudioBoard((prev) =>
+      //   applyStudioBoardAnswer(prev, res.questionId, res.answer),
+      // )
+      // setClueBoard((prev) =>
+      //   applyClueBoardAnswer(prev, res.questionId, res.answer),
+      // )
       const nextAsks = res.asksUsed ?? asksUsed + 1
       setAsksUsed(nextAsks)
       if (nextAsks >= maxAsks) {
@@ -539,8 +639,8 @@ export function WhoAmIScreen({
               </div>
             ) : (
               <>
-                <WhoamiStudioBoard state={studioBoard} />
-                <WhoamiClueBoard state={clueBoard} />
+                {/* <WhoamiStudioBoard state={studioBoard} /> */}
+                {/* <WhoamiClueBoard state={clueBoard} /> */}
 
                 <div className="grid gap-3 lg:grid-cols-2 lg:gap-4 lg:items-start">
                   <section className="whoami-panel">
@@ -614,11 +714,13 @@ export function WhoAmIScreen({
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                        {categories.map((c) => {
+                        {visibleCategories.map((c) => {
                           const meta = categoryMeta(c.id, c.label)
                           const remaining = puzzle.askBank.questions.filter(
                             (q) =>
-                              q.category === c.id && !askedIds.has(q.id),
+                              q.category === c.id &&
+                              !askedIds.has(q.id) &&
+                              isQuestionUnlocked(q, answerById),
                           ).length
                           return (
                             <button

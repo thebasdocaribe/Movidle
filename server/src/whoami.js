@@ -5,6 +5,13 @@
  */
 
 import { query } from './db.js'
+import {
+  WHOAMI_CATEGORIES_V2,
+  WHOAMI_QUESTIONS_V2,
+  isWhoamiQuestionUnlocked,
+} from './whoamiQuestionsCatalog.js'
+
+export { isWhoamiQuestionUnlocked }
 
 export const ANSWER_LABEL = {
   yes: 'SIM',
@@ -23,6 +30,13 @@ const TMDB_GENRE = {
   kids: 10751,
   scifi: 878,
   animation: 16,
+  drama: 18,
+  documentary: 99,
+  western: 37,
+  war: 10752,
+  crime: 80,
+  romance: 10749,
+  thriller: 53,
 }
 
 /** Tipos de regra que o admin pode escolher. */
@@ -30,6 +44,7 @@ export const RULE_TYPES = [
   { id: 'format', label: 'Formato (animação / live-action)', needs: 'format' },
   { id: 'studio', label: 'Estúdio', needs: 'studio' },
   { id: 'tag', label: 'Tag / gênero', needs: 'tag' },
+  { id: 'genres_all', label: 'Todos os gêneros TMDB', needs: 'tagList' },
   { id: 'bool', label: 'Campo sim/não do filme', needs: 'boolField' },
   { id: 'bool_path', label: 'Campo aninhado sim/não', needs: 'path' },
   { id: 'eq', label: 'Igual a (texto)', needs: 'pathValue' },
@@ -41,27 +56,59 @@ export const RULE_TYPES = [
 
 export const BOOL_FIELDS = [
   { id: 'basedOnBook', label: 'Baseado em livro' },
+  { id: 'isAdaptation', label: 'Adaptação de outra obra' },
   { id: 'franchise', label: 'Franquia' },
   { id: 'basedOnTrueEvents', label: 'Fatos reais' },
   { id: 'classic', label: 'Clássico' },
+  { id: 'independent', label: 'Produção independente' },
 ]
 
 export const BOOL_PATHS = [
   { id: 'protagonist.human', label: 'Protagonista humano' },
+  { id: 'protagonist.male', label: 'Protagonista homem' },
+  { id: 'protagonist.female', label: 'Protagonista mulher' },
+  { id: 'protagonist.child', label: 'Protagonista criança' },
+  { id: 'protagonist.teen', label: 'Protagonista adolescente' },
   { id: 'protagonist.animal', label: 'Protagonista animal' },
+  { id: 'protagonist.fantastical', label: 'Criatura fantástica' },
+  { id: 'protagonist.alien', label: 'Extraterrestre' },
+  { id: 'protagonist.monster', label: 'Monstro' },
+  { id: 'protagonist.villain', label: 'Protagonista vilão' },
+  { id: 'protagonist.hero', label: 'Protagonista herói' },
+  { id: 'protagonist.basedOnRealPerson', label: 'Baseado em pessoa real' },
   { id: 'protagonist.powers', label: 'Protagonista com poderes' },
   { id: 'protagonist.multiple', label: 'Vários protagonistas' },
   { id: 'antagonist.exists', label: 'Tem antagonista' },
   { id: 'antagonist.human', label: 'Vilão humano' },
   { id: 'antagonist.prince', label: 'Tem príncipe' },
-  { id: 'story.kingdom', label: 'História em reino' },
-  { id: 'story.future', label: 'História no futuro' },
-  { id: 'story.journey', label: 'Envolve viagem' },
-  { id: 'story.saveSomeone', label: 'Salvar alguém' },
+  { id: 'story.onEarth', label: 'Acontece na Terra' },
+  { id: 'story.inSpace', label: 'Acontece no espaço' },
+  { id: 'story.inPast', label: 'Acontece no passado' },
+  { id: 'story.future', label: 'Acontece no futuro' },
+  { id: 'story.historicalEra', label: 'Época histórica específica' },
+  { id: 'story.inCity', label: 'Principalmente em cidade' },
+  { id: 'story.investigation', label: 'Envolve investigação' },
+  { id: 'story.journey', label: 'Envolve jornada' },
+  { id: 'story.survival', label: 'Envolve sobrevivência' },
   { id: 'story.revenge', label: 'Vingança' },
+  { id: 'story.war', label: 'Envolve guerra' },
+  { id: 'story.crime', label: 'Envolve crime' },
+  { id: 'story.supernaturalThreat', label: 'Ameaça sobrenatural' },
+  { id: 'story.charactersHavePowers', label: 'Personagens com poderes' },
+  { id: 'story.kingdom', label: 'História em reino' },
+  { id: 'story.saveSomeone', label: 'Salvar alguém' },
   { id: 'story.fantasyWorld', label: 'Universo fantástico' },
   { id: 'story.prophecy', label: 'Profecia' },
-  { id: 'production.oscar', label: 'Ganhou Oscar' },
+  { id: 'production.oscar', label: 'Ganhou Oscar (qualquer categoria)' },
+  { id: 'production.oscarNominated', label: 'Indicado a Oscar (qualquer categoria)' },
+  { id: 'production.oscarBestPictureNom', label: 'Indicado a Melhor Filme' },
+  { id: 'production.oscarBestPicture', label: 'Ganhou Melhor Filme' },
+  { id: 'production.adaptedFromGame', label: 'Adaptado de videogame' },
+  { id: 'production.adaptedFromComics', label: 'Adaptado de HQ' },
+  { id: 'production.basedOnPlay', label: 'Baseado em peça' },
+  { id: 'production.theatricalRelease', label: 'Lançado nos cinemas' },
+  { id: 'production.hasRemake', label: 'Tem refilmagem' },
+  { id: 'production.isRemake', label: 'É remake' },
   { id: 'production.famousSong', label: 'Música famosa' },
   { id: 'production.sequel', label: 'Teve sequência' },
   { id: 'production.controversial', label: 'Controverso' },
@@ -75,96 +122,186 @@ export const EQ_PATHS = [
   { id: 'region', label: 'Região (exato)' },
 ]
 
-export const DEFAULT_CATEGORIES = [
-  { id: 'identity', label: 'Identidade', sort_order: 10 },
-  { id: 'era', label: 'Época e contexto', sort_order: 20 },
-  { id: 'genre', label: 'Gênero', sort_order: 30 },
-  { id: 'characters', label: 'Personagens', sort_order: 40 },
-  { id: 'story', label: 'História', sort_order: 50 },
-  { id: 'production', label: 'Curiosidades', sort_order: 60 },
-]
+export const DEFAULT_CATEGORIES = WHOAMI_CATEGORIES_V2
+export const DEFAULT_QUESTIONS = WHOAMI_QUESTIONS_V2
 
-/** Seed inicial — regras (não funções). */
-export const DEFAULT_QUESTIONS = [
-  { id: 'is_animation', category_id: 'identity', text: 'Sou uma animação?', sort_order: 10, rule: { type: 'format', value: 'animation' } },
-  { id: 'is_live_action', category_id: 'identity', text: 'Sou um filme live-action?', sort_order: 20, rule: { type: 'format', value: 'live_action' } },
-  { id: 'is_disney', category_id: 'identity', text: 'Sou da Disney?', sort_order: 30, rule: { type: 'studio', value: 'disney' } },
-  { id: 'is_pixar', category_id: 'identity', text: 'Sou da Pixar?', sort_order: 40, rule: { type: 'studio', value: 'pixar' } },
-  { id: 'is_dreamworks', category_id: 'identity', text: 'Sou da DreamWorks?', sort_order: 50, rule: { type: 'studio', value: 'dreamworks' } },
-  { id: 'is_ghibli', category_id: 'identity', text: 'Sou do Studio Ghibli?', sort_order: 55, rule: { type: 'studio', value: 'ghibli' } },
-  { id: 'based_on_book', category_id: 'identity', text: 'Sou uma adaptação de um livro?', sort_order: 60, rule: { type: 'bool', field: 'basedOnBook' } },
-  { id: 'is_franchise', category_id: 'identity', text: 'Faço parte de uma franquia?', sort_order: 70, rule: { type: 'bool', field: 'franchise' } },
-  { id: 'based_on_true', category_id: 'identity', text: 'Sou baseado em acontecimentos reais?', sort_order: 80, rule: { type: 'bool', field: 'basedOnTrueEvents' } },
-
-  { id: 'decade_80s', category_id: 'era', text: 'Fui lançado nos anos 80?', sort_order: 10, rule: { type: 'year_range', min: 1980, max: 1989 } },
-  { id: 'decade_90s', category_id: 'era', text: 'Fui lançado nos anos 90?', sort_order: 20, rule: { type: 'year_range', min: 1990, max: 1999 } },
-  { id: 'decade_2000s', category_id: 'era', text: 'Fui lançado nos anos 2000?', sort_order: 30, rule: { type: 'year_range', min: 2000, max: 2009 } },
-  { id: 'after_2010', category_id: 'era', text: 'Fui lançado depois de 2010?', sort_order: 40, rule: { type: 'year_gt', value: 2010 } },
-  { id: 'from_usa', category_id: 'era', text: 'Sou uma produção americana?', sort_order: 50, rule: { type: 'region', aliases: ['eua', 'usa', 'us', 'united states', 'estados unidos'] } },
-  { id: 'from_japan', category_id: 'era', text: 'Sou uma produção japonesa?', sort_order: 60, rule: { type: 'region', aliases: ['japão', 'japan', 'jp', 'japonesa'] } },
-  { id: 'is_classic', category_id: 'era', text: 'Sou considerado um clássico?', sort_order: 70, rule: { type: 'bool', field: 'classic' } },
-
-  { id: 'tag_comedy', category_id: 'genre', text: 'Sou uma comédia?', sort_order: 10, rule: { type: 'tag', value: 'comedy' } },
-  { id: 'tag_horror', category_id: 'genre', text: 'Sou um filme de terror?', sort_order: 20, rule: { type: 'tag', value: 'horror' } },
-  { id: 'tag_action', category_id: 'genre', text: 'Sou um filme de ação?', sort_order: 25, rule: { type: 'tag', value: 'action' } },
-  { id: 'tag_adventure', category_id: 'genre', text: 'Sou uma aventura?', sort_order: 30, rule: { type: 'tag', value: 'adventure' } },
-  { id: 'tag_fantasy', category_id: 'genre', text: 'Tenho elementos de fantasia?', sort_order: 40, rule: { type: 'tag', value: 'fantasy' } },
-  { id: 'tag_parody', category_id: 'genre', text: 'Sou uma paródia?', sort_order: 50, rule: { type: 'tag', value: 'parody' } },
-  { id: 'tag_musical', category_id: 'genre', text: 'Tenho elementos musicais?', sort_order: 60, rule: { type: 'tag', value: 'musical' } },
-  { id: 'tag_kids', category_id: 'genre', text: 'Sou um filme infantil?', sort_order: 70, rule: { type: 'tag', value: 'kids' } },
-  { id: 'tag_scifi', category_id: 'genre', text: 'Tenho elementos de ficção científica?', sort_order: 80, rule: { type: 'tag', value: 'scifi' } },
-
-  { id: 'prot_human', category_id: 'characters', text: 'Meu protagonista é humano?', sort_order: 10, rule: { type: 'bool_path', path: 'protagonist.human' } },
-  { id: 'prot_animal', category_id: 'characters', text: 'Meu protagonista é um animal?', sort_order: 20, rule: { type: 'bool_path', path: 'protagonist.animal' } },
-  { id: 'prot_green', category_id: 'characters', text: 'Meu protagonista é verde?', sort_order: 30, rule: { type: 'eq', path: 'protagonist.color', value: 'green', aliases: ['verde'] } },
-  { id: 'prot_multiple', category_id: 'characters', text: 'Tenho mais de um protagonista?', sort_order: 40, rule: { type: 'bool_path', path: 'protagonist.multiple' } },
-  { id: 'has_antagonist', category_id: 'characters', text: 'Tenho um antagonista principal?', sort_order: 50, rule: { type: 'bool_path', path: 'antagonist.exists' } },
-  { id: 'ant_human', category_id: 'characters', text: 'Meu vilão é humano?', sort_order: 60, rule: { type: 'bool_path', path: 'antagonist.human' } },
-  { id: 'ant_prince', category_id: 'characters', text: 'Tenho um personagem que é um príncipe?', sort_order: 70, rule: { type: 'bool_path', path: 'antagonist.prince' } },
-  { id: 'prot_powers', category_id: 'characters', text: 'Meu protagonista possui poderes?', sort_order: 80, rule: { type: 'bool_path', path: 'protagonist.powers' } },
-  { id: 'has_robot', category_id: 'characters', text: 'Tenho um personagem que é um robô?', sort_order: 90, rule: { type: 'species_includes', value: 'robot', aliases: ['robô', 'android'] } },
-
-  { id: 'story_kingdom', category_id: 'story', text: 'Minha história acontece em um reino?', sort_order: 10, rule: { type: 'bool_path', path: 'story.kingdom' } },
-  { id: 'story_future', category_id: 'story', text: 'Minha história acontece no futuro?', sort_order: 20, rule: { type: 'bool_path', path: 'story.future' } },
-  { id: 'story_journey', category_id: 'story', text: 'Minha história envolve uma viagem?', sort_order: 30, rule: { type: 'bool_path', path: 'story.journey' } },
-  { id: 'story_save', category_id: 'story', text: 'Meu protagonista precisa salvar alguém?', sort_order: 40, rule: { type: 'bool_path', path: 'story.saveSomeone' } },
-  { id: 'story_revenge', category_id: 'story', text: 'Minha história envolve vingança?', sort_order: 50, rule: { type: 'bool_path', path: 'story.revenge' } },
-  { id: 'story_fantasy_world', category_id: 'story', text: 'Minha história acontece em um universo fantástico?', sort_order: 60, rule: { type: 'bool_path', path: 'story.fantasyWorld' } },
-  { id: 'story_prophecy', category_id: 'story', text: 'Existe uma profecia na minha história?', sort_order: 70, rule: { type: 'bool_path', path: 'story.prophecy' } },
-
-  { id: 'prod_oscar', category_id: 'production', text: 'Ganhei um Oscar?', sort_order: 10, rule: { type: 'bool_path', path: 'production.oscar' } },
-  { id: 'prod_famous_song', category_id: 'production', text: 'Tenho uma música que ficou famosa?', sort_order: 20, rule: { type: 'bool_path', path: 'production.famousSong' } },
-  { id: 'prod_sequel', category_id: 'production', text: 'Tive uma sequência?', sort_order: 30, rule: { type: 'bool_path', path: 'production.sequel' } },
-  { id: 'prod_controversial', category_id: 'production', text: 'Meu filme foi controverso?', sort_order: 40, rule: { type: 'bool_path', path: 'production.controversial' } },
-  { id: 'prod_horror_director', category_id: 'production', text: 'Meu diretor é conhecido por filmes de terror?', sort_order: 50, rule: { type: 'bool_path', path: 'production.horrorDirector' } },
-  { id: 'prod_post_credits', category_id: 'production', text: 'Possuo uma cena pós-créditos?', sort_order: 60, rule: { type: 'bool_path', path: 'production.postCredits' } },
-]
+/** IDs antigos desativados dinamicamente no seed (tudo fora do v2). */
+export const WHOAMI_QUESTIONS_DEACTIVATE = []
 
 function emptyProtagonist() {
-  return { species: null, color: null, human: null, animal: null, powers: null, multiple: null }
+  return {
+    species: null,
+    color: null,
+    human: null,
+    male: null,
+    female: null,
+    child: null,
+    teen: null,
+    young: null,
+    animal: null,
+    anthropomorphic: null,
+    fantastical: null,
+    alien: null,
+    monster: null,
+    villain: null,
+    hero: null,
+    basedOnRealPerson: null,
+    powers: null,
+    multiple: null,
+    spy: null,
+    superhero: null,
+    lawEnforcement: null,
+    comedyDuo: null,
+    detective: null,
+    addiction: null,
+    gunslinger: null,
+    bountyHunter: null,
+    soldier: null,
+    musician: null,
+    specialDestiny: null,
+  }
 }
 function emptyAntagonist() {
-  return { exists: null, human: null, prince: null }
+  return {
+    exists: null,
+    human: null,
+    prince: null,
+    humanKiller: null,
+    monster: null,
+  }
 }
 function emptyStory() {
   return {
-    kingdom: null,
+    onEarth: null,
+    inSpace: null,
+    inPast: null,
     future: null,
+    historicalEra: null,
+    inCity: null,
+    investigation: null,
     journey: null,
-    saveSomeone: null,
+    survival: null,
     revenge: null,
+    war: null,
+    crime: null,
+    supernaturalThreat: null,
+    charactersHavePowers: null,
+    kingdom: null,
+    saveSomeone: null,
     fantasyWorld: null,
     prophecy: null,
+    fairyTale: null,
+    possession: null,
+    hauntedHouse: null,
+    zombies: null,
+    bodyHorror: null,
+    spaceTravel: null,
+    aliens: null,
+    ai: null,
+    timeTravel: null,
+    dystopia: null,
+    apocalypse: null,
+    robots: null,
+    scienceExperiments: null,
+    virtualReality: null,
+    firstContact: null,
+    martialArts: null,
+    rescue: null,
+    chase: null,
+    crimeOrg: null,
+    heist: null,
+    saveWorld: null,
+    darkComedy: null,
+    absurdComedy: null,
+    satire: null,
+    slapstick: null,
+    teenComedy: null,
+    misunderstandings: null,
+    magic: null,
+    mythicalCreatures: null,
+    powerfulObject: null,
+    mythology: null,
+    goodVsEvil: null,
+    serialKiller: null,
+    identityMystery: null,
+    bigTwist: null,
+    hunted: null,
+    conspiracy: null,
+    centralMystery: null,
+    trustIssues: null,
+    familyIssues: null,
+    socialInequality: null,
+    familyConflict: null,
+    personalTragedy: null,
+    prison: null,
+    discrimination: null,
+    psychologicalConflict: null,
+    politicalSocial: null,
+    coupleLeads: null,
+    forbiddenLove: null,
+    impossibleLove: null,
+    loveTriangle: null,
+    coupleSeparation: null,
+    classDifferenceRomance: null,
+    loveAtFirstSight: null,
+    oldWest: null,
+    landDispute: null,
+    sheriffOutlaws: null,
+    indigenousConflict: null,
+    gunDuel: null,
+    ww2: null,
+    ww1: null,
+    realBattle: null,
+    militaryGroup: null,
+    holocaust: null,
+    revolution: null,
+    historicalFigure: null,
+    antiquity: null,
+    coldWar: null,
+    charactersSing: null,
+    musicalNumbers: null,
+    musicIndustry: null,
+    band: null,
+    environment: null,
+    historicalEvent: null,
+    familyLeads: null,
+    talkingAnimals: null,
+    moralLesson: null,
+    absentParents: null,
+    childCreatureFriendship: null,
   }
 }
 function emptyProduction() {
   return {
     oscar: null,
+    oscarNominated: null,
+    oscarBestPictureNom: null,
+    oscarBestPicture: null,
+    adaptedFromGame: null,
+    adaptedFromComics: null,
+    basedOnPlay: null,
+    theatricalRelease: null,
+    hasRemake: null,
+    isRemake: null,
     famousSong: null,
     sequel: null,
     controversial: null,
     horrorDirector: null,
     postCredits: null,
+    animation2d: null,
+    animation3d: null,
+    stopMotion: null,
+    anime: null,
+    animatedMusical: null,
+    handDrawnLook: null,
+    foundFootage: null,
+    originalSongs: null,
+    realPeople: null,
+    interviews: null,
+    investigativeDoc: null,
+    biographyDoc: null,
+    musicDoc: null,
+    archiveFootage: null,
   }
 }
 
@@ -222,43 +359,44 @@ export function traitsFromMovie(movie) {
     region: t.region != null ? String(t.region) : meta.region != null ? String(meta.region) : null,
     runtime,
     year,
-    format: t.format === 'animation' || t.format === 'live_action' ? t.format : null,
+    format:
+      t.format === 'animation' ||
+      t.format === 'live_action' ||
+      t.format === 'hybrid'
+        ? t.format
+        : null,
     studios,
     basedOnBook: boolOrNull(t.basedOnBook),
+    isAdaptation: boolOrNull(t.isAdaptation),
     franchise: boolOrNull(t.franchise),
     basedOnTrueEvents: boolOrNull(t.basedOnTrueEvents),
     classic: boolOrNull(t.classic),
+    independent: boolOrNull(t.independent),
     tags,
     protagonist: {
+      ...Object.fromEntries(
+        Object.keys(emptyProtagonist())
+          .filter((k) => k !== 'species' && k !== 'color')
+          .map((k) => [k, boolOrNull(protagonist[k])]),
+      ),
       species: protagonist.species != null ? String(protagonist.species) : null,
-      color: protagonist.color != null ? String(protagonist.color).toLowerCase() : null,
-      human: boolOrNull(protagonist.human),
-      animal: boolOrNull(protagonist.animal),
-      powers: boolOrNull(protagonist.powers),
-      multiple: boolOrNull(protagonist.multiple),
+      color:
+        protagonist.color != null
+          ? String(protagonist.color).toLowerCase()
+          : null,
     },
-    antagonist: {
-      exists: boolOrNull(antagonist.exists),
-      human: boolOrNull(antagonist.human),
-      prince: boolOrNull(antagonist.prince),
-    },
-    story: {
-      kingdom: boolOrNull(story.kingdom),
-      future: boolOrNull(story.future),
-      journey: boolOrNull(story.journey),
-      saveSomeone: boolOrNull(story.saveSomeone),
-      revenge: boolOrNull(story.revenge),
-      fantasyWorld: boolOrNull(story.fantasyWorld),
-      prophecy: boolOrNull(story.prophecy),
-    },
-    production: {
-      oscar: boolOrNull(production.oscar),
-      famousSong: boolOrNull(production.famousSong),
-      sequel: boolOrNull(production.sequel),
-      controversial: boolOrNull(production.controversial),
-      horrorDirector: boolOrNull(production.horrorDirector),
-      postCredits: boolOrNull(production.postCredits),
-    },
+    antagonist: Object.fromEntries(
+      Object.keys(emptyAntagonist()).map((k) => [
+        k,
+        boolOrNull(antagonist[k]),
+      ]),
+    ),
+    story: Object.fromEntries(
+      Object.keys(emptyStory()).map((k) => [k, boolOrNull(story[k])]),
+    ),
+    production: Object.fromEntries(
+      Object.keys(emptyProduction()).map((k) => [k, boolOrNull(production[k])]),
+    ),
   }
 }
 
@@ -291,7 +429,21 @@ export function evaluateRule(traits, rule) {
       if (traits.genres.includes(TMDB_GENRE.animation)) return 'no'
       if (traits.genres.length) return 'yes'
     }
+    if (want === 'hybrid') {
+      // só com curadoria explícita (mistura animação + live-action)
+      return 'unknown'
+    }
     return 'unknown'
+  }
+
+  if (type === 'genres_all') {
+    const wants = Array.isArray(rule.values) ? rule.values : []
+    const ids = wants
+      .map((t) => TMDB_GENRE[String(t).toLowerCase()])
+      .filter((n) => n != null)
+    if (!ids.length) return 'unknown'
+    if (!traits.genres.length) return 'unknown'
+    return ids.every((id) => traits.genres.includes(id)) ? 'yes' : 'no'
   }
 
   if (type === 'studio') {
@@ -311,10 +463,32 @@ export function evaluateRule(traits, rule) {
   }
 
   if (type === 'bool') {
+    if (rule.field === 'isAdaptation') {
+      const explicit = traits.isAdaptation
+      if (explicit != null) return fromBool(explicit)
+      const signals = [
+        traits.basedOnBook,
+        traits.production?.adaptedFromComics,
+        traits.production?.adaptedFromGame,
+        traits.production?.basedOnPlay,
+      ]
+      if (signals.some((s) => s === true)) return 'yes'
+      if (signals.length && signals.every((s) => s === false)) return 'no'
+      return 'unknown'
+    }
     return fromBool(traits[rule.field])
   }
 
   if (type === 'bool_path') {
+    if (rule.path === 'protagonist.young') {
+      const explicit = getPath(traits, 'protagonist.young')
+      if (explicit != null) return fromBool(explicit)
+      const child = traits.protagonist?.child
+      const teen = traits.protagonist?.teen
+      if (child === true || teen === true) return 'yes'
+      if (child === false && teen === false) return 'no'
+      return 'unknown'
+    }
     return fromBool(getPath(traits, rule.path))
   }
 
@@ -398,12 +572,43 @@ export async function seedWhoamiCatalog() {
   }
   for (const q of DEFAULT_QUESTIONS) {
     await query(
-      `INSERT INTO whoami_questions (id, category_id, text, rule_json, sort_order, active)
-       VALUES ($1, $2, $3, $4::jsonb, $5, true)
-       ON CONFLICT (id) DO NOTHING`,
-      [q.id, q.category_id, q.text, JSON.stringify(q.rule), q.sort_order],
+      `INSERT INTO whoami_questions
+         (id, category_id, text, rule_json, unlock_json, sort_order, active, updated_at)
+       VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6, true, now())
+       ON CONFLICT (id) DO UPDATE SET
+         category_id = EXCLUDED.category_id,
+         text = EXCLUDED.text,
+         rule_json = EXCLUDED.rule_json,
+         unlock_json = EXCLUDED.unlock_json,
+         sort_order = EXCLUDED.sort_order,
+         active = true,
+         updated_at = now()`,
+      [
+        q.id,
+        q.category_id,
+        q.text,
+        JSON.stringify(q.rule),
+        q.unlock ? JSON.stringify(q.unlock) : null,
+        q.sort_order,
+      ],
     )
   }
+  const keepIds = DEFAULT_QUESTIONS.map((q) => q.id)
+  await query(
+    `UPDATE whoami_questions
+     SET active = false, updated_at = now()
+     WHERE NOT (id = ANY($1::text[]))`,
+    [keepIds],
+  )
+  if (WHOAMI_QUESTIONS_DEACTIVATE.length) {
+    await query(
+      `UPDATE whoami_questions
+       SET active = false, updated_at = now()
+       WHERE id = ANY($1::text[])`,
+      [WHOAMI_QUESTIONS_DEACTIVATE],
+    )
+  }
+  invalidateWhoamiCatalogCache()
 }
 
 async function loadCatalogFromDb() {
@@ -411,7 +616,7 @@ async function loadCatalogFromDb() {
     `SELECT id, label, sort_order FROM whoami_categories ORDER BY sort_order, id`,
   )
   const { rows: qs } = await query(
-    `SELECT id, category_id, text, rule_json, sort_order, active
+    `SELECT id, category_id, text, rule_json, unlock_json, sort_order, active
      FROM whoami_questions
      WHERE active = true
      ORDER BY sort_order, id`,
@@ -428,6 +633,7 @@ async function loadCatalogFromDb() {
       category_id: q.category_id,
       text: q.text,
       rule: q.rule_json || {},
+      unlock: q.unlock_json || null,
       sort_order: q.sort_order,
       active: true,
     })),
@@ -447,6 +653,7 @@ function fallbackCatalog() {
       category_id: q.category_id,
       text: q.text,
       rule: q.rule,
+      unlock: q.unlock || null,
       sort_order: q.sort_order,
       active: true,
     })),
@@ -494,6 +701,7 @@ export async function publicAskBank() {
       id: q.id,
       category: q.category || q.category_id,
       text: q.text,
+      unlock: q.unlock || null,
     })),
   }
 }
@@ -532,9 +740,11 @@ export async function previewAllAnswers(movie) {
     const answer = evaluateRule(traits, q.rule) || 'unknown'
     return {
       questionId: q.id,
+      category: q.category || q.category_id,
       text: q.text,
       answer,
       answerLabel: ANSWER_LABEL[answer] || ANSWER_LABEL.unknown,
+      unlock: q.unlock || null,
     }
   })
 }
@@ -557,29 +767,50 @@ export const TRAIT_FIELD_PATHS = [
   'franchise',
   'basedOnTrueEvents',
   'classic',
+  'independent',
   'tags',
   'protagonist.human',
+  'protagonist.male',
+  'protagonist.female',
+  'protagonist.child',
+  'protagonist.teen',
   'protagonist.animal',
-  'protagonist.color',
+  'protagonist.fantastical',
+  'protagonist.alien',
+  'protagonist.monster',
+  'protagonist.villain',
+  'protagonist.hero',
+  'protagonist.basedOnRealPerson',
   'protagonist.powers',
   'protagonist.multiple',
   'protagonist.species',
   'antagonist.exists',
   'antagonist.human',
   'antagonist.prince',
-  'story.kingdom',
+  'story.onEarth',
+  'story.inSpace',
+  'story.inPast',
   'story.future',
+  'story.historicalEra',
+  'story.inCity',
+  'story.investigation',
   'story.journey',
-  'story.saveSomeone',
+  'story.survival',
   'story.revenge',
-  'story.fantasyWorld',
-  'story.prophecy',
+  'story.war',
+  'story.crime',
+  'story.supernaturalThreat',
+  'story.charactersHavePowers',
   'production.oscar',
-  'production.famousSong',
-  'production.sequel',
-  'production.controversial',
-  'production.horrorDirector',
-  'production.postCredits',
+  'production.oscarNominated',
+  'production.oscarBestPictureNom',
+  'production.oscarBestPicture',
+  'production.adaptedFromGame',
+  'production.adaptedFromComics',
+  'production.basedOnPlay',
+  'production.theatricalRelease',
+  'production.hasRemake',
+  'production.isRemake',
 ]
 
 export function traitsCompleteness(movie) {
@@ -622,7 +853,9 @@ export function mergeTraitsPatch(existingCastJson, patch) {
   }
   if ('format' in patch) {
     next.format =
-      patch.format === 'animation' || patch.format === 'live_action'
+      patch.format === 'animation' ||
+      patch.format === 'live_action' ||
+      patch.format === 'hybrid'
         ? patch.format
         : null
   }
@@ -632,35 +865,46 @@ export function mergeTraitsPatch(existingCastJson, patch) {
   if ('tags' in patch && Array.isArray(patch.tags)) {
     next.tags = patch.tags.map((s) => String(s).toLowerCase())
   }
-  for (const key of ['basedOnBook', 'franchise', 'basedOnTrueEvents', 'classic']) {
+  for (const key of [
+    'basedOnBook',
+    'isAdaptation',
+    'franchise',
+    'basedOnTrueEvents',
+    'classic',
+    'independent',
+  ]) {
     if (key in patch) next[key] = boolOrNull(patch[key])
   }
   if ('protagonist' in patch && patch.protagonist && typeof patch.protagonist === 'object') {
-    next.protagonist = {
+    const p = patch.protagonist
+    const merged = {
       ...emptyProtagonist(),
       ...(prev.protagonist || {}),
-      species:
-        patch.protagonist.species == null || patch.protagonist.species === ''
-          ? null
-          : String(patch.protagonist.species),
-      color:
-        patch.protagonist.color == null || patch.protagonist.color === ''
-          ? null
-          : String(patch.protagonist.color).toLowerCase(),
-      human: boolOrNull(patch.protagonist.human),
-      animal: boolOrNull(patch.protagonist.animal),
-      powers: boolOrNull(patch.protagonist.powers),
-      multiple: boolOrNull(patch.protagonist.multiple),
     }
+    if ('species' in p) {
+      merged.species =
+        p.species == null || p.species === '' ? null : String(p.species)
+    }
+    if ('color' in p) {
+      merged.color =
+        p.color == null || p.color === '' ? null : String(p.color).toLowerCase()
+    }
+    for (const key of Object.keys(emptyProtagonist())) {
+      if (key === 'species' || key === 'color') continue
+      if (key in p) merged[key] = boolOrNull(p[key])
+    }
+    next.protagonist = merged
   }
   if ('antagonist' in patch && patch.antagonist && typeof patch.antagonist === 'object') {
-    next.antagonist = {
+    const keys = Object.keys(emptyAntagonist())
+    const antagonist = {
       ...emptyAntagonist(),
       ...(prev.antagonist || {}),
-      exists: boolOrNull(patch.antagonist.exists),
-      human: boolOrNull(patch.antagonist.human),
-      prince: boolOrNull(patch.antagonist.prince),
     }
+    for (const k of keys) {
+      if (k in patch.antagonist) antagonist[k] = boolOrNull(patch.antagonist[k])
+    }
+    next.antagonist = antagonist
   }
   if ('story' in patch && patch.story && typeof patch.story === 'object') {
     const keys = Object.keys(emptyStory())
@@ -693,9 +937,11 @@ export function publicTraitsForAdmin(movie) {
     format: t.format,
     studios: t.studios,
     basedOnBook: t.basedOnBook,
+    isAdaptation: t.isAdaptation,
     franchise: t.franchise,
     basedOnTrueEvents: t.basedOnTrueEvents,
     classic: t.classic,
+    independent: t.independent,
     tags: t.tags,
     protagonist: t.protagonist,
     antagonist: t.antagonist,
@@ -723,6 +969,16 @@ export const TAG_OPTIONS = [
   { id: 'musical', label: 'Musical' },
   { id: 'kids', label: 'Infantil' },
   { id: 'scifi', label: 'Ficção científica' },
+  { id: 'drama', label: 'Drama' },
+  { id: 'romance', label: 'Romance' },
+  { id: 'thriller', label: 'Suspense' },
+  { id: 'psychological_thriller', label: 'Thriller psicológico' },
+  { id: 'crime', label: 'Policial / crime' },
+  { id: 'war', label: 'Guerra' },
+  { id: 'western', label: 'Faroeste' },
+  { id: 'spaghetti_western', label: 'Faroeste spaghetti' },
+  { id: 'slasher', label: 'Slasher' },
+  { id: 'documentary', label: 'Documentário' },
 ]
 
 /** Orçamento do modo difícil: investiga com limite, depois tem que chutar. */

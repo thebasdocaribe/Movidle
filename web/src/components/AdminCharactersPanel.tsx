@@ -380,7 +380,14 @@ export function AdminCharactersPanel() {
     <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
       <aside className="panel-frame flex max-h-[min(70vh,640px)] flex-col gap-2 overflow-hidden p-3 lg:sticky lg:top-4">
         <div className="flex shrink-0 items-center justify-between gap-2">
-          <h2 className="font-display text-xl text-white">Lista</h2>
+          <div>
+            <h2 className="font-display text-xl text-white">Lista</h2>
+            {!loadingList && !listError ? (
+              <p className="text-[10px] text-cinema-muted">
+                {list.length} personagem{list.length === 1 ? '' : 'ns'}
+              </p>
+            ) : null}
+          </div>
           <button
             type="button"
             onClick={openNew}

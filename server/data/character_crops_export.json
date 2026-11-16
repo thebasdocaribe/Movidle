@@ -1,7 +1,145 @@
 {
-  "exportedAt": "2026-11-09T19:27:40.059Z",
-  "count": 183,
+  "exportedAt": "2026-11-10T19:52:03.009Z",
+  "count": 259,
   "characters": [
+    {
+      "id": "cddf5c60-256a-47d7-8f14-1ada758018bb",
+      "name": "Ace Ventura",
+      "namePt": "Ace Ventura",
+      "filmTitle": "Ace Ventura: Pet Detective",
+      "imagePath": "/characters/ace-ventura.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 20.60133153141588,
+          "y": 73.89988656985659,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 29.362528655772394,
+          "y": 7.518221104122198,
+          "zoom": 6,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 48.183326057288156,
+          "y": 2.0955146041761115,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 59.34340538302683,
+          "y": 29.164261231193798,
+          "zoom": 3.6,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 52.41663594690223,
+          "y": 8.017831924274796,
+          "zoom": 5.4,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "5b8bda2d-e2bc-4117-8534-b55128eff0cd",
+      "name": "Agent J",
+      "namePt": "Jay",
+      "filmTitle": "Men in Black",
+      "imagePath": "/characters/jay.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 28.588162025675423,
+          "y": 100,
+          "zoom": 2.8,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 81.47497355191301,
+          "y": 4.8533471871323925,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 59.083739331858844,
+          "y": 0,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 47.48753628390143,
+          "y": 59.56530550969953,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 47.92862033638926,
+          "y": 3.8749823081933457,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "6466c6a8-d588-4813-8866-0bc285f136bb",
+      "name": "Agent K",
+      "namePt": "Kay",
+      "filmTitle": "Men in Black",
+      "imagePath": "/characters/kay.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 23.672822215570868,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 54.629134834275874,
+          "y": 28.541086472670095,
+          "zoom": 4.65,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 48.0260421566504,
+          "y": 0,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 50,
+          "y": 38,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 46.81253047443146,
+          "y": 1.2194911082379472,
+          "zoom": 4.05,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
     {
       "id": "679fdd93-babe-43a5-8f51-dcdd4725f466",
       "name": "Agent Smith",
@@ -38,6 +176,52 @@
           "x": 60,
           "y": 2,
           "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "f48ade91-9381-47dd-9fda-1f8f6db58832",
+      "name": "Aladdin",
+      "namePt": "Aladin",
+      "filmTitle": "Aladdin",
+      "imagePath": "/characters/aladin.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 10.070420245558985,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 97.26666641891619,
+          "y": 47.4912733830247,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 70.29507667855566,
+          "y": 0,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 36.87947683907526,
+          "y": 37.79062329419622,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 56.55944795283645,
+          "y": 0,
+          "zoom": 3.55,
           "label": "Rosto"
         },
         "5": {
@@ -95,6 +279,52 @@
       }
     },
     {
+      "id": "8fdaf46f-b8c9-49ef-a4c3-9f56996d7827",
+      "name": "Albus Dumbledore",
+      "namePt": "Dumbledore",
+      "filmTitle": "Harry Potter",
+      "imagePath": "/characters/dumbledore.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 57.89816672602382,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 23.83544067035224,
+          "y": 86.57601553094909,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 37.88834755752154,
+          "y": 17.992198057842494,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 46.54663299330605,
+          "y": 54.011141637896024,
+          "zoom": 2.35,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 54.833324572517206,
+          "y": 4.392822459499769,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "2094f02a-4b40-4cf1-b988-6ee51f7b704e",
       "name": "Alex DeLarge",
       "namePt": "Alex DeLarge",
@@ -103,8 +333,8 @@
       "movieId": null,
       "cropJson": {
         "0": {
-          "x": 90,
-          "y": 77.7261387167047,
+          "x": 95.26056115271142,
+          "y": 75.69492505047633,
           "zoom": 2.5,
           "label": "Pernas"
         },
@@ -233,6 +463,52 @@
       }
     },
     {
+      "id": "a8e52e35-3fd3-4298-b62b-f6c5e02ae07c",
+      "name": "Amélie Poulain",
+      "namePt": "Amélie Poulain",
+      "filmTitle": "Amélie",
+      "imagePath": "/characters/amelie-poulain.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 48.24481464228615,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 63.70935296176659,
+          "y": 59.3351373781991,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 60.449958702030145,
+          "y": 14.550210783005674,
+          "zoom": 5.8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 64.0827762735623,
+          "y": 50.11169212938585,
+          "zoom": 4.1,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 61.47697809933101,
+          "y": 25.16790272685783,
+          "zoom": 4.7,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "80cb14d9-dfc2-43e0-bd05-46f3b1f7eea6",
       "name": "Anakin Skywalker",
       "namePt": "Anakin Skywalker",
@@ -325,6 +601,52 @@
       }
     },
     {
+      "id": "abe542e0-9146-44d8-ae99-fc13fa2d0fd7",
+      "name": "Anton Chigurh",
+      "namePt": "Anton Chigurh",
+      "filmTitle": "No Country for Old Men",
+      "imagePath": "/characters/anton-chigurh.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 53.5103037619523,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 87.00212177774587,
+          "y": 60.5195170006032,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 62.295696352356785,
+          "y": 7.267090935221136,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 51.116664739289696,
+          "y": 39.256212313394656,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 48.96428382883826,
+          "y": 0,
+          "zoom": 4.2,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "6f9571f8-d1db-434f-b709-659211dcced5",
       "name": "Apollo Creed",
       "namePt": "Apollo Creed",
@@ -360,6 +682,52 @@
           "x": 47.13117191208918,
           "y": 0.3368451046595345,
           "zoom": 4.4,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "6e624597-14c8-4332-bbee-63910b2e4fc2",
+      "name": "Aragorn",
+      "namePt": "Aragorn",
+      "filmTitle": "The Lord of the Rings",
+      "imagePath": "/characters/aragorn.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 0,
+          "y": 100,
+          "zoom": 2.75,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 38.83747208747906,
+          "y": 77.1009333709607,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 47.129278385443236,
+          "y": 0,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 49.7208231660765,
+          "y": 39.88434243080598,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 49.654770056064876,
+          "y": 2.0624676984496695,
+          "zoom": 2.6,
           "label": "Rosto"
         },
         "5": {
@@ -555,6 +923,98 @@
       }
     },
     {
+      "id": "89157df4-6663-4037-aac9-096634e1882f",
+      "name": "Beast",
+      "namePt": "Fera",
+      "filmTitle": "Beauty and the Beast",
+      "imagePath": "/characters/fera.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 27.62193905532048,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 76.73748677595651,
+          "y": 57.8546543788023,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 53.15831447723556,
+          "y": 0,
+          "zoom": 3.4,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 50.2791768339235,
+          "y": 61.868401352113054,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 94.53532125154015,
+          "y": 0.767832749437062,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "5aadd863-6e79-409a-8b62-1121fef7d49a",
+      "name": "Beatrix Kiddo",
+      "namePt": "A Noiva",
+      "filmTitle": "Kill Bill",
+      "imagePath": "/characters/a-noiva.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 52.63274455983307,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 59.76149751548009,
+          "y": 51.340526922418604,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 80.85826661494622,
+          "y": 11.093822977141095,
+          "zoom": 5.8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 73.47914422739476,
+          "y": 43.614394121924214,
+          "zoom": 2.75,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 74.12426018242984,
+          "y": 6.155383215562403,
+          "zoom": 3.7,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "2c6c9cf0-1517-45b6-9bd5-0b66aa815118",
       "name": "Beetlejuice",
       "namePt": "Beetlejuice",
@@ -601,6 +1061,98 @@
       }
     },
     {
+      "id": "fdd0d674-b0d2-4a61-b78d-16d36ec4470e",
+      "name": "Bella Swan",
+      "namePt": "Bella Swan",
+      "filmTitle": "Twilight",
+      "imagePath": "/characters/bella-swan.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 32.448548143713914,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 17.51875147546842,
+          "y": 73.2516685363779,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 57.26697298457209,
+          "y": 23.896700779695237,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 36.93635629060375,
+          "y": 55.55574494544974,
+          "zoom": 2.25,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 46.54764788193603,
+          "y": 3.8749526761248703,
+          "zoom": 3.25,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "92d6b196-5502-4b80-8e7f-6feb141fb012",
+      "name": "Belle",
+      "namePt": "Bela",
+      "filmTitle": "Beauty and the Beast",
+      "imagePath": "/characters/bela.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 72.94593134486092,
+          "y": 100,
+          "zoom": 3,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 60.15625293990239,
+          "y": 28.244983095677398,
+          "zoom": 5.05,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 43.31179418556632,
+          "y": 13.171559005016167,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 50,
+          "y": 38,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 57.56120005173191,
+          "y": 0.7036598955556448,
+          "zoom": 4.8,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "311dd2e8-3fca-4a87-ab58-6123fd8af89e",
       "name": "Ben",
       "namePt": "Ben",
@@ -636,6 +1188,52 @@
           "x": 57.59516412399819,
           "y": 13.256400648332438,
           "zoom": 4,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "9f4bf6dc-4eb0-4744-af22-404bc69f23bc",
+      "name": "Benny",
+      "namePt": "Bené",
+      "filmTitle": "City of God",
+      "imagePath": "/characters/bene.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 60.704007149441324,
+          "y": 100,
+          "zoom": 2.85,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 87.39684708196182,
+          "y": 91.0174758243284,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 66.99922806534886,
+          "y": 0,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 73.7285826057509,
+          "y": 79.45564529439685,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 71.05936899167533,
+          "y": 0,
+          "zoom": 2.6,
           "label": "Rosto"
         },
         "5": {
@@ -739,6 +1337,52 @@
       }
     },
     {
+      "id": "4bd2813b-904c-4373-9dfc-b86b45bed84f",
+      "name": "Blade",
+      "namePt": "Blade",
+      "filmTitle": "Blade",
+      "imagePath": "/characters/blade.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 55.70423524398806,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 60.15631318031509,
+          "y": 43.64200854844189,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 46.868507816373565,
+          "y": 0,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 50,
+          "y": 38,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 47.238134109162644,
+          "y": 0,
+          "zoom": 4.55,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "08a3ba5e-ff46-4374-a844-77e695a7d0e4",
       "name": "Blondie",
       "namePt": "Blondie",
@@ -772,6 +1416,52 @@
         },
         "4": {
           "x": 38.26199753071122,
+          "y": 0,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "26650527-0017-4375-aa9d-7f8a1dd7ba81",
+      "name": "Bob Parr",
+      "namePt": "Senhor incrivel",
+      "filmTitle": "The Incredibles",
+      "imagePath": "/characters/beto-pera.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 23.234009137773555,
+          "y": 96.93639457185729,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 89.24730468738655,
+          "y": 45.50076440725184,
+          "zoom": 2.8,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 44.787325126911895,
+          "y": 0,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 39.11278501945249,
+          "y": 38.837482862501105,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 49.65479639542124,
           "y": 0,
           "zoom": 2.6,
           "label": "Rosto"
@@ -969,6 +1659,52 @@
       }
     },
     {
+      "id": "0d2c4100-0fa7-4ce4-845e-8738cce8fe0d",
+      "name": "Candyman",
+      "namePt": "Candyman",
+      "filmTitle": "Candyman",
+      "imagePath": "/characters/candyman.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 50,
+          "y": 92,
+          "zoom": 3.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 6.069820080205815,
+          "y": 29.133270636277693,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 50.60561958395389,
+          "y": 4.366471858418288,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 48.045889951748435,
+          "y": 58.09970051669176,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 52.76189223019372,
+          "y": 11.901766403381112,
+          "zoom": 4.45,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "f93783c1-2904-4666-b3e6-f64a8fc31728",
       "name": "Captain Hook",
       "namePt": "Capitão Gancho",
@@ -1003,6 +1739,52 @@
         "4": {
           "x": 54.48806828922571,
           "y": 21.741094740381026,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "7393d6e9-2542-460d-ac91-ff7494743c16",
+      "name": "Carl Fredricksen",
+      "namePt": "Carl Fredricksen",
+      "filmTitle": "Up",
+      "imagePath": "/characters/carl-fredricksen.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 26.744346376463547,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 100,
+          "y": 67.9219319975872,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 48.0260421566504,
+          "y": 0,
+          "zoom": 6,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 45.81520436759057,
+          "y": 59.674667166826396,
+          "zoom": 2.75,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 39.98819992909958,
+          "y": 8.794616844624825,
           "zoom": 2.6,
           "label": "Rosto"
         },
@@ -1050,6 +1832,98 @@
           "x": 38.60722747464634,
           "y": 0,
           "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "f921fa59-059d-4e4c-9f09-f59ff3c71ae1",
+      "name": "Casper",
+      "namePt": "Gasparzinho",
+      "filmTitle": "Casper",
+      "imagePath": "/characters/gasparzinho.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 64.17493261301901,
+          "y": 100,
+          "zoom": 3.9,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 53.44477820038992,
+          "y": 72.9555764545741,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 63.817704903447215,
+          "y": 0,
+          "zoom": 3.4,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 63.81917294914127,
+          "y": 85.75891678729967,
+          "zoom": 2.6,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 63.4641521889644,
+          "y": 17.598205614874942,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "7ed6edfc-ae59-4855-8122-4119cf4cc9d8",
+      "name": "Catwoman",
+      "namePt": "Catwoman",
+      "filmTitle": "Batman Returns",
+      "imagePath": "/characters/catwoman.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 9.631640644499377,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 50.28649384336072,
+          "y": 55.189780461812504,
+          "zoom": 5.3,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 50,
+          "y": 8,
+          "zoom": 6.65,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 30.220179004779155,
+          "y": 67.88881634120823,
+          "zoom": 2.5,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 44.47621553961255,
+          "y": 19.928560375925038,
+          "zoom": 3.4,
           "label": "Rosto"
         },
         "5": {
@@ -1245,6 +2119,52 @@
       }
     },
     {
+      "id": "328502b7-b8b8-486c-a66a-0c4b50cf848b",
+      "name": "Chihiro",
+      "namePt": "Chihiro",
+      "filmTitle": "Spirited Away",
+      "imagePath": "/characters/chihiro.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 45.17335743486886,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 44.10354862460368,
+          "y": 61.66412920339751,
+          "zoom": 4.65,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 42.09781932394828,
+          "y": 15.196718339397115,
+          "zoom": 6.95,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 44.00660928952768,
+          "y": 57.02271505159604,
+          "zoom": 3.25,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 44.64137728563256,
+          "y": 25.349180780436384,
+          "zoom": 4.35,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "5fd9c493-c34a-43a9-84f0-9d7253599a24",
       "name": "Chris MacNeil",
       "namePt": "Chris MacNeil",
@@ -1418,6 +2338,98 @@
           "x": 40.33340353367833,
           "y": 0,
           "zoom": 3.45,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "053be1ba-7578-462e-a6a6-6fa6e35c8d57",
+      "name": "Commodus",
+      "namePt": "Commodus",
+      "filmTitle": "Gladiator",
+      "imagePath": "/characters/commodus.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 53.94904988627421,
+          "y": 99.89822378263132,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 20.282310528281677,
+          "y": 46.8990892194171,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 46.73449284081459,
+          "y": 0,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 46.6500696767374,
+          "y": 37.162517137498895,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 51.380919775740495,
+          "y": 0,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "a221ad0d-cc13-4c6e-a1e2-aeb01a904cb0",
+      "name": "Coraline Jones",
+      "namePt": "Coraline",
+      "filmTitle": "Coraline",
+      "imagePath": "/characters/coraline.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 68.42901105840531,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 79.50101570856341,
+          "y": 56.0780680024128,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 83.95209900177824,
+          "y": 5.9273215418067,
+          "zoom": 3.4,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 93.02924712503018,
+          "y": 52.508557929716886,
+          "zoom": 2.65,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 78.30927683238201,
+          "y": 15.526785745512294,
+          "zoom": 2.6,
           "label": "Rosto"
         },
         "5": {
@@ -1705,6 +2717,98 @@
       }
     },
     {
+      "id": "8ded531b-fc5b-42fc-9494-ecb7d69de3f6",
+      "name": "Darkman",
+      "namePt": "Darkman",
+      "filmTitle": "Darkman",
+      "imagePath": "/characters/darkman.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 77.18309250078546,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 73.18435663388595,
+          "y": 56.9663329526353,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 80.77202397230027,
+          "y": 15.312301958631885,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 80.31000633556599,
+          "y": 58.96627637593153,
+          "zoom": 2.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 82.1987849709713,
+          "y": 21.238033352027255,
+          "zoom": 4.5,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "aef79f46-8906-4572-9692-89d1a026c92b",
+      "name": "Darth Maul",
+      "namePt": "Darth Maul",
+      "filmTitle": "Star Wars: Episode I",
+      "imagePath": "/characters/darth-maul.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 16.652248168403975,
+          "y": 96.70907028542847,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 30.94164071408064,
+          "y": 39.2005595502515,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 58.29064703823341,
+          "y": 0.3014929212121986,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 59.92893555536874,
+          "y": 38,
+          "zoom": 2.95,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 53.18531641771603,
+          "y": 8.511387552146283,
+          "zoom": 5,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "cb309ecb-c176-4f36-901f-288bd08e9c9e",
       "name": "Darth Vader",
       "namePt": "Darth Vader",
@@ -1751,6 +2855,52 @@
       }
     },
     {
+      "id": "3f3d64b3-5370-4fb8-99fc-26bd737b6188",
+      "name": "Dash Parr",
+      "namePt": "Flecha",
+      "filmTitle": "The Incredibles",
+      "imagePath": "/characters/flecha.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 100,
+          "y": 92.00002510780116,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 0,
+          "y": 60.815609082407,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 50,
+          "y": 8,
+          "zoom": 3.4,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 85.39175113227486,
+          "y": 64.20031283440021,
+          "zoom": 2.2,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 15.476478819360274,
+          "y": 24.071429746718803,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "a0394ba2-7d1a-4a05-8df8-4a19a65097c6",
       "name": "David Kessler",
       "namePt": "David Kessler",
@@ -1785,6 +2935,52 @@
         "4": {
           "x": 83.83306129276949,
           "y": 16.56248580283746,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "86ce82ae-33ee-439b-a1eb-199964ad0de2",
+      "name": "Davy Jones",
+      "namePt": "Davy Jones",
+      "filmTitle": "Pirates of the Caribbean",
+      "imagePath": "/characters/davy-jones.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 83.98367519148378,
+          "y": 100,
+          "zoom": 2.85,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 18.30838280513843,
+          "y": 81.5423823691511,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 50,
+          "y": 0,
+          "zoom": 6.1,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 60.608080743028324,
+          "y": 62.496515495715045,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 48.96428382883826,
+          "y": 4.133897445168476,
           "zoom": 2.6,
           "label": "Rosto"
         },
@@ -1889,6 +3085,52 @@
       }
     },
     {
+      "id": "0808b993-4d2b-4365-b873-c4c073ec1842",
+      "name": "Doctor Octopus",
+      "namePt": "Doc Otto",
+      "filmTitle": "Spider-Man 2",
+      "imagePath": "/characters/doc-otto.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 46.05091663698809,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 44.390016879569416,
+          "y": 47.41082112662612,
+          "zoom": 5.8,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 50,
+          "y": 8,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 50,
+          "y": 38,
+          "zoom": 3.75,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 50.4787477941091,
+          "y": 15.177666998355612,
+          "zoom": 5,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "9a1ecb51-042f-425c-9bc5-ed07aa619bb8",
       "name": "Don Lockwood",
       "namePt": "Don Lockwood",
@@ -1970,6 +3212,144 @@
           "x": 76.27267662657616,
           "y": 0,
           "zoom": 4.25,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "89b5a880-a4f4-486a-9d2d-393b70c8c6eb",
+      "name": "Donatello",
+      "namePt": "Donatello",
+      "filmTitle": "Teenage Mutant Ninja Turtles",
+      "imagePath": "/characters/donatello.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 35.520038827868895,
+          "y": 92.98728895749193,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 24.169926195798237,
+          "y": 50.7483314636221,
+          "zoom": 4.65,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 45.155320542093634,
+          "y": 3.4580854915156474,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 42.67506012961937,
+          "y": 35.73785735589235,
+          "zoom": 4.05,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 44.398552188412104,
+          "y": 11.981980224204692,
+          "zoom": 4.05,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "d4b222ff-d6cb-4675-b3eb-ee208afbd86b",
+      "name": "Donkey",
+      "namePt": "Burro",
+      "filmTitle": "Shrek",
+      "imagePath": "/characters/burro.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 50,
+          "y": 92,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 66.75540067419404,
+          "y": 97.62037224755068,
+          "zoom": 6.1,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 64.544030371684,
+          "y": 25.907836576126883,
+          "zoom": 7.05,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 62.16446295104916,
+          "y": 76.39851093214979,
+          "zoom": 4.3,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 68.32964887930288,
+          "y": 42.97324223623165,
+          "zoom": 3.95,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "acc395f8-8731-4dc5-a134-b776d26aa4d3",
+      "name": "Donnie Darko",
+      "namePt": "Donnie Darko",
+      "filmTitle": "Donnie Darko",
+      "imagePath": "/characters/donnie-darko.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 51.31633880317884,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 57.382124456581316,
+          "y": 44.86702794113152,
+          "zoom": 5.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 50,
+          "y": 8,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 50,
+          "y": 38,
+          "zoom": 3.95,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 49.540766212839934,
+          "y": 15.800650530344356,
+          "zoom": 4.6,
           "label": "Rosto"
         },
         "5": {
@@ -2211,6 +3591,52 @@
       }
     },
     {
+      "id": "c6dcfed9-20a3-40d4-aad2-ee30ed35140c",
+      "name": "Edward Cullen",
+      "namePt": "Edward Cullen",
+      "filmTitle": "Twilight",
+      "imagePath": "/characters/edward-cullen.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 56.58179444610728,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 34.49480097635755,
+          "y": 59.9273215418067,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 52.8824874043437,
+          "y": 6.270483884302359,
+          "zoom": 7.25,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 50.417413588787305,
+          "y": 55.23578118535325,
+          "zoom": 2.55,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 48.201624870276135,
+          "y": 17.4072023300072,
+          "zoom": 4.5,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "1cc27ca3-1659-4c9b-88ef-06198868ccc0",
       "name": "Ellen Ripley",
       "namePt": "Ellen Ripley",
@@ -2349,6 +3775,52 @@
       }
     },
     {
+      "id": "43b9370f-cf05-40d9-a7be-9b9fb98a056c",
+      "name": "Eric Cartman",
+      "namePt": "Cartman",
+      "filmTitle": "South Park: Bigger, Longer & Uncut",
+      "imagePath": "/characters/cartman.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 53.07149068415499,
+          "y": 97.2654950756548,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 36.124864968785964,
+          "y": 79.1179032638999,
+          "zoom": 4.8,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 50,
+          "y": 8,
+          "zoom": 3.4,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 44.83391801571572,
+          "y": 87.93004756899147,
+          "zoom": 3.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 59.47888802572271,
+          "y": 34.79659573240695,
+          "zoom": 1.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "5afd0f34-937c-4601-99eb-f85354415c70",
       "name": "Erik",
       "namePt": "Erik",
@@ -2430,6 +3902,98 @@
           "x": 61.73802880864515,
           "y": 19.928590007993513,
           "zoom": 3.5,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "3940a5d3-2761-4d85-a2dc-f36894487ac5",
+      "name": "Evan",
+      "namePt": "Evan",
+      "filmTitle": "Superbad",
+      "imagePath": "/characters/evan.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 17.46760986463447,
+          "y": 100,
+          "zoom": 3,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 44.75937573773421,
+          "y": 85.0955438267412,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 48.8156132459077,
+          "y": 0,
+          "zoom": 5.9,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 41.62520613914674,
+          "y": 93.48355712015847,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 48.273823940968015,
+          "y": 6.205327191887282,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "41e7fbfe-1ebd-4524-8998-8e852189f1bb",
+      "name": "EVE",
+      "namePt": "EVA",
+      "filmTitle": "WALL-E",
+      "imagePath": "/characters/eva.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 27.183092500785463,
+          "y": 94.63271615307595,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 12.386449034676916,
+          "y": 85.98385395771929,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 13.67918773044985,
+          "y": 2.9609547036047013,
+          "zoom": 3.4,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 16.779958794106143,
+          "y": 87.41178440303764,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 30.321577123421534,
+          "y": 2.8392624961558646,
+          "zoom": 2.6,
           "label": "Rosto"
         },
         "5": {
@@ -2671,6 +4235,144 @@
       }
     },
     {
+      "id": "aada31e5-eab6-4602-a73b-11739a322566",
+      "name": "Fiona",
+      "namePt": "Fiona",
+      "filmTitle": "Shrek",
+      "imagePath": "/characters/fiona.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 5.243777680427854,
+          "y": 94.96184176467462,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 50.68127938798937,
+          "y": 41.8654108768635,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 46.52561686505123,
+          "y": 0,
+          "zoom": 7.15,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 31.26337721768843,
+          "y": 40.38180006206539,
+          "zoom": 2.2,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 43.44049936845081,
+          "y": 1.8035426841183835,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "7403e859-2763-43ba-a7f2-d982b110b313",
+      "name": "Flik",
+      "namePt": "Flik",
+      "filmTitle": "A Bug's Life",
+      "imagePath": "/characters/flik.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 33.32610734583314,
+          "y": 98.25279658704731,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 31.786048534458555,
+          "y": 40.60494481871063,
+          "zoom": 7.3,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 31.839563745018577,
+          "y": 0,
+          "zoom": 5.85,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 30.01566292768353,
+          "y": 52.55236339371578,
+          "zoom": 3.05,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 31.224110672648777,
+          "y": 18.21598691684665,
+          "zoom": 3.7,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "583099d6-74a1-4e2e-ae98-06359b68f2ae",
+      "name": "Fogell",
+      "namePt": "Fogell",
+      "filmTitle": "Superbad",
+      "imagePath": "/characters/fogell.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 43.652747346245164,
+          "y": 100,
+          "zoom": 3.35,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 89.37083504551778,
+          "y": 80.3579914515581,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 54.580080119475234,
+          "y": 7.141210119141416,
+          "zoom": 7.15,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 50.83114521538168,
+          "y": 54.21313703367529,
+          "zoom": 2.55,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 51.726176059031985,
+          "y": 13.1964309844622,
+          "zoom": 3.75,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "4bf55041-3a1c-4135-b136-43e6a8fa2341",
       "name": "Forrest Gump",
       "namePt": "Forrest Gump",
@@ -2706,6 +4408,52 @@
           "x": 50,
           "y": 12.160691417712403,
           "zoom": 4.85,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "e53bb508-03cc-4362-99af-a94b14465b8b",
+      "name": "Frank",
+      "namePt": "Frank",
+      "filmTitle": "Donnie Darko",
+      "imagePath": "/characters/frank.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 47.80606851796424,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 83.05417597084032,
+          "y": 56.966366838202,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 50,
+          "y": 8,
+          "zoom": 6.1,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 52.743296117096,
+          "y": 50.32478787689232,
+          "zoom": 2.95,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 52.10052947346107,
+          "y": 14.940315934429238,
+          "zoom": 3.85,
           "label": "Rosto"
         },
         "5": {
@@ -2843,6 +4591,144 @@
         "4": {
           "x": 17.547911161683757,
           "y": 0,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "fe85ea96-3e79-4231-8d93-de35094e62c6",
+      "name": "Frodo Baggins",
+      "namePt": "Frodo",
+      "filmTitle": "The Lord of the Rings",
+      "imagePath": "/characters/frodo.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 48.067914246072775,
+          "y": 98.06703556853994,
+          "zoom": 3.55,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 38.192837650131494,
+          "y": 38.492691703782825,
+          "zoom": 5.2,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 52.313936777063994,
+          "y": 10.169345421807336,
+          "zoom": 7.3,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 48.96828762241888,
+          "y": 47.93851394343831,
+          "zoom": 3.2,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 51.96228203021906,
+          "y": 18.688574273482363,
+          "zoom": 5.25,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "5f6bf37f-31fc-439c-b375-25f3aaf1cca2",
+      "name": "Gandalf",
+      "namePt": "Gandalf",
+      "filmTitle": "The Lord of the Rings",
+      "imagePath": "/characters/gandalf.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 35.081292703546985,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 8.438533347977717,
+          "y": 34.7591105520611,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 51.74730992201902,
+          "y": 4.505417862171174,
+          "zoom": 7.4,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 46.961597844825434,
+          "y": 47.102490683535244,
+          "zoom": 2.75,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 51.744639991757104,
+          "y": 16.438817768640455,
+          "zoom": 4.15,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "6209bad8-0c7c-46d1-9031-801a50c6fec7",
+      "name": "Genie",
+      "namePt": "Gênio",
+      "filmTitle": "Aladdin",
+      "imagePath": "/characters/genio.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 58.33246175424821,
+          "y": 100,
+          "zoom": 2.8,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 16.998447983641007,
+          "y": 77.5293715406782,
+          "zoom": 2.05,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 24.245874221690084,
+          "y": 10.235050413224986,
+          "zoom": 6.5,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 34.92534549262154,
+          "y": 70.24327789855207,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 27.55971123258418,
+          "y": 4.392822459499769,
           "zoom": 2.6,
           "label": "Rosto"
         },
@@ -2993,6 +4879,52 @@
       }
     },
     {
+      "id": "569ee68a-2c5a-4473-b353-956b47575606",
+      "name": "Gimli",
+      "namePt": "Gimli",
+      "filmTitle": "The Lord of the Rings",
+      "imagePath": "/characters/gimli.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 87.29683519460794,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 5.675004415370822,
+          "y": 42.4576176308489,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 73.69101532456337,
+          "y": 8.17545997609492,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 74.00773814147225,
+          "y": 45.537393683937914,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 64.49986836012613,
+          "y": 0,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "5f1fb14d-c6f2-4697-a00c-d1d40e6b74db",
       "name": "Gizmo",
       "namePt": "Gizmo",
@@ -3085,6 +5017,52 @@
       }
     },
     {
+      "id": "4634b953-8ceb-4584-8a14-dd58d7c10437",
+      "name": "Gomez Addams",
+      "namePt": "Gomez Addams",
+      "filmTitle": "The Addams Family",
+      "imagePath": "/characters/gomez-addams.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 14.897096287427829,
+          "y": 100,
+          "zoom": 2.4,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 56.60312279783183,
+          "y": 36.2395935514579,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 29.148723876225198,
+          "y": 0,
+          "zoom": 5.95,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 14.825870044056742,
+          "y": 28.368887179452337,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 26.869251344713934,
+          "y": 0,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "a6cc488c-9cfb-4ce2-8eb8-bef39cc7c212",
       "name": "Grand Moff Tarkin",
       "namePt": "Grand Moff Tarkin",
@@ -3120,6 +5098,52 @@
           "x": 54.833271893804465,
           "y": 9.312476750643565,
           "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "c2fd6f08-53d3-4ea3-b9ce-33886188b65c",
+      "name": "Gromit",
+      "namePt": "Gromit",
+      "filmTitle": "Wallace & Gromit",
+      "imagePath": "/characters/gromit.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 35.95885190566621,
+          "y": 88.37998233553155,
+          "zoom": 3.15,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 20.677065952703984,
+          "y": 54.3014703308344,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 31.444778200389923,
+          "y": 0,
+          "zoom": 5.55,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 28.41508008922827,
+          "y": 55.38177632542822,
+          "zoom": 3.05,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 30.733943347991104,
+          "y": 14.491056056118657,
+          "zoom": 3.15,
           "label": "Rosto"
         },
         "5": {
@@ -3257,6 +5281,52 @@
         "4": {
           "x": 46.20239159864454,
           "y": 14.749990947806106,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "0f77a7be-4196-4495-97fc-2e8f5c03b175",
+      "name": "Haku",
+      "namePt": "Haku",
+      "filmTitle": "Spirited Away",
+      "imagePath": "/characters/haku.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 64.04114809433379,
+          "y": 85.74724107465444,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 28.290276275092157,
+          "y": 100,
+          "zoom": 3.9,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 48.815643366114045,
+          "y": 0,
+          "zoom": 3.4,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 24.317286047795374,
+          "y": 62.07777007101216,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 45.51195805013066,
+          "y": 44.52682195428787,
           "zoom": 2.6,
           "label": "Rosto"
         },
@@ -3407,6 +5477,98 @@
       }
     },
     {
+      "id": "d5c53804-b41d-429d-bd66-f10dc81dc000",
+      "name": "Harry Osborn",
+      "namePt": "Harry Osborn",
+      "filmTitle": "Spider-Man",
+      "imagePath": "/characters/harry-osborn.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 91.68469815867945,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 17.91356714030342,
+          "y": 100,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 60.26460488158301,
+          "y": 0,
+          "zoom": 6.15,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 76.79933609509,
+          "y": 85.73679471732143,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 59.32134018303017,
+          "y": 3.357122402174607,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "2649efb2-6e37-4142-a88b-27ca0ff57496",
+      "name": "Harry Potter",
+      "namePt": "Harry Potter",
+      "filmTitle": "Harry Potter",
+      "imagePath": "/characters/harry-potter.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 45.61213703592848,
+          "y": 79.16538164551139,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 36.428921039827955,
+          "y": 49.29774600492417,
+          "zoom": 5.1,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 19.44877286349328,
+          "y": 1.877557902183045,
+          "zoom": 5.95,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 22.207905402988835,
+          "y": 63.15308736627828,
+          "zoom": 2.6,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 18.583600993489128,
+          "y": 8.794616844624825,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "1d144816-66ee-4d36-9527-7fe1935f4c36",
       "name": "Harry Powell",
       "namePt": "Harry Powell",
@@ -3442,6 +5604,52 @@
           "x": 48.67103940180156,
           "y": 0,
           "zoom": 4.45,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "39800f3b-a925-4a9c-81b9-7b1909193e57",
+      "name": "Helen Parr",
+      "namePt": "Helena Pêra",
+      "filmTitle": "The Incredibles",
+      "imagePath": "/characters/helena-pera.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 10.509233323356305,
+          "y": 93.97452769938151,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 77.92187353004881,
+          "y": 99.6042930340943,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 50,
+          "y": 8,
+          "zoom": 3.4,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 62.59858581542601,
+          "y": 72.83375038580495,
+          "zoom": 2.6,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 58.976136578451424,
+          "y": 15.78570088248743,
+          "zoom": 2.6,
           "label": "Rosto"
         },
         "5": {
@@ -3535,6 +5743,144 @@
           "y": 21.013708413814967,
           "zoom": 3.05,
           "label": "Óculos"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "0ab3de0c-cec6-4358-99d6-7299504160aa",
+      "name": "Hercules",
+      "namePt": "Hércules",
+      "filmTitle": "Hercules",
+      "imagePath": "/characters/hercules.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 98.37440798243745,
+          "y": 100,
+          "zoom": 1.95,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 43.18023355921961,
+          "y": 23.8035453926759,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 37.60716574468072,
+          "y": 0,
+          "zoom": 7,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 51.67495451253022,
+          "y": 36.953140431695125,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 48.61905388490314,
+          "y": 0,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "0f296046-ab4e-4d28-b82e-238cc7e770f1",
+      "name": "Hermione Granger",
+      "namePt": "Hermione",
+      "filmTitle": "Harry Potter",
+      "imagePath": "/characters/hermione.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 30.254616661678153,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 17.12399605104613,
+          "y": 86.2799121539564,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 47.29011361065548,
+          "y": 0,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 35.762875994392054,
+          "y": 58.93719136609753,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 43.44055204716355,
+          "y": 0,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "2a98b539-3dac-4a63-95df-0aaf099fe363",
+      "name": "Howard Langston",
+      "namePt": "Howard Langston",
+      "filmTitle": "Jingle All the Way",
+      "imagePath": "/characters/howard-langston.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 40.34671486973773,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 100,
+          "y": 44.530296089042196,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 45.891279208294904,
+          "y": 0,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 51.67495451253022,
+          "y": 23.762695494625284,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 48.96428382883826,
+          "y": 0,
+          "zoom": 2.6,
+          "label": "Rosto"
         },
         "5": {
           "x": 50,
@@ -3775,6 +6121,52 @@
       }
     },
     {
+      "id": "911c4752-9a7a-4070-8b0e-ba80dca86068",
+      "name": "Jack Sparrow",
+      "namePt": "Jack Sparrow",
+      "filmTitle": "Pirates of the Caribbean",
+      "imagePath": "/characters/jack-sparrow.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 100,
+          "y": 96.12256917985334,
+          "zoom": 3.45,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 0,
+          "y": 77.3970254527645,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 30.016341648208808,
+          "y": 11.138548219748484,
+          "zoom": 6.6,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 20.409065951292245,
+          "y": 68.35892748084143,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 34.11915918542063,
+          "y": 13.714281013124785,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "4e45dda1-6d52-43b8-a548-b567c90f3bce",
       "name": "Jack Torrance",
       "namePt": "Jack Torrance",
@@ -3821,6 +6213,52 @@
       }
     },
     {
+      "id": "bcd6e518-e4d4-424e-be4f-17285796c6ef",
+      "name": "Jake Sully",
+      "namePt": "Jake Sully",
+      "filmTitle": "Avatar",
+      "imagePath": "/characters/jake-sully.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 10.509233323356305,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 71.6052445755777,
+          "y": 56.6702634612093,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 50,
+          "y": 8,
+          "zoom": 3.4,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 52.09496875658358,
+          "y": 51.21352708013075,
+          "zoom": 3.05,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 82.45208883831624,
+          "y": 7.499981895612212,
+          "zoom": 3.85,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "a1641684-62ba-4a0f-9138-bfcd23f1ed33",
       "name": "James Bond",
       "namePt": "James Bond",
@@ -3856,6 +6294,52 @@
           "x": 49.44609117801202,
           "y": 4.194115842074152,
           "zoom": 3.95,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "a463b980-877e-41c6-8f6d-2ac1da5d1f59",
+      "name": "Jane Porter",
+      "namePt": "Jane",
+      "filmTitle": "Tarzan",
+      "imagePath": "/characters/jane.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 60.09209820805958,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 98.84583871763714,
+          "y": 45.7146870066352,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 57.89583137339841,
+          "y": 0,
+          "zoom": 6.05,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 69.17032093559335,
+          "y": 36.308691268935796,
+          "zoom": 3,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 58.74238148331069,
+          "y": 12.20368494342165,
+          "zoom": 4.55,
           "label": "Rosto"
         },
         "5": {
@@ -4327,6 +6811,52 @@
       }
     },
     {
+      "id": "c55bc85f-11fe-479d-8e3a-c8573eaaec8f",
+      "name": "Judge Dredd",
+      "namePt": "Juiz Dredd",
+      "filmTitle": "Judge Dredd",
+      "imagePath": "/characters/juiz-dredd.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 62.44624186967421,
+          "y": 100,
+          "zoom": 2.8,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 100,
+          "y": 80.6540835333619,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 33.02395049911088,
+          "y": 0,
+          "zoom": 7.55,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 41.18312463229467,
+          "y": 42.366156506312336,
+          "zoom": 2.55,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 45.511984389487026,
+          "y": 0,
+          "zoom": 3.15,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "da72fbd3-6758-4785-8e59-b304c6646e66",
       "name": "Julia Cotton",
       "namePt": "Julia",
@@ -4335,33 +6865,79 @@
       "movieId": null,
       "cropJson": {
         "0": {
-          "x": 52.17322184383491,
+          "x": 54.471211255558565,
           "y": 100,
           "zoom": 3.2,
           "label": "Pernas"
         },
         "1": {
-          "x": 34.10001543172889,
-          "y": 86.87216408869739,
-          "zoom": 3.4,
+          "x": 43.674569125367924,
+          "y": 58.279981167316656,
+          "zoom": 3.85,
           "label": "Mão"
         },
         "2": {
-          "x": 43.4033490784725,
-          "y": 26.48191694780421,
-          "zoom": 5.5,
+          "x": 54.27348422424756,
+          "y": 0,
+          "zoom": 8,
           "label": "Cabelo"
         },
         "3": {
-          "x": 53.0707534893391,
-          "y": 88.87737342223606,
-          "zoom": 1.7,
+          "x": 52.10836098868021,
+          "y": 40.88934251762074,
+          "zoom": 2.3,
           "label": "Busto"
         },
         "4": {
           "x": 53.25969015596467,
-          "y": 20.70535517363123,
+          "y": 0,
           "zoom": 4,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "b7162edf-60e5-4851-916d-ce6fc73b9714",
+      "name": "Kala",
+      "namePt": "Kala",
+      "filmTitle": "Tarzan",
+      "imagePath": "/characters/kala.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 0,
+          "y": 100,
+          "zoom": 2.15,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 92.92396518758832,
+          "y": 99.1117124593997,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 62.63334826956127,
+          "y": 0,
+          "zoom": 5.2,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 25.71310632280641,
+          "y": 72.96512715257315,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 79.34499300354376,
+          "y": 11.901766403381112,
+          "zoom": 2.6,
           "label": "Rosto"
         },
         "5": {
@@ -4407,6 +6983,98 @@
         "4": {
           "x": 53.45235211806397,
           "y": 0,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "c573202e-2b93-4667-9347-2911ab72b768",
+      "name": "Kenny McCormick",
+      "namePt": "Kenny",
+      "filmTitle": "South Park: Bigger, Longer & Uncut",
+      "imagePath": "/characters/kenny.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 41.663087149654274,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 25.414612969073183,
+          "y": 100,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 49.6052445755777,
+          "y": 0,
+          "zoom": 3.4,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 46.552071688523455,
+          "y": 97.6603798381377,
+          "zoom": 2.5,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 50,
+          "y": 22,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "b3dbc983-d326-4f9c-a3a6-6b4fe34600e9",
+      "name": "Kermit the Frog",
+      "namePt": "Kermit",
+      "filmTitle": "The Muppet Movie",
+      "imagePath": "/characters/kermit.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 96.1532122852737,
+          "y": 100,
+          "zoom": 1.9,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 37.65314557379945,
+          "y": 58.7429306242137,
+          "zoom": 4.05,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 14.113689509328925,
+          "y": 20.907777898763282,
+          "zoom": 5.05,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 51.954110048251565,
+          "y": 47.42173611474389,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 10.297976981620685,
+          "y": 38.3125228367753,
           "zoom": 2.6,
           "label": "Rosto"
         },
@@ -4638,6 +7306,52 @@
           "x": 47.58336405309777,
           "y": 0,
           "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "03feca8e-856a-4148-a6bd-3ca5c11d7666",
+      "name": "Kyle Broflovski",
+      "namePt": "Kyle",
+      "filmTitle": "South Park: Bigger, Longer & Uncut",
+      "imagePath": "/characters/kyle.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 33.76492042363045,
+          "y": 100,
+          "zoom": 3.35,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 91.73957843349604,
+          "y": 93.3862350691366,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 54.342731351534205,
+          "y": 0,
+          "zoom": 3.4,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 51.67497581073238,
+          "y": 100,
+          "zoom": 3.85,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 50.27499868685936,
+          "y": 32.10723001380094,
+          "zoom": 1.65,
           "label": "Rosto"
         },
         "5": {
@@ -4925,6 +7639,144 @@
       }
     },
     {
+      "id": "e16a65ca-6c57-4fd1-9d2f-66f00c22dc79",
+      "name": "Legolas",
+      "namePt": "Legolas",
+      "filmTitle": "The Lord of the Rings",
+      "imagePath": "/characters/legolas.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 54.38786296407152,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 43.96977452827056,
+          "y": 23.8035115071092,
+          "zoom": 5.65,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 74.54478722425515,
+          "y": 20.93719136609753,
+          "zoom": 6.8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 77.52263386522766,
+          "y": 54.938356044481495,
+          "zoom": 2.75,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 65.74053172236908,
+          "y": 24.006530815887658,
+          "zoom": 5.5,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "d0a28831-3f5e-4fa1-9462-e28fdfb6f756",
+      "name": "Leonardo",
+      "namePt": "Leonardo",
+      "filmTitle": "Teenage Mutant Ninja Turtles",
+      "imagePath": "/characters/leonardo.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 9.631674121237076,
+          "y": 100,
+          "zoom": 2.6,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 80.68540246265572,
+          "y": 25.2840283920727,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 52.64629298905231,
+          "y": 0,
+          "zoom": 7.3,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 47.48753628390143,
+          "y": 62.70588421461416,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 38.505971612581604,
+          "y": 6.363435817162676,
+          "zoom": 4.35,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "d1c6bffd-9553-4384-a9c7-d3f295a74d0d",
+      "name": "Leprechaun",
+      "namePt": "Leprechaun",
+      "filmTitle": "Leprechaun",
+      "imagePath": "/characters/leprechaun.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 35.08122575007158,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 66.47291201457985,
+          "y": 43.0497904992676,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 36.27771671590303,
+          "y": 1.9084825354801744,
+          "zoom": 5.65,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 47.987896587456156,
+          "y": 55.94921990620887,
+          "zoom": 3.2,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 41.36911970484007,
+          "y": 13.455326366725016,
+          "zoom": 4,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "f6d64141-8bfc-48c6-b53e-e52b95b3febe",
       "name": "Lex Luthor",
       "namePt": "Lex Luthor",
@@ -4960,6 +7812,144 @@
           "x": 31.738643752551724,
           "y": 6.448882964137428,
           "zoom": 4.35,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "d76fdb70-83c4-4c63-9b98-082cf0a61f1f",
+      "name": "Linguini",
+      "namePt": "Linguini",
+      "filmTitle": "Ratatouille",
+      "imagePath": "/characters/linguini.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 34.642546579225076,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 34.73941870163586,
+          "y": 71.66051252286661,
+          "zoom": 4.3,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 32.64852295292603,
+          "y": 3.818469864107037,
+          "zoom": 7.15,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 48.60420102319112,
+          "y": 70.8713840552494,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 43.10189161580769,
+          "y": 12.538190467442561,
+          "zoom": 4.2,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "4398b1dd-2416-4d01-9dc3-110cae10f76a",
+      "name": "Lionel Cosgrove",
+      "namePt": "Lionel",
+      "filmTitle": "Braindead",
+      "imagePath": "/characters/lionel.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 57.45616164184249,
+          "y": 100,
+          "zoom": 2.75,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 44.36456007289921,
+          "y": 100,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 31.839563745018577,
+          "y": 0,
+          "zoom": 5.75,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 41.50174258998327,
+          "y": 58.64931763218158,
+          "zoom": 2.95,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 36.19059152774411,
+          "y": 0,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "e7ce2b6e-55bf-4157-8316-79d3e5dff685",
+      "name": "Liu Kang",
+      "namePt": "Liu Kang",
+      "filmTitle": "Mortal Kombat",
+      "imagePath": "/characters/liu-kang.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 35.520038827868895,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 82.26460488158301,
+          "y": 54.30151551159,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 50,
+          "y": 8,
+          "zoom": 7.75,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 55.0248422393885,
+          "y": 59.984066908211744,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 49.64584633160506,
+          "y": 15.012257516623482,
+          "zoom": 5.8,
           "label": "Rosto"
         },
         "5": {
@@ -5247,6 +8237,52 @@
       }
     },
     {
+      "id": "3bcb8ffe-fe5c-4ba1-8d4a-5244780af03e",
+      "name": "Mary Jane Watson",
+      "namePt": "Mary Jane",
+      "filmTitle": "Spider-Man",
+      "imagePath": "/characters/mary-jane.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 100,
+          "y": 92.06967132454773,
+          "zoom": 2.9,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 83.05417597084032,
+          "y": 37.7200765508547,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 69.73957843349604,
+          "y": 0,
+          "zoom": 3.4,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 100,
+          "y": 93.48355712015847,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 85.21398106850998,
+          "y": 0,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "24f80c33-073d-4924-b3e7-1dc573489e32",
       "name": "Mary Poppins",
       "namePt": "Mary Poppins",
@@ -5293,6 +8329,52 @@
       }
     },
     {
+      "id": "3cab2501-2674-4632-8f80-7fa30e9ed8d5",
+      "name": "Matilda Wormwood",
+      "namePt": "Matilda",
+      "filmTitle": "Matilda",
+      "imagePath": "/characters/matilda.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 44.29576475601194,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 26.59893948275279,
+          "y": 64.6648739169898,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 52.02004868561921,
+          "y": 18.06440037889825,
+          "zoom": 7.95,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 47.71523757485124,
+          "y": 59.03419917953979,
+          "zoom": 2.75,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 50,
+          "y": 25.01277674369018,
+          "zoom": 5.5,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "72386bc1-6b35-414e-85d3-281c7ba98e9d",
       "name": "Max Rockatansky",
       "namePt": "Max Rockatansky",
@@ -5328,6 +8410,52 @@
           "x": 52.1993082261581,
           "y": 1.4576561275802158,
           "zoom": 5.15,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "2c734972-b10b-4a51-8368-a0508d1c2b10",
+      "name": "Maximus",
+      "namePt": "Maximus",
+      "filmTitle": "Gladiator",
+      "imagePath": "/characters/maximus.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 46.4897631915231,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 91.84629961484285,
+          "y": 55.84237052826795,
+          "zoom": 2.35,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 54.166636987374545,
+          "y": 0,
+          "zoom": 7.7,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 46.65009097493956,
+          "y": 69.19641833024718,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 54.14281200593422,
+          "y": 3.0981776331309945,
+          "zoom": 2.6,
           "label": "Rosto"
         },
         "5": {
@@ -5477,6 +8605,52 @@
       }
     },
     {
+      "id": "e7bee04b-ccec-4dfd-85ed-643a11716b17",
+      "name": "Michelangelo",
+      "namePt": "Michelangelo",
+      "filmTitle": "Teenage Mutant Ninja Turtles",
+      "imagePath": "/characters/michelangelo.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 72.06529489346617,
+          "y": 98.90532808406039,
+          "zoom": 3.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 68.44686985792944,
+          "y": 40.681042549648296,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 45.26603442841163,
+          "y": 1.816772733805284,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 50,
+          "y": 38,
+          "zoom": 2.65,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 47.579538075051644,
+          "y": 8.68745878155213,
+          "zoom": 3.55,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "78436e22-c955-4ead-9842-e46f2e62720e",
       "name": "Mickey Mouse",
       "namePt": "Mickey Mouse",
@@ -5511,6 +8685,52 @@
         "4": {
           "x": 38.952483757937834,
           "y": 16.044616019462563,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "657a6f9a-b259-40aa-8fa4-966da19299f9",
+      "name": "Mike Wazowski",
+      "namePt": "Mike Wazowski",
+      "filmTitle": "Monsters, Inc.",
+      "imagePath": "/characters/mike-wazowski.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 38.59156298876158,
+          "y": 92.98728895749193,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 81.08021812749071,
+          "y": 58.7429306242137,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 44.867697559208494,
+          "y": 11.8492648345828,
+          "zoom": 3.4,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 48.883377857114624,
+          "y": 68.14957473575164,
+          "zoom": 3.65,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 47.928567657676524,
+          "y": 56.17860563689451,
           "zoom": 2.6,
           "label": "Rosto"
         },
@@ -5604,6 +8824,52 @@
           "x": 52.76189223019372,
           "y": 0,
           "zoom": 5.05,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "9b5b4c22-a646-460c-ad79-46f0bafc9d85",
+      "name": "Mr. Freeze",
+      "namePt": "Dr. Frio",
+      "filmTitle": "Batman & Robin",
+      "imagePath": "/characters/dr-frio.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 42.540646351773496,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 77.5270578652138,
+          "y": 54.8936883800087,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 46.3664673054265,
+          "y": 7.545815479563108,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 44.432389645307,
+          "y": 40.38610164644986,
+          "zoom": 3.45,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 47.38297345861476,
+          "y": 11.204771244391033,
+          "zoom": 4.15,
           "label": "Rosto"
         },
         "5": {
@@ -6397,6 +9663,52 @@
       }
     },
     {
+      "id": "722feecb-837b-497c-99b4-29100afad2a1",
+      "name": "Puss in Boots",
+      "namePt": "Gato de Botas",
+      "filmTitle": "Shrek 2",
+      "imagePath": "/characters/gato-de-botas.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 27.055957767066957,
+          "y": 100,
+          "zoom": 2.75,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 100,
+          "y": 19.61240039469802,
+          "zoom": 5.15,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 85.53124118029285,
+          "y": 0,
+          "zoom": 6.1,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 76.60162009459832,
+          "y": 54.4317012964209,
+          "zoom": 3.1,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 76.28367529026333,
+          "y": 9.537097466943642,
+          "zoom": 3.85,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "a13ea9e2-46cc-44c9-8d4f-d7a6c757cc4c",
       "name": "Queen of Hearts",
       "namePt": "Rainha de Copas",
@@ -6754,6 +10066,52 @@
           "x": 65.75347056104245,
           "y": 26.851268614452238,
           "zoom": 5.25,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "6d72f461-9d63-4b7d-b143-c51409015c7e",
+      "name": "Rocket",
+      "namePt": "Buscapé",
+      "filmTitle": "City of God",
+      "imagePath": "/characters/buscape.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 63.57278601592054,
+          "y": 100,
+          "zoom": 2.95,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 72.39478554462865,
+          "y": 100,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 44.47291201457984,
+          "y": 8.592172868418702,
+          "zoom": 7.35,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 55.02488483579282,
+          "y": 83.22433814291347,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 40.67863347761345,
+          "y": 17.5982154922311,
+          "zoom": 2.6,
           "label": "Rosto"
         },
         "5": {
@@ -7685,6 +11043,52 @@
       }
     },
     {
+      "id": "f7ba2966-204e-465c-be9a-c1d3ff0bc262",
+      "name": "The Djinn",
+      "namePt": "Djinn",
+      "filmTitle": "Wishmaster",
+      "imagePath": "/characters/djinn.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 47.59234653159645,
+          "y": 88.8611697447678,
+          "zoom": 2.6,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 46.52069871687958,
+          "y": 40.202561928506,
+          "zoom": 5.15,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 48.18323365271325,
+          "y": 3.9122700119525398,
+          "zoom": 8,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 47.839414657254736,
+          "y": 40.73783156468694,
+          "zoom": 2.65,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 49.03297685783305,
+          "y": 12.933930196531662,
+          "zoom": 5.1,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
       "id": "0e820421-2688-410d-b303-0b04c4f44ac7",
       "name": "The Golem",
       "namePt": "Golem",
@@ -7720,6 +11124,52 @@
           "x": 35.500131639873864,
           "y": 3.8749526761248703,
           "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "295c89cd-da24-4afc-b98a-36bd846a06e8",
+      "name": "The Riddler",
+      "namePt": "Charada",
+      "filmTitle": "Batman Forever",
+      "imagePath": "/characters/charada.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 5.682557281487469,
+          "y": 100,
+          "zoom": 4.2,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 100,
+          "y": 45.1224915478387,
+          "zoom": 3.95,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 78.60336354198452,
+          "y": 18.141286702338014,
+          "zoom": 5.9,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 49.47889553152813,
+          "y": 57.72204803263385,
+          "zoom": 2.8,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 63.03848196628003,
+          "y": 25.27556848866483,
+          "zoom": 3.6,
           "label": "Rosto"
         },
         "5": {
@@ -8041,6 +11491,52 @@
         "4": {
           "x": 44.1310119350338,
           "y": 21.74106510831255,
+          "zoom": 2.6,
+          "label": "Rosto"
+        },
+        "5": {
+          "x": 50,
+          "y": 50,
+          "zoom": 1,
+          "label": "Completo"
+        }
+      }
+    },
+    {
+      "id": "9585a34f-c825-43d6-b893-0694d81f00bc",
+      "name": "Two-Face",
+      "namePt": "Duas Caras",
+      "filmTitle": "Batman Forever",
+      "imagePath": "/characters/duas-caras.jpg",
+      "movieId": null,
+      "cropJson": {
+        "0": {
+          "x": 76.67464890021705,
+          "y": 96.92288169589976,
+          "zoom": 2.55,
+          "label": "Pernas"
+        },
+        "1": {
+          "x": 2.911475482763908,
+          "y": 43.9381232206235,
+          "zoom": 3.4,
+          "label": "Mão"
+        },
+        "2": {
+          "x": 49.42137554118954,
+          "y": 0.4427180861774226,
+          "zoom": 7.6,
+          "label": "Cabelo"
+        },
+        "3": {
+          "x": 32.133790135408105,
+          "y": 37.37187786949334,
+          "zoom": 1.7,
+          "label": "Busto"
+        },
+        "4": {
+          "x": 44.47621553961255,
+          "y": 4.910692242874667,
           "zoom": 2.6,
           "label": "Rosto"
         },

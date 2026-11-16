@@ -129,6 +129,7 @@ import {
   WHOAMI_MAX_ASKS,
   WHOAMI_MAX_WRONG,
 } from './whoami.js'
+import { whoamiPoolSql } from './whoamiPoolCatalog.js'
 
 const CHARACTER_MAX_TAKE = 6
 const CHARACTER_POINTS = CAST_POINTS
@@ -960,14 +961,22 @@ async function ensureWhoamiTraits(movie) {
     movie.cast_json?.region ||
     details.production_countries?.[0]?.iso_3166_1 ||
     '—'
+  const prevTraits =
+    movie.cast_json?._traits && typeof movie.cast_json._traits === 'object'
+      ? movie.cast_json._traits
+      : {}
   const castJson = {
     ...(typeof movie.cast_json === 'object' && movie.cast_json
       ? movie.cast_json
       : {}),
     _traits: {
+      ...prevTraits,
       genres,
-      region: movie.cast_json?.region || region,
-      runtime: details.runtime || null,
+      region:
+        prevTraits.region ||
+        movie.cast_json?.region ||
+        region,
+      runtime: prevTraits.runtime ?? details.runtime ?? null,
     },
   }
   await query(`UPDATE movies SET cast_json = $2::jsonb WHERE id = $1`, [
@@ -1004,7 +1013,8 @@ async function ensureWhoamiDaily(dateStr) {
         `SELECT id::text AS id FROM movies
          WHERE cast_json IS NOT NULL
            AND cast_json != '{}'::jsonb
-           AND year IS NOT NULL`,
+           AND year IS NOT NULL
+           AND ${whoamiPoolSql()}`,
       )
       return rows.map((r) => r.id)
     },
@@ -1573,7 +1583,8 @@ app.get('/api/whoami/next', async (req, res) => {
     const params = []
     let where = `cast_json IS NOT NULL
       AND cast_json != '{}'::jsonb
-      AND year IS NOT NULL`
+      AND year IS NOT NULL
+      AND ${whoamiPoolSql()}`
     if (exclude.length) {
       params.push(exclude)
       where += ` AND NOT (id::text = ANY($${params.length}::text[]))`
@@ -1593,6 +1604,7 @@ app.get('/api/whoami/next', async (req, res) => {
                 director, cast_json, source_url
          FROM movies
          WHERE cast_json IS NOT NULL AND year IS NOT NULL
+           AND ${whoamiPoolSql()}
          ORDER BY random() LIMIT 1`,
       ))
     }
@@ -2855,11 +2867,13 @@ app.get('/api/admin/characters', authAdminRequired, async (req, res) => {
               crop_json, movie_id::text AS movie_id
        FROM characters
        WHERE ${where}
-       ORDER BY lower(COALESCE(name_pt, name)) ASC
-       LIMIT 200`,
+       ORDER BY lower(COALESCE(name_pt, name)) ASC`,
       params,
     )
-    res.json({ characters: rows.map(publicAdminCharacter) })
+    res.json({
+      characters: rows.map(publicAdminCharacter),
+      total: rows.length,
+    })
   } catch (err) {
     res.status(500).json({ error: String(err.message) })
   }
@@ -3094,18 +3108,20 @@ app.delete(
 app.get('/api/admin/whoami/movies', authAdminRequired, async (req, res) => {
   try {
     const q = String(req.query.q || '').trim()
+    const poolOnly = String(req.query.pool || '1') !== '0'
     const params = []
     let where = `year IS NOT NULL`
+    if (poolOnly) where += ` AND ${whoamiPoolSql()}`
     if (q) {
       params.push(`%${q}%`)
-      where += ` AND (title ILIKE $1 OR title_pt ILIKE $1)`
+      where += ` AND (title ILIKE $${params.length} OR title_pt ILIKE $${params.length})`
     }
     const { rows } = await query(
       `SELECT id::text AS id, title, title_pt, year, poster_path, cast_json
        FROM movies
        WHERE ${where}
        ORDER BY lower(COALESCE(title_pt, title)) ASC
-       LIMIT 120`,
+       LIMIT 300`,
       params,
     )
     res.json({

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   fetchAdminWhoamiMovie,
   fetchAdminWhoamiMovies,
@@ -11,6 +11,243 @@ import {
 import { AdminWhoamiQuestionsPanel } from './AdminWhoamiQuestionsPanel'
 
 type Tri = boolean | null
+type NicheField = { path: 'protagonist' | 'antagonist' | 'story' | 'production'; key: string; label: string }
+type NicheBlock = { id: string; title: string; when: (t: WhoamiTraits) => boolean; fields: NicheField[] }
+
+const NICHE_BLOCKS: NicheBlock[] = [
+  {
+    id: 'animation',
+    title: 'Aprofundar · Animação',
+    when: (t) => t.format === 'animation' || t.format === 'hybrid',
+    fields: [
+      { path: 'production', key: 'animation2d', label: 'Animação 2D' },
+      { path: 'production', key: 'animation3d', label: 'Animação 3D' },
+      { path: 'production', key: 'stopMotion', label: 'Stop-motion' },
+      { path: 'production', key: 'anime', label: 'Anime japonês' },
+      { path: 'protagonist', key: 'anthropomorphic', label: 'Animal antropomórfico' },
+      { path: 'story', key: 'fairyTale', label: 'Baseado em conto de fadas' },
+      { path: 'production', key: 'animatedMusical', label: 'Musical animado' },
+      { path: 'production', key: 'handDrawnLook', label: 'Estética desenhada à mão' },
+    ],
+  },
+  {
+    id: 'horror',
+    title: 'Aprofundar · Terror',
+    when: (t) => t.tags.includes('horror'),
+    fields: [
+      { path: 'story', key: 'supernaturalThreat', label: 'Elementos sobrenaturais' },
+      { path: 'story', key: 'possession', label: 'Possessão demoníaca' },
+      { path: 'antagonist', key: 'humanKiller', label: 'Antagonista assassino humano' },
+      { path: 'story', key: 'hauntedHouse', label: 'Casa mal-assombrada' },
+      { path: 'antagonist', key: 'monster', label: 'Antagonista criatura/monstro' },
+      { path: 'production', key: 'foundFootage', label: 'Found footage' },
+      { path: 'story', key: 'zombies', label: 'Zumbis' },
+      { path: 'story', key: 'bodyHorror', label: 'Body horror' },
+    ],
+  },
+  {
+    id: 'scifi',
+    title: 'Aprofundar · Ficção científica',
+    when: (t) => t.tags.includes('scifi'),
+    fields: [
+      { path: 'story', key: 'spaceTravel', label: 'Viagens espaciais' },
+      { path: 'story', key: 'aliens', label: 'Extraterrestres' },
+      { path: 'story', key: 'ai', label: 'Inteligência artificial' },
+      { path: 'story', key: 'timeTravel', label: 'Viagem no tempo' },
+      { path: 'story', key: 'dystopia', label: 'Sociedade distópica' },
+      { path: 'story', key: 'apocalypse', label: 'Pós-apocalipse' },
+      { path: 'story', key: 'robots', label: 'Robôs / androides' },
+      { path: 'story', key: 'scienceExperiments', label: 'Experimentos científicos' },
+      { path: 'story', key: 'virtualReality', label: 'Realidade virtual / simulada' },
+      { path: 'story', key: 'firstContact', label: 'Contato com civilização alienígena' },
+    ],
+  },
+  {
+    id: 'action',
+    title: 'Aprofundar · Ação',
+    when: (t) => t.tags.includes('action'),
+    fields: [
+      { path: 'protagonist', key: 'spy', label: 'Agente secreto / espião' },
+      { path: 'story', key: 'martialArts', label: 'Artes marciais' },
+      { path: 'protagonist', key: 'superhero', label: 'Super-herói' },
+      { path: 'story', key: 'rescue', label: 'Missão de resgate' },
+      { path: 'story', key: 'chase', label: 'Perseguição' },
+      { path: 'story', key: 'revenge', label: 'Vingança' },
+      { path: 'story', key: 'crimeOrg', label: 'Organização criminosa' },
+      { path: 'protagonist', key: 'lawEnforcement', label: 'Policial / agente da lei' },
+      { path: 'story', key: 'heist', label: 'Assalto / roubo elaborado' },
+      { path: 'story', key: 'saveWorld', label: 'Impedir ameaça de grandes proporções' },
+    ],
+  },
+  {
+    id: 'comedy',
+    title: 'Aprofundar · Comédia',
+    when: (t) => t.tags.includes('comedy'),
+    fields: [
+      { path: 'story', key: 'darkComedy', label: 'Humor negro' },
+      { path: 'story', key: 'absurdComedy', label: 'Humor absurdo' },
+      { path: 'story', key: 'satire', label: 'Sátira social / política' },
+      { path: 'story', key: 'slapstick', label: 'Humor físico / pastelão' },
+      { path: 'protagonist', key: 'comedyDuo', label: 'Dupla cômica' },
+      { path: 'story', key: 'teenComedy', label: 'Comédia adolescente' },
+      { path: 'story', key: 'misunderstandings', label: 'Confusões e mal-entendidos' },
+    ],
+  },
+  {
+    id: 'fantasy',
+    title: 'Aprofundar · Fantasia / aventura',
+    when: (t) => t.tags.includes('fantasy') || t.tags.includes('adventure'),
+    fields: [
+      { path: 'story', key: 'magic', label: 'Magia' },
+      { path: 'story', key: 'fantasyWorld', label: 'Mundo fictício' },
+      { path: 'story', key: 'mythicalCreatures', label: 'Dragões / criaturas mitológicas' },
+      { path: 'story', key: 'prophecy', label: 'Profecia' },
+      { path: 'story', key: 'powerfulObject', label: 'Objeto poderoso' },
+      { path: 'story', key: 'journey', label: 'Jornada por lugares' },
+      { path: 'story', key: 'kingdom', label: 'Reinos / monarquias' },
+      { path: 'protagonist', key: 'specialDestiny', label: 'Origem / destino especial' },
+      { path: 'story', key: 'mythology', label: 'Mitologias / lendas' },
+      { path: 'story', key: 'goodVsEvil', label: 'Bem vs mal' },
+    ],
+  },
+  {
+    id: 'thriller',
+    title: 'Aprofundar · Suspense',
+    when: (t) => t.tags.includes('thriller') || t.tags.includes('psychological_thriller'),
+    fields: [
+      { path: 'story', key: 'investigation', label: 'Investigação criminal' },
+      { path: 'protagonist', key: 'detective', label: 'Detetive / investigador' },
+      { path: 'story', key: 'serialKiller', label: 'Serial killer' },
+      { path: 'story', key: 'identityMystery', label: 'Descobrir identidade de alguém' },
+      { path: 'story', key: 'bigTwist', label: 'Grande reviravolta' },
+      { path: 'story', key: 'hunted', label: 'Protagonista perseguido' },
+      { path: 'story', key: 'conspiracy', label: 'Conspiração' },
+      { path: 'story', key: 'centralMystery', label: 'Mistério central' },
+      { path: 'story', key: 'crime', label: 'Crime a solucionar' },
+      { path: 'story', key: 'trustIssues', label: 'Não pode confiar nas pessoas' },
+    ],
+  },
+  {
+    id: 'drama',
+    title: 'Aprofundar · Drama',
+    when: (t) => t.tags.includes('drama'),
+    fields: [
+      { path: 'protagonist', key: 'basedOnRealPerson', label: 'Baseado em pessoa real' },
+      { path: 'story', key: 'familyIssues', label: 'Problemas familiares' },
+      { path: 'story', key: 'socialInequality', label: 'Desigualdade social' },
+      { path: 'story', key: 'familyConflict', label: 'Relacionamento familiar complicado' },
+      { path: 'protagonist', key: 'addiction', label: 'Protagonista com vício' },
+      { path: 'story', key: 'personalTragedy', label: 'Tragédia pessoal' },
+      { path: 'story', key: 'prison', label: 'Prisão' },
+      { path: 'story', key: 'discrimination', label: 'Preconceito / discriminação' },
+      { path: 'story', key: 'psychologicalConflict', label: 'Conflitos psicológicos' },
+      { path: 'story', key: 'politicalSocial', label: 'Questões políticas / sociais' },
+    ],
+  },
+  {
+    id: 'romance',
+    title: 'Aprofundar · Romance',
+    when: (t) => t.tags.includes('romance'),
+    fields: [
+      { path: 'story', key: 'coupleLeads', label: 'Casal como protagonistas' },
+      { path: 'story', key: 'forbiddenLove', label: 'Romance proibido' },
+      { path: 'story', key: 'impossibleLove', label: 'Amor impossível' },
+      { path: 'story', key: 'historicalEra', label: 'Época histórica' },
+      { path: 'story', key: 'loveTriangle', label: 'Triângulo amoroso' },
+      { path: 'story', key: 'coupleSeparation', label: 'Separação do casal' },
+      { path: 'story', key: 'classDifferenceRomance', label: 'Classes sociais diferentes' },
+      { path: 'story', key: 'loveAtFirstSight', label: 'Amor à primeira vista' },
+    ],
+  },
+  {
+    id: 'western',
+    title: 'Aprofundar · Faroeste',
+    when: (t) => t.tags.includes('western') || t.tags.includes('spaghetti_western'),
+    fields: [
+      { path: 'story', key: 'oldWest', label: 'Velho Oeste americano' },
+      { path: 'protagonist', key: 'gunslinger', label: 'Pistoleiro' },
+      { path: 'story', key: 'landDispute', label: 'Disputa por terras' },
+      { path: 'story', key: 'sheriffOutlaws', label: 'Xerifes e foras da lei' },
+      { path: 'protagonist', key: 'bountyHunter', label: 'Caçador de recompensas' },
+      { path: 'story', key: 'indigenousConflict', label: 'Conflito com povos indígenas' },
+      { path: 'story', key: 'gunDuel', label: 'Duelos de armas' },
+    ],
+  },
+  {
+    id: 'war',
+    title: 'Aprofundar · Guerra / história',
+    when: (t) => t.tags.includes('war') || t.story.war === true,
+    fields: [
+      { path: 'story', key: 'ww2', label: 'Segunda Guerra Mundial' },
+      { path: 'story', key: 'ww1', label: 'Primeira Guerra Mundial' },
+      { path: 'story', key: 'realBattle', label: 'Baseado em batalha real' },
+      { path: 'protagonist', key: 'soldier', label: 'Protagonista soldado' },
+      { path: 'story', key: 'militaryGroup', label: 'Grupo de militares' },
+      { path: 'story', key: 'holocaust', label: 'Holocausto' },
+      { path: 'story', key: 'revolution', label: 'Revolução' },
+      { path: 'story', key: 'historicalFigure', label: 'Figura histórica conhecida' },
+      { path: 'story', key: 'antiquity', label: 'Antiguidade' },
+      { path: 'story', key: 'coldWar', label: 'Guerra Fria' },
+    ],
+  },
+  {
+    id: 'musical',
+    title: 'Aprofundar · Musical',
+    when: (t) => t.tags.includes('musical') || t.production.animatedMusical === true,
+    fields: [
+      { path: 'story', key: 'charactersSing', label: 'Personagens cantam' },
+      { path: 'story', key: 'musicalNumbers', label: 'Números de dança' },
+      { path: 'story', key: 'musicIndustry', label: 'Mundo da música' },
+      { path: 'protagonist', key: 'musician', label: 'Protagonista músico / cantor' },
+      { path: 'production', key: 'basedOnPlay', label: 'Baseado em musical teatral' },
+      { path: 'production', key: 'originalSongs', label: 'Músicas originais' },
+      { path: 'story', key: 'band', label: 'Banda / grupo musical' },
+      { path: 'production', key: 'animatedMusical', label: 'Musical animado' },
+    ],
+  },
+  {
+    id: 'documentary',
+    title: 'Aprofundar · Documentário',
+    when: (t) => t.tags.includes('documentary') || t.basedOnTrueEvents === true,
+    fields: [
+      { path: 'production', key: 'realPeople', label: 'Acompanha pessoas reais' },
+      { path: 'production', key: 'interviews', label: 'Baseado em entrevistas' },
+      { path: 'story', key: 'environment', label: 'Ambiental / natureza' },
+      { path: 'story', key: 'historicalEvent', label: 'Acontecimento histórico real' },
+      { path: 'production', key: 'investigativeDoc', label: 'Documentário investigativo' },
+      { path: 'production', key: 'biographyDoc', label: 'Vida de uma pessoa específica' },
+      { path: 'production', key: 'musicDoc', label: 'Sobre música / artistas' },
+      { path: 'production', key: 'archiveFootage', label: 'Imagens de arquivo' },
+    ],
+  },
+  {
+    id: 'family',
+    title: 'Aprofundar · Infantil / família',
+    when: (t) =>
+      t.tags.includes('kids') ||
+      t.format === 'animation' ||
+      t.protagonist.child === true ||
+      t.protagonist.teen === true,
+    fields: [
+      { path: 'protagonist', key: 'child', label: 'Protagonista criança' },
+      { path: 'story', key: 'familyLeads', label: 'Protagonizada por uma família' },
+      { path: 'story', key: 'talkingAnimals', label: 'Animais que falam' },
+      { path: 'story', key: 'moralLesson', label: 'Lição moral explícita' },
+      { path: 'story', key: 'fairyTale', label: 'Conto infantil' },
+      { path: 'story', key: 'absentParents', label: 'Ausência dos pais' },
+      { path: 'story', key: 'childCreatureFriendship', label: 'Amizade criança + criatura' },
+    ],
+  },
+]
+
+const GENERAL_CATS = new Set([
+  'identity',
+  'era',
+  'genre',
+  'characters',
+  'story',
+  'production',
+])
 
 const ANSWER_CLASS: Record<WhoamiAnswer, string> = {
   yes: 'text-emerald-400',
@@ -176,6 +413,22 @@ export function AdminWhoamiPanel() {
     setTraits((prev) => (prev ? { ...prev, [key]: value } : prev))
   }
 
+  const openNicheIds = useMemo(() => {
+    if (!traits) return new Set<string>()
+    return new Set(
+      NICHE_BLOCKS.filter((b) => b.when(traits)).map((b) => `niche_${b.id}`),
+    )
+  }, [traits])
+
+  const visiblePreview = useMemo(() => {
+    if (!detail) return []
+    return detail.preview.filter((p) => {
+      const cat = p.category || ''
+      if (!cat || GENERAL_CATS.has(cat)) return true
+      return openNicheIds.has(cat)
+    })
+  }, [detail, openNicheIds])
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-1.5">
@@ -222,6 +475,11 @@ export function AdminWhoamiPanel() {
           <p className="text-sm text-cinema-muted">Carregando…</p>
         ) : listError ? (
           <p className="text-sm text-cinema-red">{listError}</p>
+        ) : list.length === 0 ? (
+          <p className="rounded-md border border-dashed border-cinema-line/70 px-3 py-6 text-center text-[12px] text-cinema-muted">
+            Nenhum filme na pool curada
+            {query.trim() ? ' para essa busca' : ''}.
+          </p>
         ) : (
           <ul className="max-h-[28rem] overflow-y-auto border border-cinema-line/50">
             {list.map((m) => (
@@ -314,7 +572,8 @@ export function AdminWhoamiPanel() {
                             ...p,
                             format:
                               e.target.value === 'animation' ||
-                              e.target.value === 'live_action'
+                              e.target.value === 'live_action' ||
+                              e.target.value === 'hybrid'
                                 ? e.target.value
                                 : null,
                           }
@@ -326,6 +585,7 @@ export function AdminWhoamiPanel() {
                   <option value="">—</option>
                   <option value="animation">Animação</option>
                   <option value="live_action">Live-action</option>
+                  <option value="hybrid">Mistura animação + live-action</option>
                 </select>
               </label>
               <label className="flex flex-col gap-1 text-[11px]">
@@ -387,6 +647,11 @@ export function AdminWhoamiPanel() {
                 onChange={(v) => setBool('basedOnBook', v)}
               />
               <TriToggle
+                label="Adaptação de outra obra"
+                value={traits.isAdaptation ?? null}
+                onChange={(v) => setBool('isAdaptation', v)}
+              />
+              <TriToggle
                 label="Franquia"
                 value={traits.franchise}
                 onChange={(v) => setBool('franchise', v)}
@@ -401,55 +666,58 @@ export function AdminWhoamiPanel() {
                 value={traits.classic}
                 onChange={(v) => setBool('classic', v)}
               />
+              <TriToggle
+                label="Independente"
+                value={traits.independent}
+                onChange={(v) => setBool('independent', v)}
+              />
             </div>
 
             <h3 className="font-display text-xl text-cinema-gold">
               Personagens
             </h3>
             <div className="grid gap-2 sm:grid-cols-2">
+              {(
+                [
+                  ['male', 'Homem'],
+                  ['female', 'Mulher'],
+                  ['child', 'Criança'],
+                  ['teen', 'Adolescente'],
+                  ['animal', 'Animal'],
+                  ['fantastical', 'Criatura fantástica'],
+                  ['alien', 'Extraterrestre'],
+                  ['monster', 'Monstro'],
+                  ['villain', 'Vilão (protagonista)'],
+                  ['hero', 'Herói'],
+                  ['basedOnRealPerson', 'Baseado em pessoa real'],
+                  ['powers', 'Protagonista com poderes'],
+                  ['human', 'Humano'],
+                  ['multiple', 'Vários protagonistas'],
+                ] as const
+              ).map(([key, label]) => (
+                <TriToggle
+                  key={key}
+                  label={label}
+                  value={(traits.protagonist[key] as Tri) ?? null}
+                  onChange={(v) =>
+                    setTraits((p) =>
+                      p
+                        ? {
+                            ...p,
+                            protagonist: { ...p.protagonist, [key]: v },
+                          }
+                        : p,
+                    )
+                  }
+                />
+              ))}
               <TriToggle
-                label="Protagonista humano"
-                value={traits.protagonist.human}
+                label="Tem antagonista principal"
+                value={(traits.antagonist.exists as Tri) ?? null}
                 onChange={(v) =>
                   setTraits((p) =>
                     p
-                      ? { ...p, protagonist: { ...p.protagonist, human: v } }
-                      : p,
-                  )
-                }
-              />
-              <TriToggle
-                label="Protagonista animal"
-                value={traits.protagonist.animal}
-                onChange={(v) =>
-                  setTraits((p) =>
-                    p
-                      ? { ...p, protagonist: { ...p.protagonist, animal: v } }
-                      : p,
-                  )
-                }
-              />
-              <TriToggle
-                label="Tem poderes"
-                value={traits.protagonist.powers}
-                onChange={(v) =>
-                  setTraits((p) =>
-                    p
-                      ? { ...p, protagonist: { ...p.protagonist, powers: v } }
-                      : p,
-                  )
-                }
-              />
-              <TriToggle
-                label="Vários protagonistas"
-                value={traits.protagonist.multiple}
-                onChange={(v) =>
-                  setTraits((p) =>
-                    p
-                      ? {
-                          ...p,
-                          protagonist: { ...p.protagonist, multiple: v },
-                        }
+                      ? { ...p, antagonist: { ...p.antagonist, exists: v } }
                       : p,
                   )
                 }
@@ -479,7 +747,7 @@ export function AdminWhoamiPanel() {
               </label>
               <label className="flex flex-col gap-1 text-[11px]">
                 <span className="font-bold text-cinema-muted uppercase">
-                  Espécie
+                  Espécie (ex.: robô)
                 </span>
                 <input
                   value={traits.protagonist.species || ''}
@@ -500,58 +768,32 @@ export function AdminWhoamiPanel() {
                   placeholder="ogro, robô…"
                 />
               </label>
-              <TriToggle
-                label="Tem antagonista"
-                value={traits.antagonist.exists}
-                onChange={(v) =>
-                  setTraits((p) =>
-                    p
-                      ? { ...p, antagonist: { ...p.antagonist, exists: v } }
-                      : p,
-                  )
-                }
-              />
-              <TriToggle
-                label="Vilão humano"
-                value={traits.antagonist.human}
-                onChange={(v) =>
-                  setTraits((p) =>
-                    p
-                      ? { ...p, antagonist: { ...p.antagonist, human: v } }
-                      : p,
-                  )
-                }
-              />
-              <TriToggle
-                label="Tem príncipe"
-                value={traits.antagonist.prince}
-                onChange={(v) =>
-                  setTraits((p) =>
-                    p
-                      ? { ...p, antagonist: { ...p.antagonist, prince: v } }
-                      : p,
-                  )
-                }
-              />
             </div>
 
             <h3 className="font-display text-xl text-cinema-gold">História</h3>
             <div className="grid gap-2 sm:grid-cols-2">
               {(
                 [
-                  ['kingdom', 'Reino'],
-                  ['future', 'Futuro'],
-                  ['journey', 'Viagem'],
-                  ['saveSomeone', 'Salvar alguém'],
+                  ['onEarth', 'Na Terra'],
+                  ['inSpace', 'No espaço'],
+                  ['inPast', 'No passado'],
+                  ['future', 'No futuro'],
+                  ['historicalEra', 'Época histórica'],
+                  ['inCity', 'Em cidade'],
+                  ['investigation', 'Investigação'],
+                  ['journey', 'Jornada / viagem'],
+                  ['survival', 'Sobrevivência'],
                   ['revenge', 'Vingança'],
-                  ['fantasyWorld', 'Universo fantástico'],
-                  ['prophecy', 'Profecia'],
+                  ['war', 'Guerra'],
+                  ['crime', 'Crime'],
+                  ['supernaturalThreat', 'Ameaça sobrenatural'],
+                  ['charactersHavePowers', 'Personagens com poderes'],
                 ] as const
               ).map(([key, label]) => (
                 <TriToggle
                   key={key}
                   label={label}
-                  value={traits.story[key]}
+                  value={(traits.story[key] as Tri) ?? null}
                   onChange={(v) =>
                     setTraits((p) =>
                       p ? { ...p, story: { ...p.story, [key]: v } } : p,
@@ -567,18 +809,22 @@ export function AdminWhoamiPanel() {
             <div className="grid gap-2 sm:grid-cols-2">
               {(
                 [
-                  ['oscar', 'Oscar'],
-                  ['famousSong', 'Música famosa'],
-                  ['sequel', 'Sequência'],
-                  ['controversial', 'Controverso'],
-                  ['horrorDirector', 'Diretor de terror'],
-                  ['postCredits', 'Pós-créditos'],
+                  ['oscar', 'Ganhou Oscar (qualquer categoria)'],
+                  ['oscarNominated', 'Indicado a Oscar (qualquer categoria)'],
+                  ['oscarBestPictureNom', 'Indicado a Melhor Filme'],
+                  ['oscarBestPicture', 'Ganhou Melhor Filme'],
+                  ['adaptedFromGame', 'Baseado em videogame'],
+                  ['adaptedFromComics', 'De HQ'],
+                  ['basedOnPlay', 'De peça teatral'],
+                  ['theatricalRelease', 'Lançado nos cinemas'],
+                  ['hasRemake', 'Tem refilmagem'],
+                  ['isRemake', 'É remake'],
                 ] as const
               ).map(([key, label]) => (
                 <TriToggle
                   key={key}
                   label={label}
-                  value={traits.production[key]}
+                  value={(traits.production[key] as Tri) ?? null}
                   onChange={(v) =>
                     setTraits((p) =>
                       p
@@ -593,11 +839,47 @@ export function AdminWhoamiPanel() {
               ))}
             </div>
 
+            <p className="rounded-md border border-dashed border-cinema-line/60 px-3 py-2 text-[11px] text-cinema-muted">
+              Blocos de aprofundamento aparecem conforme as tags/formato
+              (ex.: marque <span className="text-cinema-gold">Ação</span> para
+              curar espião, perseguição, heist…).
+            </p>
+
+            {NICHE_BLOCKS.filter((b) => b.when(traits)).map((block) => (
+              <div key={block.id} className="flex flex-col gap-2">
+                <h3 className="font-display text-xl text-cinema-gold">
+                  {block.title}
+                </h3>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {block.fields.map((f) => (
+                    <TriToggle
+                      key={`${block.id}-${f.path}-${f.key}`}
+                      label={f.label}
+                      value={(traits[f.path][f.key] as Tri) ?? null}
+                      onChange={(v) =>
+                        setTraits((p) => {
+                          if (!p) return p
+                          return {
+                            ...p,
+                            [f.path]: { ...p[f.path], [f.key]: v },
+                          }
+                        })
+                      }
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+
             <h3 className="font-display text-xl text-cinema-gold">
               Preview das respostas
             </h3>
+            <p className="text-[10px] text-cinema-muted">
+              Só gerais + nichos liberados pelas tags atuais. Salve pra
+              atualizar o preview.
+            </p>
             <ul className="max-h-56 overflow-y-auto border border-cinema-line/50 bg-black/30 p-2 text-[11px]">
-              {detail.preview.map((p) => (
+              {visiblePreview.map((p) => (
                 <li
                   key={p.questionId}
                   className="flex justify-between gap-2 border-b border-cinema-line/30 py-1"

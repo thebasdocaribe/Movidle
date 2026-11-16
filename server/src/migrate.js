@@ -5,6 +5,7 @@ import { seedCharacterCatalog } from './characterCatalog.js'
 import { seedMoviesCatalog } from './moviesCatalog.js'
 import { pool } from './db.js'
 import { seedWhoamiCatalog } from './whoami.js'
+import { seedWhoamiPool } from './whoamiPoolSeed.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const DB_DIR = path.join(__dirname, '../../db')
@@ -25,6 +26,8 @@ const MIGRATION_FILES = [
   'character_crops.sql',
   'achievements_stats.sql',
   'whoami_questions.sql',
+  'whoami_unlock.sql',
+  'whoami_pool.sql',
 ]
 
 /** Clips em web/public/clips (vão pro dist no build). */
@@ -136,6 +139,15 @@ export async function migrate() {
     console.log('[migrate] whoami perguntas/categorias OK')
   } catch (err) {
     console.warn('[migrate] whoami catalog:', err.message)
+  }
+
+  try {
+    const poolResult = await seedWhoamiPool()
+    console.log(
+      `[migrate] whoami pool: ${poolResult.flaggedInDb} filmes (${poolResult.missingCount} sem match)`,
+    )
+  } catch (err) {
+    console.warn('[migrate] whoami pool:', err.message)
   }
 }
 

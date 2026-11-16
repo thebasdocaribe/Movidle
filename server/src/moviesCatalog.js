@@ -70,6 +70,7 @@ export async function seedMoviesCatalog(client) {
       )
       inserted += 1
     } else {
+      // Preserva _traits / _keywords curados: merge em cima do cast_json existente.
       await client.query(
         `UPDATE movies SET
            title_pt = $2,
@@ -81,7 +82,17 @@ export async function seedMoviesCatalog(client) {
            poster_wide_path = COALESCE($8, poster_wide_path),
            clip_path = COALESCE($9, clip_path),
            director = COALESCE($10, director),
-           cast_json = $11::jsonb,
+           cast_json = COALESCE(cast_json, '{}'::jsonb) || $11::jsonb
+             || jsonb_build_object(
+                  '_traits',
+                  COALESCE(cast_json->'_traits', '{}'::jsonb)
+                    || COALESCE($11::jsonb->'_traits', '{}'::jsonb)
+                )
+             || jsonb_build_object(
+                  '_keywords',
+                  COALESCE(cast_json->'_keywords', '{}'::jsonb)
+                    || COALESCE($11::jsonb->'_keywords', '{}'::jsonb)
+                ),
            year = COALESCE($12, year)
          WHERE id = $1`,
         [

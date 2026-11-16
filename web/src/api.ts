@@ -255,10 +255,16 @@ export type WhoamiCategory = {
   label: string
 }
 
+export type WhoamiUnlockCond = {
+  questionId: string
+  answer?: string
+}
+
 export type WhoamiQuestion = {
   id: string
   category: string
   text: string
+  unlock?: { any: WhoamiUnlockCond[] } | null
 }
 
 export type WhoamiAskBank = {
@@ -408,48 +414,29 @@ export function finishWhoami(body: {
   )
 }
 
+export type WhoamiTri = boolean | null
+
 export type WhoamiTraits = {
   genres: number[]
   region: string | null
   runtime: number | null
   year: number | null
-  format: 'animation' | 'live_action' | null
+  format: 'animation' | 'live_action' | 'hybrid' | null
   studios: string[]
-  basedOnBook: boolean | null
-  franchise: boolean | null
-  basedOnTrueEvents: boolean | null
-  classic: boolean | null
+  basedOnBook: WhoamiTri
+  isAdaptation?: WhoamiTri
+  franchise: WhoamiTri
+  basedOnTrueEvents: WhoamiTri
+  classic: WhoamiTri
+  independent: WhoamiTri
   tags: string[]
-  protagonist: {
+  protagonist: Record<string, WhoamiTri | string | null> & {
     species: string | null
     color: string | null
-    human: boolean | null
-    animal: boolean | null
-    powers: boolean | null
-    multiple: boolean | null
   }
-  antagonist: {
-    exists: boolean | null
-    human: boolean | null
-    prince: boolean | null
-  }
-  story: {
-    kingdom: boolean | null
-    future: boolean | null
-    journey: boolean | null
-    saveSomeone: boolean | null
-    revenge: boolean | null
-    fantasyWorld: boolean | null
-    prophecy: boolean | null
-  }
-  production: {
-    oscar: boolean | null
-    famousSong: boolean | null
-    sequel: boolean | null
-    controversial: boolean | null
-    horrorDirector: boolean | null
-    postCredits: boolean | null
-  }
+  antagonist: Record<string, WhoamiTri>
+  story: Record<string, WhoamiTri>
+  production: Record<string, WhoamiTri>
 }
 
 export type AdminWhoamiMovieCard = {
@@ -466,9 +453,11 @@ export type AdminWhoamiMovieDetail = AdminWhoamiMovieCard & {
   traits: WhoamiTraits
   preview: {
     questionId: string
+    category?: string
     text: string
     answer: WhoamiAnswer
     answerLabel: string
+    unlock?: { any: { questionId: string; answer?: string }[] } | null
   }[]
 }
 
