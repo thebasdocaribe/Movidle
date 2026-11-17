@@ -67,6 +67,7 @@ const GENERAL = [
   { id: 'tag_scifi', category_id: 'genre', text: 'Sou uma ficção científica?', sort_order: 80, rule: { type: 'tag', value: 'scifi' } },
   { id: 'tag_romance', category_id: 'genre', text: 'Sou um romance?', sort_order: 90, rule: { type: 'tag', value: 'romance' } },
   { id: 'tag_western', category_id: 'genre', text: 'Sou um faroeste?', sort_order: 100, rule: { type: 'tag', value: 'western' } },
+  { id: 'tag_kids', category_id: 'genre', text: 'Sou um filme voltado ao público infantil ou familiar?', sort_order: 110, rule: { type: 'tag', value: 'kids' } },
 
   // Personagens 27–36
   { id: 'prot_male', category_id: 'characters', text: 'Meu protagonista é homem?', sort_order: 10, rule: { type: 'bool_path', path: 'protagonist.male' } },
@@ -283,7 +284,8 @@ const NICHE_DOC = niche('niche_documentary', unlockYes('based_on_true'), [
 
 const NICHE_FAMILY = niche(
   'niche_family',
-  unlockYes('is_animation', 'prot_young', 'tag_comedy'),
+  // Só após confirmar público infantil/familiar — não liberar por adolescente em terror
+  unlockYes('tag_kids', 'anim_kids'),
   [
     { id: 'family_child_lead', text: 'Meu protagonista é uma criança?', rule: { type: 'bool_path', path: 'protagonist.child' } },
     { id: 'family_family_leads', text: 'Minha história é protagonizada por uma família?', rule: { type: 'bool_path', path: 'story.familyLeads' } },

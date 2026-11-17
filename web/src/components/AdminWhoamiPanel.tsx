@@ -223,11 +223,8 @@ const NICHE_BLOCKS: NicheBlock[] = [
   {
     id: 'family',
     title: 'Aprofundar · Infantil / família',
-    when: (t) =>
-      t.tags.includes('kids') ||
-      t.format === 'animation' ||
-      t.protagonist.child === true ||
-      t.protagonist.teen === true,
+    // Só com tag Infantil — teen/child em terror NÃO abre este bloco
+    when: (t) => t.tags.includes('kids'),
     fields: [
       { path: 'protagonist', key: 'child', label: 'Protagonista criança' },
       { path: 'story', key: 'familyLeads', label: 'Protagonizada por uma família' },
